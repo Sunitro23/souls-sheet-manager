@@ -34,6 +34,60 @@ export const armors = [
     stability: "Règle spéciale",
   },
 ];
+export const weaponTypes = [
+  ...[
+    "Sceaux",
+    "Bâtons",
+    "Dagues",
+    "Arcs courts",
+    "Épées courtes",
+    "Fouets",
+    "Griffes",
+  ].map((name) => ({ name, weight: 1 })),
+  ...[
+    "Épées",
+    "Arcs",
+    "Haches",
+    "Fléaux",
+    "Lances",
+    "Marteaux",
+    "Arbalètes",
+    "Hallebardes",
+  ].map((name) => ({ name, weight: 2 })),
+  ...[
+    "Greatswords",
+    "Great Spears",
+    "Greataxes",
+    "Great Hammers",
+    "Greatbows",
+    "Great Staves",
+    "Faux",
+    "Ballistes",
+  ].map((name) => ({ name, weight: 3 })),
+  { name: "Colossal Weapons", weight: 4 },
+];
+export function weaponCategory(category: string) {
+  return category === "Épée longue" ? "Épées" : category;
+}
+export function itemWeight(item: Entry) {
+  if (item.type === "armor") return armors[item.armor]?.weight ?? 0;
+  if (item.type === "shield") return item.shield;
+  if (item.type === "talisman" || item.type === "spell") return 0;
+  if (item.type === "weapon")
+    return (
+      weaponTypes.find((t) => t.name === weaponCategory(item.category))
+        ?.weight ?? item.weight
+    );
+  return item.weight;
+}
+export function normalizeStored(c: Character) {
+  for (const item of c.inventory) {
+    item.category = weaponCategory(item.category);
+    item.weight = itemWeight(item);
+  }
+  c.reviewStatus ??= "pending";
+  return c;
+}
 export const ranks = [
   "Inné",
   "Basique",
@@ -41,7 +95,9 @@ export const ranks = [
   "Avancé",
   "Légendaire",
 ];
+export type ZoneOrigin = "self" | "target";
 export type Technique = {
+  origin?: ZoneOrigin;
   name: string;
   end: number;
   mana: number;
@@ -52,6 +108,7 @@ export type Technique = {
   description: string;
 };
 export type Entry = {
+  origin?: ZoneOrigin;
   id: string;
   name: string;
   type: string;
@@ -79,6 +136,7 @@ export type Entry = {
   modifiedAt: string;
 };
 export type Character = {
+  reviewStatus?: "pending" | "approved" | "rejected";
   id: string;
   name: string;
   subtitle: string;
@@ -102,7 +160,7 @@ export const mod = (v: number) => Math.floor((v - 10) / 2);
 export function derive(c: Character) {
   const equipped = c.inventory.filter((i) => i.equipped);
   const armor = armors[equipped.find((i) => i.type === "armor")?.armor || 0];
-  const weight = equipped.reduce((s, i) => s + i.weight, 0);
+  const weight = equipped.reduce((s, i) => s + itemWeight(i), 0);
   const capacity = 2 + Math.max(0, mod(c.stats.FOR));
   const overload = Math.max(0, weight - capacity);
   const mobility = Math.min(4, Math.max(1, Math.floor((c.stats.DEX + 4) / 6)));
@@ -117,7 +175,10 @@ export function derive(c: Character) {
     move,
     sprint: move * 2,
     dodge: Math.max(1, mobility - armor.dodge),
-    hp: Math.round((4 + 3 * c.level + 2 * mod(c.stats.CON)) * armor.hp),
+    hp: Math.max(
+      0,
+      Math.round((4 + 3 * c.level + 2 * mod(c.stats.CON)) * armor.hp),
+    ),
     end: Math.max(0, 3 - overload - c.malus + c.bonus),
     mana: Math.max(4, 6 + magic),
     magic,
@@ -162,6 +223,18 @@ export function validate(c: Character, old?: Character, gm = false) {
         ].includes(item.type)
       )
         throw Error("Type invalide.");
+      if (item.type === "weapon") {
+        item.category = weaponCategory(item.category);
+        const legacy = old?.inventory.find((i) => i.id === item.id);
+        if (
+          !weaponTypes.some((t) => t.name === item.category) &&
+          (!legacy ||
+            legacy.category !== item.category ||
+            legacy.weight !== item.weight)
+        )
+          throw Error("Choisissez un type d’arme du barème.");
+      }
+      item.weight = itemWeight(item);
       integer(item.weight, 0, 100, "Poids");
       integer(item.rank, 0, 4, "Rang");
       integer(item.armor, 0, 4, "Armure");
@@ -174,24 +247,41 @@ export function validate(c: Character, old?: Character, gm = false) {
       const prev = [...(old?.inventory || []), ...(old?.spells || [])].find(
         (i) => i.id === item.id,
       );
-      const mechanical = (i: Entry) =>
-        JSON.stringify([
-          i.type,
-          i.weight,
-          i.damage,
-          i.armor,
-          i.shield,
-          i.category,
-          i.techniques,
-          i.special,
-          i.rank,
-          i.end,
-          i.mana,
-          i.range,
-          i.pattern,
-          i.friendlyFire,
-          i.target,
-        ]);
+      const mechanical = (i: Entry) => {
+        const common = [i.type, itemWeight(i)];
+        const techniques = i.techniques.map((t) => ({
+          ...t,
+          origin: t.origin ?? "self",
+        }));
+        const special = i.special
+          ? { ...i.special, origin: i.special.origin ?? "self" }
+          : null;
+        if (i.type === "weapon")
+          return JSON.stringify([
+            ...common,
+            weaponCategory(i.category),
+            i.damage,
+            techniques,
+            special,
+          ]);
+        if (i.type === "armor") return JSON.stringify([...common, i.armor]);
+        if (i.type === "shield")
+          return JSON.stringify([...common, i.shield, techniques, special]);
+        if (i.type === "spell")
+          return JSON.stringify([
+            ...common,
+            i.rank,
+            i.damage,
+            i.end,
+            i.mana,
+            i.range,
+            i.pattern,
+            i.friendlyFire,
+            i.target,
+            i.origin ?? "self",
+          ]);
+        return JSON.stringify(common);
+      };
       if (!gm) {
         item.status = prev?.status || "pending";
         if (prev && mechanical(prev) !== mechanical(item))
@@ -213,6 +303,8 @@ export function validate(c: Character, old?: Character, gm = false) {
         ...(item.special ? [item.special] : []),
       ];
       for (const t of patterns) {
+        if (!["self", "target"].includes(t.origin ?? "self"))
+          throw Error("Origine de zone invalide.");
         if (t.damage && !/^\d+d\d+([+-]\d+)?$/.test(t.damage))
           throw Error("Dégâts : utilisez une notation comme 1d8 ou 2d6+2.");
         integer(t.end, 0, 100, "Coût END");
@@ -253,6 +345,44 @@ export function validate(c: Character, old?: Character, gm = false) {
     integer(c[key], 0, 100000, key);
     c[key] = Math.min(c[key], Math.max(0, d[key]));
   }
+  if (!gm) {
+    c.reviewStatus = old?.reviewStatus ?? "pending";
+    if (
+      old &&
+      (old.level !== c.level ||
+        old.magic !== c.magic ||
+        statNames.some((s) => old.stats[s] !== c.stats[s]))
+    )
+      c.reviewStatus = "pending";
+  } else if (
+    !["pending", "approved", "rejected"].includes(c.reviewStatus ?? "pending")
+  )
+    throw Error("Validation du personnage invalide.");
+  return c;
+}
+export function createCharacter(input: {
+  name: string;
+  level: number;
+  stats: Record<string, number>;
+  magic: string;
+}): Character {
+  const c = fresh();
+  Object.assign(c, input, {
+    id: crypto.randomUUID(),
+    inventory: [],
+    spells: [],
+    notes: "",
+    subtitle: "",
+    reviewStatus: "pending",
+    hp: 0,
+    end: 0,
+    mana: 0,
+  });
+  validate(c, undefined, true);
+  const d = derive(c);
+  c.hp = d.hp;
+  c.end = d.end;
+  c.mana = d.mana;
   return c;
 }
 export function entry(
@@ -271,7 +401,7 @@ export function entry(
     armor: 0,
     shield: 1,
     damage: "",
-    category: "",
+    category: type === "weapon" ? "Épées" : "",
     techniques: [],
     special: null,
     rank: 1,
@@ -293,7 +423,7 @@ export function fresh(): Character {
   return {
     id: "",
     name: "Kaelen",
-    subtitle: "Le dernier veilleur",
+    subtitle: "",
     level: 6,
     stats: { FOR: 16, DEX: 14, CON: 14, INT: 12, SAG: 16, CHA: 10 },
     magic: "SAG",

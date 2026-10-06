@@ -49,6 +49,10 @@ import {
   type Character,
   type Entry,
   type Technique,
+  type ZoneOrigin,
+  weaponTypes,
+  itemWeight,
+  weaponCategory,
 } from "../lib/rules";
 const icons: Record<string, any> = {
   weapon: Sword,
@@ -68,6 +72,18 @@ const typeNames: Record<string, string> = {
   other: "Objet",
   spell: "Sort",
 };
+const draftCharacter = (): Character => ({
+  ...fresh(),
+  name: "Nouveau personnage",
+  level: 1,
+  stats: { FOR: 10, DEX: 10, CON: 10, INT: 10, SAG: 10, CHA: 10 },
+  inventory: [],
+  spells: [],
+  hp: 7,
+  end: 3,
+  mana: 6,
+  notes: "",
+});
 const sign = (n: number) => (n >= 0 ? "+" + n : String(n));
 async function api(data: object) {
   const r = await fetch("/api/data", {
@@ -79,7 +95,13 @@ async function api(data: object) {
   if (!r.ok) throw Error(b.error || "Connexion impossible.");
   return b;
 }
-function Pattern({ points }: { points: number[][] }) {
+function Pattern({
+  points,
+  origin = "self",
+}: {
+  points: number[][];
+  origin?: ZoneOrigin;
+}) {
   const [rotation, setRotation] = useState(0);
   const rotated = points.map(([x, y]) =>
     rotation === 1
@@ -92,6 +114,7 @@ function Pattern({ points }: { points: number[][] }) {
   );
   return (
     <div className="pattern-wrap">
+      <small>{origin === "self" ? "◆ Personnage" : "◆ Cible choisie"}</small>
       <div className="pattern">
         {Array.from({ length: 25 }, (_, i) => {
           const x = (i % 5) - 2,
@@ -99,13 +122,10 @@ function Pattern({ points }: { points: number[][] }) {
           return (
             <span
               key={i}
-              className={
-                x === 0 && y === 0
-                  ? "origin"
-                  : rotated.some((p) => p[0] === x && p[1] === y)
-                    ? "hit"
-                    : ""
-              }
+              className={[
+                x === 0 && y === 0 ? "origin" : "",
+                rotated.some((p) => p[0] === x && p[1] === y) ? "hit" : "",
+              ].join(" ")}
             >
               {x === 0 && y === 0 ? "◆" : ""}
             </span>
@@ -132,12 +152,15 @@ const blankTechnique = (): Technique => ({
   pattern: [[0, -1]],
   friendlyFire: false,
   description: "",
+  origin: "self",
 });
 function PatternEditor({
   points,
+  origin = "self",
   onChange,
 }: {
   points: number[][];
+  origin?: ZoneOrigin;
   onChange: (points: number[][]) => void;
 }) {
   return (
@@ -146,7 +169,8 @@ function PatternEditor({
         <b>Zone d’effet</b>
         <p>
           Cliquez sur les cases affectées.
-          <br />◆ Personnage · Orientation Nord ↑
+          <br />◆ {origin === "self" ? "Personnage" : "Cible choisie"} ·
+          Orientation Nord ↑
         </p>
       </div>
       <div className="pattern editable">
@@ -188,6 +212,18 @@ function TechniqueEditor({
 }) {
   return (
     <div className="technique-editor">
+      <label>
+        Origine de la zone
+        <select
+          value={value.origin ?? "self"}
+          onChange={(e) =>
+            onChange({ ...value, origin: e.target.value as ZoneOrigin })
+          }
+        >
+          <option value="self">Personnage (mêlée)</option>
+          <option value="target">Cible choisie (à distance)</option>
+        </select>
+      </label>
       <div className="form-grid">
         <label>
           Nom de la technique
@@ -210,7 +246,13 @@ function TechniqueEditor({
       <div className="form-grid three">
         {(["end", "mana", "range"] as const).map((key, i) => (
           <label key={key}>
-            {["Coût END", "Coût Mana", "Portée"][i]}
+            {
+              [
+                "Coût END",
+                "Coût Mana",
+                value.origin === "target" ? "Portée de placement" : "Portée",
+              ][i]
+            }
             <input
               type="number"
               min="0"
@@ -241,6 +283,7 @@ function TechniqueEditor({
         Touche aussi les alliés
       </label>
       <PatternEditor
+        origin={value.origin}
         points={value.pattern}
         onChange={(pattern) => onChange({ ...value, pattern })}
       />
@@ -252,9 +295,11 @@ function TechniqueEditor({
   );
 }
 
-export default function Page() {
+export default function Page({
+  initialTab = "Fiche",
+}: { initialTab?: string } = {}) {
   const [c, setC] = useState<Character | null>(null),
-    [tab, setTab] = useState("Fiche"),
+    [tab, setTab] = useState(initialTab),
     [filter, setFilter] = useState("Tous"),
     [search, setSearch] = useState(""),
     [modal, setModal] = useState(""),
@@ -268,7 +313,18 @@ export default function Page() {
     [campaign, setCampaign] = useState<any>(null),
     [gm, setGm] = useState(false),
     [newName, setNewName] = useState(""),
-    [campaignCode, setCampaignCode] = useState("");
+    [campaignCode, setCampaignCode] = useState(""),
+    [newStats, setNewStats] = useState<Record<string, number>>({
+      FOR: 10,
+      DEX: 10,
+      CON: 10,
+      INT: 10,
+      SAG: 10,
+      CHA: 10,
+    }),
+    [newLevel, setNewLevel] = useState(1),
+    [newMagic, setNewMagic] = useState("INT"),
+    [reviewFilter, setReviewFilter] = useState("pending");
   const token = useRef(""),
     gmToken = useRef(""),
     current = useRef<Character | null>(null),
@@ -303,6 +359,14 @@ export default function Page() {
           localStorage.getItem("cendres-characters") || "[]",
         );
         setSaved(list);
+        const localDM =
+          initialTab === "DM"
+            ? JSON.parse(localStorage.getItem("cendres-gm") || "null")
+            : null;
+        if (localDM && !params.get("gm")) {
+          params.set("gm", localDM.token);
+          params.set("campaign", localDM.id);
+        }
         if (params.get("gm")) {
           gmToken.current = params.get("gm")!;
           const data = await api({
@@ -312,9 +376,17 @@ export default function Page() {
           });
           if (!live) return;
           setCampaign({ ...data, id: params.get("campaign") });
+          localStorage.setItem(
+            "cendres-gm",
+            JSON.stringify({
+              id: params.get("campaign"),
+              token: gmToken.current,
+              name: data.name,
+            }),
+          );
           setGm(true);
-          setTab("Campagne");
-          apply(data.characters[0] || fresh());
+          setTab("DM");
+          apply(data.characters[0] || draftCharacter());
           setReady(true);
           return;
         }
@@ -323,9 +395,13 @@ export default function Page() {
         );
         const id = params.get("character") || active?.id;
         const key = params.get("key") || active?.token;
-        const r = id
-          ? await api({ op: "load", id, token: key })
-          : await api({ op: "create" });
+        if (!id) {
+          if (!live) return;
+          apply(draftCharacter());
+          if (initialTab !== "DM") setModal("new");
+          return;
+        }
+        const r = await api({ op: "load", id, token: key });
         if (!live) return;
         token.current = r.token || key;
         apply(r.character);
@@ -334,7 +410,7 @@ export default function Page() {
       } catch (e) {
         notify(String((e as Error).message));
         if (live) {
-          apply(fresh());
+          apply(draftCharacter());
           setReady(false);
         }
       }
@@ -390,7 +466,10 @@ export default function Page() {
       token.current = access?.token || "";
       apply(r.character);
       setReady(true);
-      if (access) remember(r.character, access.token);
+      if (access) {
+        remember(r.character, access.token);
+        if (!gmToken.current) history.replaceState(null, "", "/");
+      }
       setTab("Fiche");
     } catch (e) {
       notify((e as Error).message);
@@ -398,7 +477,13 @@ export default function Page() {
   }
   async function create() {
     try {
-      const r = await api({ op: "create", name: newName || "Sans-nom" });
+      const r = await api({
+        op: "create",
+        name: newName,
+        stats: newStats,
+        level: newLevel,
+        magic: newMagic,
+      });
       token.current = r.token;
       gmToken.current = "";
       setGm(false);
@@ -408,6 +493,7 @@ export default function Page() {
       setModal("");
       setNewName("");
       setTab("Fiche");
+      history.replaceState(null, "", "/");
     } catch (e) {
       notify((e as Error).message);
     }
@@ -432,8 +518,9 @@ export default function Page() {
       setGm(true);
       setNewName("");
       setModal("");
-      setTab("Campagne");
-      notify("Campagne créée. Conservez votre lien GM.");
+      setTab("DM");
+      history.replaceState(null, "", "/dm");
+      notify("Campagne créée. Conservez votre lien DM.");
     } catch (e) {
       notify((e as Error).message);
     }
@@ -454,19 +541,70 @@ export default function Page() {
     }
   }
   async function openCampaign() {
-    const local = localStorage.getItem("cendres-gm");
-    if (local && !gm) {
-      try {
-        const a = JSON.parse(local),
-          r = await api({ op: "campaign", id: a.id, token: a.token });
-        gmToken.current = a.token;
-        setCampaign({ ...r, id: a.id });
-        setGm(true);
-      } catch (e) {
-        notify((e as Error).message);
-      }
-    }
     setTab("Campagne");
+  }
+  async function refreshCampaign() {
+    const r = await api({
+      op: "campaign",
+      id: campaign.id,
+      token: gmToken.current,
+    });
+    setCampaign({ ...r, id: campaign.id });
+  }
+  async function reviewCharacter(
+    character: Character,
+    status: "approved" | "rejected",
+  ) {
+    try {
+      await api({
+        op: "reviewCharacter",
+        id: character.id,
+        gmToken: gmToken.current,
+        revision: character.revision,
+        status,
+      });
+      await refreshCampaign();
+    } catch (e) {
+      notify((e as Error).message);
+      await refreshCampaign().catch(() => {});
+    }
+  }
+  async function reviewItem(
+    character: Character,
+    item: Entry,
+    status: "approved" | "rejected",
+  ) {
+    try {
+      const loaded = await api({
+        op: "load",
+        id: character.id,
+        gmToken: gmToken.current,
+      });
+      if (loaded.character.revision !== character.revision) {
+        await refreshCampaign();
+        throw Error(
+          "La fiche a changé. Vérifiez le contenu actualisé avant de valider.",
+        );
+      }
+      const target = [
+        ...loaded.character.inventory,
+        ...loaded.character.spells,
+      ].find((i: Entry) => i.id === item.id);
+      target.status = status;
+      if (status === "rejected") {
+        target.equipped = false;
+        target.memorized = false;
+      }
+      await api({
+        op: "save",
+        id: character.id,
+        gmToken: gmToken.current,
+        character: loaded.character,
+      });
+      await refreshCampaign();
+    } catch (e) {
+      notify((e as Error).message);
+    }
   }
   function openEntry(type = "weapon") {
     setEdit(entry("", type));
@@ -480,25 +618,46 @@ export default function Page() {
     const item: Entry = {
       ...edit,
       name: String(f.get("name")),
-      description: String(f.get("description")),
+      description:
+        edit.type === "spell"
+          ? String(f.get("description") ?? "")
+          : edit.description,
       type: String(f.get("type")),
       weight: Number(f.get("weight")),
       armor: Number(f.get("armor")),
       shield: Number(f.get("shield") || 1),
-      damage: String(f.get("damage")),
-      category: String(f.get("category")),
+      damage: String(f.get("damage") ?? ""),
+      category: String(f.get("category") ?? ""),
       rank: Number(f.get("rank")),
       end: Number(f.get("end")),
       mana: Number(f.get("mana")),
-      range: Number(f.get("range")),
-      target: String(f.get("target")),
+      range: Number(f.get("range") ?? 1),
+      target: String(f.get("target") ?? "Une cible"),
+      origin: (f.get("origin") ?? edit.origin ?? "self") as ZoneOrigin,
       friendlyFire: f.get("friendlyFire") === "on",
       techniques,
       special,
       pattern,
       status: gm ? "approved" : edit.status,
     };
+    if (item.type !== "weapon" && item.type !== "shield") {
+      item.techniques = [];
+      item.special = null;
+    }
+    if (item.type !== "spell") {
+      item.rank = 0;
+      item.memorized = false;
+      item.origin = "self";
+      item.end = 0;
+      item.mana = 0;
+      item.range = 1;
+      item.pattern = [];
+      item.friendlyFire = false;
+      item.target = "";
+    }
+    item.weight = itemWeight(item);
     change((n) => {
+      // A changed type replaces the same object rather than keeping irrelevant mechanics.
       const list = item.type === "spell" ? n.spells : n.inventory;
       const at = list.findIndex((i) => i.id === item.id);
       if (at < 0) list.push(item);
@@ -615,7 +774,7 @@ export default function Page() {
                     </button>
                   </td>
                   <td className="weight-value">
-                    {i.weight}
+                    {itemWeight(i)}
                     <Weight size={11} />
                   </td>
                   <td>
@@ -780,14 +939,18 @@ export default function Page() {
         <div className="workspace-label">VOTRE ESPACE</div>
         <button
           className="character-select"
-          onClick={() => setModal("characters")}
+          onClick={() => setModal(c.id ? "characters" : "new")}
         >
           <span className="mini-portrait">
             <Shield size={20} />
           </span>
           <span>
-            <b>{c.name}</b>
-            <small>Niveau {c.level} · Personnage</small>
+            <b>{c.id ? c.name : "Créer un personnage"}</b>
+            <small>
+              {c.id
+                ? `Niveau ${c.level} · Personnage`
+                : "Choisir les caractéristiques"}
+            </small>
           </span>
           <ChevronDown size={14} />
         </button>
@@ -821,6 +984,15 @@ export default function Page() {
           >
             <Users size={17} />
             Campagne{pending > 0 && <span className="notification-dot" />}
+          </button>
+          <button
+            className={tab === "DM" ? "active" : ""}
+            onClick={() => {
+              location.href = "/dm";
+            }}
+          >
+            <Shield size={17} />
+            Espace DM
           </button>
           <button
             className={tab === "Règles" ? "active" : ""}
@@ -859,18 +1031,25 @@ export default function Page() {
             <Menu />
           </button>
           <div className="breadcrumb">
-            Personnages <ChevronRight size={12} />
-            <span>{c.name}</span>
+            {tab === "DM" ? "Campagnes" : "Personnages"}{" "}
+            <ChevronRight size={12} />
+            <span>{tab === "DM" ? campaign?.name || "Espace DM" : c.name}</span>
             <ChevronRight size={12} />
             <b>{tab}</b>
           </div>
           <div className="save-state">
-            <span className={"dot " + (!ready ? "offline" : "")} />
-            {!ready
-              ? "Connexion indisponible"
-              : saving
-                ? "Sauvegarde…"
-                : "Sauvegardé"}
+            <span className={"dot " + (!ready && !gm ? "offline" : "")} />
+            {tab === "DM"
+              ? gm
+                ? "Accès DM"
+                : "Créer ou ouvrir une campagne"
+              : !c.id
+                ? "Aucun personnage créé"
+                : !ready
+                  ? "Connexion indisponible"
+                  : saving
+                    ? "Sauvegarde…"
+                    : "Sauvegardé"}
             <span className="topbar-divider" />
             <span className="mode-pill">{gm ? "MAÎTRE DU JEU" : "JOUEUR"}</span>
           </div>
@@ -879,7 +1058,13 @@ export default function Page() {
           <div className="page-heading">
             <div>
               <div className="eyebrow">LE REGISTRE DES ÂMES</div>
-              <h1>{tab === "Fiche" ? "Fiche de personnage" : tab}</h1>
+              <h1>
+                {tab === "Fiche"
+                  ? "Fiche de personnage"
+                  : tab === "DM"
+                    ? "Espace DM"
+                    : tab}
+              </h1>
               <p>
                 {tab === "Fiche"
                   ? "Chaque détail compte. Chaque braise aussi."
@@ -887,30 +1072,32 @@ export default function Page() {
                     ? "Tout ce que vous emportez dans les ténèbres."
                     : tab === "Grimoire"
                       ? "Les savoirs qui survivent à l’oubli."
-                      : tab === "Campagne"
+                      : tab === "Campagne" || tab === "DM"
                         ? "Rassemblez les personnages et validez leurs créations."
                         : tab === "Règles"
                           ? "Vos règles, toujours à portée de main."
                           : "Les traces laissées sur votre chemin."}
               </p>
             </div>
-            <div className="heading-actions">
-              <button
-                className="button"
-                onClick={copyLink}
-                disabled={gm || !ready}
-              >
-                <LinkIcon size={14} />
-                Partager
-              </button>
-              <button
-                className="button primary"
-                onClick={() => setModal("identity")}
-              >
-                <Settings2 size={14} />
-                Modifier le personnage
-              </button>
-            </div>
+            {tab !== "DM" && (
+              <div className="heading-actions">
+                <button
+                  className="button"
+                  onClick={copyLink}
+                  disabled={gm || !ready}
+                >
+                  <LinkIcon size={14} />
+                  Partager
+                </button>
+                <button
+                  className="button primary"
+                  onClick={() => setModal("identity")}
+                >
+                  <Settings2 size={14} />
+                  Modifier le personnage
+                </button>
+              </div>
+            )}
           </div>
           {(tab === "Fiche" || tab === "Inventaire" || tab === "Grimoire") && (
             <>
@@ -962,13 +1149,17 @@ export default function Page() {
                     />
                     <div className="identity-text">
                       <h2>{c.name}</h2>
-                      <p>{c.subtitle}</p>
+
                       <span className="character-state">
                         <span className="dot" />
                         {c.death === 3 ? "Mort" : "En vie"}
                         <span className="identity-separator">·</span>
                         {c.campaignId
-                          ? "En campagne"
+                          ? c.reviewStatus === "approved"
+                            ? "Validé par le DM"
+                            : c.reviewStatus === "rejected"
+                              ? "Refusé par le DM"
+                              : "À valider par le DM"
                           : "Personnage indépendant"}
                       </span>
                     </div>
@@ -1018,12 +1209,6 @@ export default function Page() {
                       <span>Armure prise en compte</span>
                     </div>
                   </section>
-                  <div className="quote">
-                    <span>“</span>Ce n’est pas la chute qui vous définit,
-                    <br />
-                    mais ce qu’il reste de vous après.
-                    <small>— Parole de veilleur</small>
-                  </div>
                 </div>
                 <div className="content-column">
                   <div className="resources">
@@ -1051,6 +1236,15 @@ export default function Page() {
                     ).map(({ key, label, icon: Icon, color }) => (
                       <section className={"panel resource " + color} key={key}>
                         <div className="resource-label">
+                          {key === "end" && (
+                            <button
+                              className="icon-button"
+                              aria-label="Ajuster l’endurance"
+                              onClick={() => setModal("end")}
+                            >
+                              <Settings2 size={12} />
+                            </button>
+                          )}
                           <Icon size={15} />
                           {label}
                           <button
@@ -1115,20 +1309,6 @@ export default function Page() {
                             }}
                           />
                         </div>
-                        <div className="resource-foot">
-                          {key === "hp" ? (
-                            "La volonté de continuer"
-                          ) : key === "end" ? (
-                            <button onClick={() => setModal("end")}>
-                              Bonus / malus temporaires <Settings2 size={10} />
-                            </button>
-                          ) : (
-                            "Caractéristique magique : " +
-                            c.magic +
-                            " " +
-                            sign(d.magic)
-                          )}
-                        </div>
                       </section>
                     ))}
                   </div>
@@ -1136,7 +1316,6 @@ export default function Page() {
                     <div>
                       <Skull size={16} />
                       <b>Dégâts mortels</b>
-                      <span>Chaque marque laisse une trace.</span>
                     </div>
                     <div className="death-counter">
                       {[0, 1, 2, 3].map((v) => (
@@ -1165,13 +1344,7 @@ export default function Page() {
                   {tab === "Fiche" && (
                     <>
                       <section className="panel equipped">
-                        {sectionTitle(
-                          Sword,
-                          "Équipement actif",
-                          <span className="section-caption">
-                            Prêt pour le voyage
-                          </span>,
-                        )}
+                        {sectionTitle(Sword, "Équipement actif")}
                         <div className="equipment-grid">
                           {["weapon", "armor", "shield"].map((type) => {
                             const item = equipment.find((i) => i.type === type),
@@ -1209,7 +1382,7 @@ export default function Page() {
                                 {item && (
                                   <span className="slot-weight">
                                     <Weight size={10} />
-                                    {item.weight}
+                                    {itemWeight(item)}
                                   </span>
                                 )}
                               </button>
@@ -1314,9 +1487,6 @@ export default function Page() {
                             </button>,
                           )}
                           <p>{c.notes || "Aucune note pour le moment."}</p>
-                          <span className="subtle">
-                            <Feather size={12} /> Votre histoire continue ici.
-                          </span>
                         </section>
                       </div>
                     </>
@@ -1416,12 +1586,15 @@ export default function Page() {
               </section>
             </div>
           )}
-          {tab === "Campagne" && (
+          {(tab === "Campagne" || tab === "DM") && (
             <div className="campaign-view">
               <section className="panel campaign-head">
                 <Users size={28} />
                 <div>
-                  <h2>{campaign?.name || "Le voyage se partage"}</h2>
+                  <h2>
+                    {campaign?.name ||
+                      (tab === "DM" ? "Espace DM" : "Campagne")}
+                  </h2>
                   <p>
                     {gm
                       ? "Accès maître du jeu · Validation et suivi des personnages"
@@ -1434,6 +1607,7 @@ export default function Page() {
                   <>
                     <button
                       className="button"
+                      disabled={!c.id}
                       onClick={() => {
                         setCampaignCode("");
                         setModal("join");
@@ -1490,7 +1664,7 @@ export default function Page() {
                       onClick={async () => {
                         await navigator.clipboard.writeText(
                           location.origin +
-                            "/#campaign=" +
+                            "/dm#campaign=" +
                             campaign.id +
                             "&gm=" +
                             gmToken.current,
@@ -1514,114 +1688,170 @@ export default function Page() {
                       </p>
                     </div>
                   )}
-                  {campaign.characters.map((character: Character) => (
-                    <section
-                      className="panel campaign-character"
-                      key={character.id}
-                    >
-                      <div className="section-title">
-                        <h2>
-                          <Shield size={17} />
-                          {character.name}{" "}
-                          <small>Niveau {character.level}</small>
-                        </h2>
-                        <button
-                          className="button"
-                          onClick={() => choose(character.id)}
-                        >
-                          Ouvrir la fiche <ArrowUpRight size={13} />
-                        </button>
-                      </div>
-                      {[...character.inventory, ...character.spells]
-                        .filter((i) => i.status === "pending")
-                        .map((i) => (
-                          <div className="review-row" key={i.id}>
-                            <div>
-                              <b>{i.name}</b>
-                              <small>
-                                {typeNames[i.type]} · Poids {i.weight} ·{" "}
-                                {i.damage || "Sans dégâts"}
-                              </small>
-                            </div>
-                            <button
-                              className="text-button"
-                              onClick={() => setDetail(i)}
+                  <div className="panel dm-summary">
+                    <div>
+                      <b>
+                        {
+                          campaign.characters.filter(
+                            (ch: Character) =>
+                              (ch.reviewStatus ?? "pending") === "pending",
+                          ).length
+                        }
+                      </b>{" "}
+                      personnages à valider
+                    </div>
+                    <div>
+                      <b>
+                        {
+                          campaign.characters
+                            .flatMap((ch: Character) => [
+                              ...ch.inventory,
+                              ...ch.spells,
+                            ])
+                            .filter((i: Entry) => i.status === "pending").length
+                        }
+                      </b>{" "}
+                      objets / sorts à valider
+                    </div>
+                    <div className="filters">
+                      <button
+                        className={reviewFilter === "pending" ? "selected" : ""}
+                        onClick={() => setReviewFilter("pending")}
+                      >
+                        À valider
+                      </button>
+                      <button
+                        className={reviewFilter === "all" ? "selected" : ""}
+                        onClick={() => setReviewFilter("all")}
+                      >
+                        Tout le contenu
+                      </button>
+                    </div>
+                  </div>
+                  {campaign.characters
+                    .filter(
+                      (ch: Character) =>
+                        reviewFilter === "all" ||
+                        (ch.reviewStatus ?? "pending") === "pending" ||
+                        [...ch.inventory, ...ch.spells].some(
+                          (i) => i.status === "pending",
+                        ),
+                    )
+                    .map((character: Character) => (
+                      <section
+                        className="panel campaign-character"
+                        key={character.id}
+                      >
+                        <div className="section-title">
+                          <h2>
+                            <Shield size={17} />
+                            {character.name}{" "}
+                            <small>Niveau {character.level}</small>
+                          </h2>
+                          <button
+                            className="button"
+                            onClick={() => choose(character.id)}
+                          >
+                            Ouvrir la fiche <ArrowUpRight size={13} />
+                          </button>
+                        </div>
+                        <div className="character-review">
+                          <div className="detail-chips">
+                            {statNames.map((k) => (
+                              <span key={k}>
+                                {k} {character.stats[k]}
+                              </span>
+                            ))}
+                            <span>
+                              PV {character.hp}/{derive(character).hp}
+                            </span>
+                            <span>
+                              END {character.end}/{derive(character).end}
+                            </span>
+                            <span>
+                              Mana {character.mana}/{derive(character).mana}
+                            </span>
+                            <span
+                              className={
+                                "status " +
+                                (character.reviewStatus ?? "pending")
+                              }
                             >
-                              Détails
-                            </button>
+                              {character.reviewStatus === "approved"
+                                ? "Personnage validé"
+                                : character.reviewStatus === "rejected"
+                                  ? "Personnage refusé"
+                                  : "Personnage à valider"}
+                            </span>
+                          </div>
+                          <div className="review-actions">
                             <button
                               className="button"
-                              onClick={async () => {
-                                try {
-                                  const loaded = await api({
-                                    op: "load",
-                                    id: character.id,
-                                    gmToken: gmToken.current,
-                                  });
-                                  const updated = loaded.character;
-                                  [
-                                    ...updated.inventory,
-                                    ...updated.spells,
-                                  ].find((x: Entry) => x.id === i.id).status =
-                                    "rejected";
-                                  await api({
-                                    op: "save",
-                                    id: character.id,
-                                    gmToken: gmToken.current,
-                                    character: updated,
-                                  });
-                                  const r = await api({
-                                    op: "campaign",
-                                    id: campaign.id,
-                                    token: gmToken.current,
-                                  });
-                                  setCampaign({ ...r, id: campaign.id });
-                                } catch (e) {
-                                  notify((e as Error).message);
-                                }
-                              }}
+                              onClick={() =>
+                                reviewCharacter(character, "rejected")
+                              }
                             >
-                              Refuser
+                              Refuser le personnage
                             </button>
                             <button
                               className="button primary"
-                              onClick={async () => {
-                                try {
-                                  const loaded = await api({
-                                    op: "load",
-                                    id: character.id,
-                                    gmToken: gmToken.current,
-                                  });
-                                  const updated = loaded.character;
-                                  [
-                                    ...updated.inventory,
-                                    ...updated.spells,
-                                  ].find((x: Entry) => x.id === i.id).status =
-                                    "approved";
-                                  await api({
-                                    op: "save",
-                                    id: character.id,
-                                    gmToken: gmToken.current,
-                                    character: updated,
-                                  });
-                                  const r = await api({
-                                    op: "campaign",
-                                    id: campaign.id,
-                                    token: gmToken.current,
-                                  });
-                                  setCampaign({ ...r, id: campaign.id });
-                                } catch (e) {
-                                  notify((e as Error).message);
-                                }
-                              }}
+                              onClick={() =>
+                                reviewCharacter(character, "approved")
+                              }
                             >
                               <Check size={13} />
-                              Valider
+                              Valider le personnage
                             </button>
                           </div>
-                        ))}
-                    </section>
-                  ))}
+                        </div>
+                        {[...character.inventory, ...character.spells]
+                          .filter(
+                            (i) =>
+                              reviewFilter === "all" || i.status === "pending",
+                          )
+                          .map((i) => (
+                            <div className="review-row" key={i.id}>
+                              <div>
+                                <b>{i.name}</b>
+                                <small>
+                                  {typeNames[i.type]} · Poids {itemWeight(i)}
+                                  {i.damage ? " · " + i.damage : ""}
+                                </small>
+                              </div>
+                              <span className={"status " + i.status}>
+                                {i.status === "approved"
+                                  ? "Validé"
+                                  : i.status === "rejected"
+                                    ? "Refusé"
+                                    : "À valider"}
+                              </span>
+                              <button
+                                className="text-button"
+                                onClick={() => setDetail(i)}
+                              >
+                                Détails
+                              </button>
+                              <button
+                                className="button"
+                                onClick={() =>
+                                  reviewItem(character, i, "rejected")
+                                }
+                              >
+                                Refuser
+                              </button>
+                              <button
+                                className="button primary"
+                                onClick={() =>
+                                  reviewItem(character, i, "approved")
+                                }
+                              >
+                                <Check size={13} />
+                                Valider
+                              </button>
+                            </div>
+                          ))}
+                      </section>
+                    ))}
                 </>
               )}
             </div>
@@ -1672,7 +1902,6 @@ export default function Page() {
                     const f = new FormData(e.currentTarget);
                     change((n) => {
                       n.name = String(f.get("name"));
-                      n.subtitle = String(f.get("subtitle"));
                       n.level = Number(f.get("level"));
                       for (const s of statNames) n.stats[s] = Number(f.get(s));
                     });
@@ -1689,10 +1918,6 @@ export default function Page() {
                     />
                   </label>
                   <div className="form-grid">
-                    <label>
-                      Surnom
-                      <input name="subtitle" defaultValue={c.subtitle} />
-                    </label>
                     <label>
                       Niveau
                       <input
@@ -1796,6 +2021,57 @@ export default function Page() {
                       autoFocus
                     />
                   </label>
+                  {modal === "new" && (
+                    <>
+                      <div className="form-grid">
+                        <label>
+                          Niveau
+                          <input
+                            type="number"
+                            min="1"
+                            max="1000"
+                            value={newLevel}
+                            onChange={(e) =>
+                              setNewLevel(Number(e.target.value))
+                            }
+                            required
+                          />
+                        </label>
+                        <label>
+                          Caractéristique magique
+                          <select
+                            value={newMagic}
+                            onChange={(e) => setNewMagic(e.target.value)}
+                          >
+                            {["INT", "SAG", "CHA"].map((k) => (
+                              <option key={k}>{k}</option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                      <div className="form-grid three">
+                        {statNames.map((k) => (
+                          <label key={k}>
+                            {k}
+                            <input
+                              type="number"
+                              min="2"
+                              max="28"
+                              value={newStats[k]}
+                              onChange={(e) =>
+                                setNewStats({
+                                  ...newStats,
+                                  [k]: Number(e.target.value),
+                                })
+                              }
+                              required
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <p>PV, END et Mana seront au maximum.</p>
+                    </>
+                  )}
                   <p>
                     Sans compte. Conservez votre lien secret pour retrouver
                     votre accès.
@@ -1901,7 +2177,13 @@ export default function Page() {
                         name="type"
                         value={edit.type}
                         onChange={(e) =>
-                          setEdit({ ...edit, type: e.target.value })
+                          setEdit({
+                            ...edit,
+                            type: e.target.value,
+                            category:
+                              e.target.value === "weapon" ? "Épées" : "",
+                            armor: e.target.value === "armor" ? 1 : 0,
+                          })
                         }
                         disabled={edit.type === "spell"}
                       >
@@ -1922,189 +2204,286 @@ export default function Page() {
                       )}
                     </label>
                   </div>
-                  <label>
-                    Description
-                    <textarea
-                      name="description"
-                      defaultValue={edit.description}
-                    />
-                  </label>
-                  <div className="form-grid three">
+                  {edit.type === "spell" && (
                     <label>
-                      Poids
-                      <input
-                        type="number"
-                        name="weight"
-                        defaultValue={edit.weight}
-                        min="0"
-                        max="100"
-                        required
+                      Description du sort
+                      <textarea
+                        name="description"
+                        defaultValue={edit.description}
                       />
                     </label>
-                    <label>
-                      Dégâts
-                      <input
-                        name="damage"
-                        defaultValue={edit.damage}
-                        placeholder="1d8 / 2d6+2"
-                        pattern="[0-9]+d[0-9]+([+-][0-9]+)?"
-                      />
-                    </label>
-                    <label>
-                      Catégorie
-                      <input
-                        name="category"
-                        defaultValue={edit.category}
-                        placeholder="Épée longue…"
-                      />
-                    </label>
-                    <label>
-                      Catégorie d’armure
-                      <select name="armor" defaultValue={edit.armor}>
-                        {armors.map((a, i) => (
-                          <option value={i} key={a.name}>
-                            {a.name} · poids {a.weight}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Bouclier
-                      <select name="shield" defaultValue={edit.shield}>
-                        {[
-                          "Petit bouclier",
-                          "Bouclier",
-                          "Greatshield",
-                          "Wall shield",
-                        ].map((s, i) => (
-                          <option value={i + 1} key={s}>
-                            {s} · {i + 1}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Rang du sort
-                      <select name="rank" defaultValue={edit.rank}>
-                        {ranks.map((s, i) => (
-                          <option value={i} key={s}>
-                            {s} · mémoire {i}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Coût END
-                      <input
-                        name="end"
-                        type="number"
-                        min="0"
-                        max="100"
-                        defaultValue={edit.end}
-                      />
-                    </label>
-                    <label>
-                      Coût Mana
-                      <input
-                        name="mana"
-                        type="number"
-                        min="0"
-                        max="100"
-                        defaultValue={edit.mana}
-                      />
-                    </label>
-                    <label>
-                      Portée (cases)
-                      <input
-                        name="range"
-                        type="number"
-                        min="0"
-                        max="1000"
-                        defaultValue={edit.range}
-                      />
-                    </label>
+                  )}
+                  <div className="form-grid">
+                    {edit.type === "weapon" && (
+                      <>
+                        <label>
+                          Type d’arme
+                          <select
+                            name="category"
+                            value={weaponCategory(edit.category)}
+                            onChange={(e) =>
+                              setEdit({ ...edit, category: e.target.value })
+                            }
+                            required
+                          >
+                            {!weaponTypes.some(
+                              (t) => t.name === weaponCategory(edit.category),
+                            ) && <option value="">Choisir une famille</option>}
+                            {weaponTypes.map((t) => (
+                              <option value={t.name} key={t.name}>
+                                {t.name} · poids {t.weight}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Dégâts
+                          <input
+                            name="damage"
+                            defaultValue={edit.damage}
+                            placeholder="1d8 / 2d6+2"
+                            pattern="[0-9]+d[0-9]+([+-][0-9]+)?"
+                          />
+                        </label>
+                      </>
+                    )}
+                    {edit.type === "armor" && (
+                      <label>
+                        Catégorie d’armure
+                        <select
+                          name="armor"
+                          value={edit.armor || 1}
+                          onChange={(e) =>
+                            setEdit({ ...edit, armor: Number(e.target.value) })
+                          }
+                        >
+                          {armors.slice(1).map((a, i) => (
+                            <option value={i + 1} key={a.name}>
+                              {a.name} · poids {a.weight}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    {edit.type === "shield" && (
+                      <label>
+                        Type de bouclier
+                        <select
+                          name="shield"
+                          value={edit.shield}
+                          onChange={(e) =>
+                            setEdit({ ...edit, shield: Number(e.target.value) })
+                          }
+                        >
+                          {[
+                            "Petit bouclier",
+                            "Bouclier",
+                            "Greatshield",
+                            "Wall Shield",
+                          ].map((name, i) => (
+                            <option value={i + 1} key={name}>
+                              {name} · poids {i + 1}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                    {["weapon", "armor", "shield", "talisman"].includes(
+                      edit.type,
+                    ) && (
+                      <label>
+                        Poids automatique
+                        <output className="derived-field">
+                          {itemWeight(
+                            edit.type === "armor"
+                              ? { ...edit, armor: edit.armor || 1 }
+                              : edit,
+                          )}
+                        </output>
+                      </label>
+                    )}
+                    {["consumable", "other"].includes(edit.type) && (
+                      <label>
+                        Poids
+                        <input
+                          name="weight"
+                          type="number"
+                          min="0"
+                          max="100"
+                          defaultValue={edit.weight}
+                          required
+                        />
+                      </label>
+                    )}
+                    {edit.type === "spell" && (
+                      <>
+                        <label>
+                          Rang du sort
+                          <select name="rank" defaultValue={edit.rank}>
+                            {ranks.map((name, i) => (
+                              <option value={i} key={name}>
+                                {name} · mémoire {i}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Dégâts
+                          <input
+                            name="damage"
+                            defaultValue={edit.damage}
+                            placeholder="2d6"
+                            pattern="[0-9]+d[0-9]+([+-][0-9]+)?"
+                          />
+                        </label>
+                        <label>
+                          Coût END
+                          <input
+                            name="end"
+                            type="number"
+                            min="0"
+                            max="100"
+                            defaultValue={edit.end}
+                          />
+                        </label>
+                        <label>
+                          Coût Mana
+                          <input
+                            name="mana"
+                            type="number"
+                            min="0"
+                            max="100"
+                            defaultValue={edit.mana}
+                          />
+                        </label>
+                      </>
+                    )}
                   </div>
-                  <details>
-                    <summary>Patterns, ciblage et techniques</summary>
-                    <label>
-                      Ciblage
-                      <input name="target" defaultValue={edit.target} />
-                    </label>
-                    <label className="inline-label">
-                      <input
-                        type="checkbox"
-                        name="friendlyFire"
-                        defaultChecked={edit.friendlyFire}
+                  {edit.type === "armor" && (
+                    <div className="detail-chips">
+                      <span>PV ×{armors[edit.armor || 1].hp}</span>
+                      <span>Déplacement −{armors[edit.armor || 1].move}</span>
+                      <span>Esquive −{armors[edit.armor || 1].dodge}</span>
+                      <span>
+                        Stabilité : {armors[edit.armor || 1].stability}
+                      </span>
+                    </div>
+                  )}
+                  {edit.type === "spell" && (
+                    <>
+                      <div className="form-grid">
+                        <label>
+                          Origine de la zone
+                          <select
+                            name="origin"
+                            value={edit.origin ?? "self"}
+                            onChange={(e) =>
+                              setEdit({
+                                ...edit,
+                                origin: e.target.value as ZoneOrigin,
+                              })
+                            }
+                          >
+                            <option value="self">Personnage (mêlée)</option>
+                            <option value="target">
+                              Cible choisie (à distance)
+                            </option>
+                          </select>
+                        </label>
+                        <label>
+                          {edit.origin === "target"
+                            ? "Portée de placement (cases)"
+                            : "Portée (cases)"}
+                          <input
+                            name="range"
+                            type="number"
+                            min="0"
+                            max="1000"
+                            defaultValue={edit.range}
+                          />
+                        </label>
+                        <label>
+                          Ciblage
+                          <input name="target" defaultValue={edit.target} />
+                        </label>
+                      </div>
+                      <label className="inline-label">
+                        <input
+                          type="checkbox"
+                          name="friendlyFire"
+                          defaultChecked={edit.friendlyFire}
+                        />
+                        Touche aussi les alliés
+                      </label>
+                      <PatternEditor
+                        points={edit.pattern}
+                        origin={edit.origin}
+                        onChange={(pattern) => setEdit({ ...edit, pattern })}
                       />
-                      Touche aussi les alliés
-                    </label>
-                    <PatternEditor
-                      points={edit.pattern}
-                      onChange={(points) =>
-                        setEdit({ ...edit, pattern: points })
-                      }
-                    />
-                    {edit.techniques.map((t, index) => (
-                      <TechniqueEditor
-                        key={index}
-                        value={t}
-                        onChange={(value) =>
-                          setEdit({
-                            ...edit,
-                            techniques: edit.techniques.map((x, i) =>
-                              i === index ? value : x,
-                            ),
-                          })
-                        }
-                        onRemove={() =>
-                          setEdit({
-                            ...edit,
-                            techniques: edit.techniques.filter(
-                              (_, i) => i !== index,
-                            ),
-                          })
-                        }
-                      />
-                    ))}
-                    <button
-                      type="button"
-                      className="button"
-                      onClick={() =>
-                        setEdit({
-                          ...edit,
-                          techniques: [...edit.techniques, blankTechnique()],
-                        })
-                      }
-                    >
-                      <Plus size={12} />
-                      Ajouter une technique
-                    </button>
-                    {edit.special ? (
-                      <TechniqueEditor
-                        value={edit.special}
-                        onChange={(value) =>
-                          setEdit({ ...edit, special: value })
-                        }
-                        onRemove={() => setEdit({ ...edit, special: null })}
-                      />
-                    ) : (
+                    </>
+                  )}
+                  {["weapon", "shield"].includes(edit.type) && (
+                    <details open>
+                      <summary>Techniques et compétence spéciale</summary>
+                      {edit.techniques.map((t, index) => (
+                        <TechniqueEditor
+                          key={index}
+                          value={t}
+                          onChange={(value) =>
+                            setEdit({
+                              ...edit,
+                              techniques: edit.techniques.map((x, i) =>
+                                i === index ? value : x,
+                              ),
+                            })
+                          }
+                          onRemove={() =>
+                            setEdit({
+                              ...edit,
+                              techniques: edit.techniques.filter(
+                                (_, i) => i !== index,
+                              ),
+                            })
+                          }
+                        />
+                      ))}
                       <button
                         type="button"
                         className="button"
                         onClick={() =>
-                          setEdit({ ...edit, special: blankTechnique() })
+                          setEdit({
+                            ...edit,
+                            techniques: [...edit.techniques, blankTechnique()],
+                          })
                         }
                       >
-                        <Sparkles size={12} />
-                        Compétence spéciale
+                        <Plus size={12} />
+                        Ajouter une technique
                       </button>
-                    )}
-                  </details>
+                      {edit.special ? (
+                        <TechniqueEditor
+                          value={edit.special}
+                          onChange={(special) => setEdit({ ...edit, special })}
+                          onRemove={() => setEdit({ ...edit, special: null })}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          className="button"
+                          onClick={() =>
+                            setEdit({ ...edit, special: blankTechnique() })
+                          }
+                        >
+                          <Sparkles size={12} />
+                          Compétence spéciale
+                        </button>
+                      )}
+                    </details>
+                  )}
                   <p className="subtle">
                     {gm
                       ? "Les créations du GM sont automatiquement validées."
                       : "Toute modification mécanique nécessite la validation du GM."}{" "}
-                    Poids des armures et boucliers calculé automatiquement.
                   </p>
                   <button className="button primary submit">Enregistrer</button>
                 </form>
@@ -2138,9 +2517,11 @@ export default function Page() {
                   : "Refusé"}
             </div>
             <h2>{detail.name}</h2>
-            <p>{detail.description || "Aucune description."}</p>
+            {detail.type === "spell" && detail.description && (
+              <p>{detail.description}</p>
+            )}
             <div className="detail-chips">
-              <span>Poids {detail.weight}</span>
+              <span>Poids {itemWeight(detail)}</span>
               {detail.damage && <span>Dégâts {detail.damage}</span>}
               {detail.type === "spell" && (
                 <>
@@ -2161,11 +2542,14 @@ export default function Page() {
                 <div>
                   <h3>{detail.target}</h3>
                   <p>
-                    Portée {detail.range} ·{" "}
+                    {detail.origin === "target"
+                      ? "Portée de placement"
+                      : "Portée"}{" "}
+                    {detail.range} ·{" "}
                     {detail.friendlyFire ? "Alliés affectés" : "Sans tir allié"}
                   </p>
                 </div>
-                <Pattern points={detail.pattern} />
+                <Pattern points={detail.pattern} origin={detail.origin} />
               </div>
             )}
             {[
@@ -2177,13 +2561,15 @@ export default function Page() {
                   <h3>{t.name}</h3>
                   <p>{t.description}</p>
                   <small>
-                    {t.end} END · {t.mana} Mana · Portée {t.range}
+                    {t.end} END · {t.mana} Mana ·{" "}
+                    {t.origin === "target" ? "Portée de placement" : "Portée"}{" "}
+                    {t.range}
                     <br />
                     {t.damage} ·{" "}
                     {t.friendlyFire ? "Alliés affectés" : "Sans tir allié"}
                   </small>
                 </div>
-                <Pattern points={t.pattern} />
+                <Pattern points={t.pattern} origin={t.origin} />
               </div>
             ))}
             <p className="subtle">

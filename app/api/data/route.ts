@@ -1,7 +1,12 @@
 import { getDb } from "../../../db";
 import { characters, campaigns } from "../../../db/schema";
 import { eq, and } from "drizzle-orm";
-import { fresh, validate, type Character } from "../../../lib/rules";
+import {
+  createCharacter,
+  validate,
+  normalizeStored,
+  type Character,
+} from "../../../lib/rules";
 const hash = async (s: string) =>
   Array.from(
     new Uint8Array(
@@ -23,39 +28,29 @@ export async function POST(req: Request) {
     const { op, id, token } = body;
     if (op === "create") {
       const token = secret();
-      const c = fresh();
-      c.id = crypto.randomUUID();
-      if (body.name) {
-        c.name = String(body.name).slice(0, 100);
-        c.inventory = [];
-        c.spells = [];
-        c.level = 1;
-        c.hp = 7;
-        c.end = 3;
-        c.mana = 6;
-      }
-      validate(c, undefined, true);
-      await db
-        .insert(characters)
-        .values({
-          id: c.id,
-          tokenHash: await hash(token),
-          data: JSON.stringify(c),
-          revision: 0,
-        });
+      const c = createCharacter({
+        name: body.name,
+        level: body.level,
+        stats: body.stats,
+        magic: body.magic,
+      });
+      await db.insert(characters).values({
+        id: c.id,
+        tokenHash: await hash(token),
+        data: JSON.stringify(c),
+        revision: 0,
+      });
       return Response.json({ character: c, token });
     }
     if (op === "campaignCreate") {
       if (!body.name?.trim()) throw Error("Nom de campagne requis.");
       const id = crypto.randomUUID(),
         token = secret();
-      await db
-        .insert(campaigns)
-        .values({
-          id,
-          name: body.name.slice(0, 100),
-          tokenHash: await hash(token),
-        });
+      await db.insert(campaigns).values({
+        id,
+        name: body.name.slice(0, 100),
+        tokenHash: await hash(token),
+      });
       return Response.json({ id, token, name: body.name });
     }
     if (op === "campaign") {
@@ -71,7 +66,7 @@ export async function POST(req: Request) {
         .where(eq(characters.campaignId, id));
       return Response.json({
         name: campaign.name,
-        characters: rows.map((r) => JSON.parse(r.data)),
+        characters: rows.map((r) => normalizeStored(JSON.parse(r.data))),
       });
     }
     const [row] = await db
@@ -83,7 +78,7 @@ export async function POST(req: Request) {
         { error: "Personnage introuvable." },
         { status: 404 },
       );
-    const old: Character = JSON.parse(row.data);
+    const old: Character = normalizeStored(JSON.parse(row.data));
     let gm = false;
     if (old.campaignId && body.gmToken) {
       const [campaign] = await db
@@ -107,6 +102,7 @@ export async function POST(req: Request) {
       if (old.campaignId)
         throw Error("Ce personnage appartient déjà à une campagne.");
       old.campaignId = campaign.id;
+      old.reviewStatus = "pending";
       old.revision++;
       await db
         .update(characters)
@@ -117,6 +113,32 @@ export async function POST(req: Request) {
         })
         .where(
           and(eq(characters.id, id), eq(characters.revision, row.revision)),
+        );
+      return Response.json({ character: old });
+    }
+    if (op === "reviewCharacter") {
+      if (!gm)
+        return Response.json({ error: "Accès DM requis." }, { status: 403 });
+      if (!["approved", "rejected"].includes(body.status))
+        throw Error("Validation invalide.");
+      if (body.revision !== old.revision)
+        return Response.json(
+          { error: "La fiche a changé. Actualisez avant de valider." },
+          { status: 409 },
+        );
+      old.reviewStatus = body.status;
+      old.revision++;
+      const updated = await db
+        .update(characters)
+        .set({ data: JSON.stringify(old), revision: old.revision })
+        .where(
+          and(eq(characters.id, id), eq(characters.revision, row.revision)),
+        )
+        .returning({ id: characters.id });
+      if (!updated.length)
+        return Response.json(
+          { error: "Modification simultanée. Actualisez la fiche." },
+          { status: 409 },
         );
       return Response.json({ character: old });
     }

@@ -110,3 +110,77 @@ test("invalid dice, stats and patterns are rejected", () => {
   c.inventory[0].pattern = [[1, 1, 1]];
   assert.throws(() => validate(c, undefined, true), /Pattern/);
 });
+
+test("every weapon family uses its automatic weight and ignores player-supplied weight", async () => {
+  const { weaponTypes, itemWeight } = await import("../lib/rules.ts");
+  for (const family of weaponTypes) {
+    const c = fresh();
+    const item = entry("Test", "weapon", { category: family.name, weight: 99 });
+    c.inventory.push(item);
+    validate(c, undefined, true);
+    assert.equal(item.weight, family.weight);
+    assert.equal(itemWeight(item), family.weight);
+  }
+  const c = fresh();
+  c.inventory.push(entry("Talisman", "talisman", { weight: 42 }));
+  validate(c, undefined, true);
+  assert.equal(c.inventory.at(-1).weight, 0);
+});
+test("creation accepts chosen stats and fills each derived resource", async () => {
+  const { createCharacter } = await import("../lib/rules.ts");
+  const c = createCharacter({
+    name: "Mira",
+    level: 4,
+    stats: { FOR: 12, DEX: 16, CON: 18, INT: 20, SAG: 8, CHA: 10 },
+    magic: "INT",
+  });
+  assert.equal(c.stats.CON, 18);
+  assert.equal(c.level, 4);
+  assert.equal(c.hp, 24);
+  assert.equal(c.end, 3);
+  assert.equal(c.mana, 11);
+  assert.equal(c.reviewStatus, "pending");
+  assert.equal(c.inventory.length, 0);
+  const minimal = createCharacter({
+    name: "Faible",
+    level: 1,
+    stats: { FOR: 2, DEX: 2, CON: 2, INT: 2, SAG: 2, CHA: 2 },
+    magic: "INT",
+  });
+  assert.equal(minimal.hp, 0);
+  assert.equal(minimal.mana, 4);
+});
+test("character review cannot be forged and stat edits reset it", () => {
+  const old = fresh();
+  old.reviewStatus = "approved";
+  const c = copy(old);
+  c.hp--;
+  validate(c, old);
+  assert.equal(c.reviewStatus, "approved");
+  c.stats.FOR = 18;
+  validate(c, old);
+  assert.equal(c.reviewStatus, "pending");
+  const pending = copy(c);
+  c.reviewStatus = "approved";
+  validate(c, pending);
+  assert.equal(c.reviewStatus, "pending");
+});
+test("target origins persist, trigger revalidation and reject invalid values", () => {
+  const old = fresh(),
+    c = copy(old);
+  c.inventory[0].techniques[0].origin = "target";
+  validate(c, old);
+  assert.equal(c.inventory[0].status, "pending");
+  assert.equal(c.inventory[0].techniques[0].origin, "target");
+  c.inventory[0].techniques[0].origin = "enemy";
+  assert.throws(() => validate(c, old), /Origine/);
+});
+test("legacy weapons are normalized without revoking approval", async () => {
+  const { normalizeStored } = await import("../lib/rules.ts");
+  const old = fresh();
+  const c = normalizeStored(copy(old));
+  assert.equal(c.inventory[0].category, "Épées");
+  validate(c, old);
+  assert.equal(c.inventory[0].status, "approved");
+  assert.equal(c.inventory[0].equipped, true);
+});

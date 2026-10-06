@@ -2361,3 +2361,75 @@ footer svg {
 .modal details > .button {
   margin: 5px 6px 0 0;
 }
+.derived-field {
+  display: block;
+  padding: 9px 11px;
+  background: #25291f;
+  border: 1px solid #3b4230;
+  border-radius: 5px;
+  color: var(--accent);
+  font-size: 13px;
+}
+.pattern-wrap > small {
+  display: block;
+  font-size: 8px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.dm-summary {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 18px;
+  color: var(--muted);
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.dm-summary b {
+  font-size: 20px;
+  color: var(--accent);
+  margin-right: 7px;
+}
+.dm-summary .filters {
+  margin-left: auto;
+}
+.character-review {
+  padding: 0 16px 16px;
+}
+.character-review .detail-chips {
+  margin: 3px 0 14px;
+}
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.resource {
+  padding-bottom: 15px;
+}
+.resource-label {
+  position: relative;
+}
+.resource-label > .icon-button:first-child {
+  position: absolute;
+  right: 22px;
+  top: 0;
+  margin: 0;
+}
+.resource-label > .icon-button:last-child {
+  margin-left: auto;
+}
+@media (max-width: 620px) {
+  .dm-summary {
+    gap: 14px;
+  }
+  .dm-summary .filters {
+    margin-left: 0;
+  }
+  .review-actions {
+    flex-wrap: wrap;
+  }
+  .character-review {
+    padding: 0 12px 12px;
+  }
+}

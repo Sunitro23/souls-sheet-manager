@@ -1,3 +1,4 @@
+import { learnTechnique, learnPersonalSkill } from "../../../lib/combat";
 import { getDb } from "../../../db";
 import { characters, campaigns } from "../../../db/schema";
 import { eq, and } from "drizzle-orm";
@@ -115,6 +116,34 @@ export async function POST(req: Request) {
           and(eq(characters.id, id), eq(characters.revision, row.revision)),
         );
       return Response.json({ character: old });
+    }
+    if (op === "learnTechnique" || op === "learnSkill") {
+      if (body.revision !== old.revision)
+        return Response.json(
+          {
+            error:
+              "La fiche a changé. Rechargez-la avant d’apprendre une technique.",
+          },
+          { status: 409 },
+        );
+      const updated =
+        op === "learnSkill"
+          ? learnPersonalSkill(old, body.skillId)
+          : learnTechnique(old, body.weaponTypeId, body.techniqueId);
+      updated.revision = old.revision + 1;
+      const result = await db
+        .update(characters)
+        .set({ data: JSON.stringify(updated), revision: updated.revision })
+        .where(
+          and(eq(characters.id, id), eq(characters.revision, row.revision)),
+        )
+        .returning({ id: characters.id });
+      if (!result.length)
+        return Response.json(
+          { error: "Apprentissage simultané. Rechargez la fiche." },
+          { status: 409 },
+        );
+      return Response.json({ character: updated });
     }
     if (op === "reviewCharacter") {
       if (!gm)

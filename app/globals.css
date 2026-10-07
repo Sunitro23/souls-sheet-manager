@@ -2433,3 +2433,125 @@ footer svg {
     padding: 0 12px 12px;
   }
 }
+.pattern-scroll {
+  max-width: 280px;
+  overflow: auto;
+  padding-bottom: 3px;
+}
+.catalog-preview {
+  margin: 12px 0;
+}
+.catalog-technique {
+  padding: 10px 0 !important;
+  border-top: 1px solid var(--line);
+}
+.catalog-technique summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 !important;
+  padding: 4px 0;
+}
+.catalog-technique summary b {
+  font-weight: 500;
+}
+.catalog-technique summary span,
+.technique-rank {
+  font-size: 9px;
+  color: var(--muted);
+}
+.catalog-technique summary strong {
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 500;
+  margin-left: auto;
+}
+.catalog-technique .technique {
+  border: 0;
+  padding-bottom: 4px;
+}
+.technique-rank {
+  display: block;
+  margin-top: 5px;
+}
+@media (max-width: 620px) {
+  .technique {
+    flex-wrap: wrap;
+  }
+  .pattern-scroll {
+    max-width: 260px;
+  }
+  .technique .pattern-wrap {
+    margin-left: auto;
+  }
+}
+.training-balance {
+  padding: 12px;
+  background: #292b21;
+  border: 1px solid #424633;
+  border-radius: 5px;
+  margin: 15px 0;
+}
+.training-balance span {
+  font-size: 12px;
+}
+.training-balance b {
+  color: var(--accent);
+  font-size: 19px;
+  margin: 0 5px;
+}
+.training-balance small {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  margin-top: 7px;
+}
+.learn-button {
+  margin-top: 12px;
+}
+.training-intro {
+  padding: 0 16px 16px;
+  color: var(--muted);
+  line-height: 1.8;
+  font-size: 11px;
+}
+.training-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.personal-skill {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+  border-top: 1px solid var(--line);
+}
+.personal-skill > div {
+  flex: 1;
+  min-width: 0;
+}
+.personal-skill h3 {
+  font-size: 12px;
+  font-weight: 500;
+}
+.personal-skill p,
+.skill-description {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 8px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.personal-skill .button {
+  flex-shrink: 0;
+}
+@media (max-width: 620px) {
+  .personal-skill {
+    flex-wrap: wrap;
+  }
+  .personal-skill > div {
+    min-width: 100%;
+  }
+}

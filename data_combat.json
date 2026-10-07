@@ -1,0 +1,5547 @@
+{
+  "schemaVersion": 1,
+  "coordinateSystem": {
+    "orientation": "north",
+    "x": "right",
+    "y": "down",
+    "distance": "chebyshev",
+    "unit": "case"
+  },
+  "weapons": [
+    {
+      "id": "dague",
+      "name": "Dague",
+      "family": "lames",
+      "baseReach": 1,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "custom",
+            "cells": [
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "estoc",
+          "name": "Estoc",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "epee-courte",
+      "name": "Épée courte",
+      "family": "lames",
+      "baseReach": 1,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "custom",
+            "cells": [
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "estoc",
+          "name": "Estoc",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "epee",
+      "name": "Épée",
+      "family": "lames",
+      "baseReach": 2,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "custom",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "estoc",
+          "name": "Estoc",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "greatsword",
+      "name": "Greatsword",
+      "family": "lames",
+      "baseReach": 3,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "custom",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "estoc",
+          "name": "Estoc",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 4,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "griffes",
+      "name": "Griffes",
+      "family": "lames",
+      "baseReach": 1,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "custom",
+            "cells": [
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "estoc",
+          "name": "Estoc",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lance",
+      "name": "Lance",
+      "family": "longues",
+      "baseReach": 3,
+      "techniques": [
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 4,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "super-cyclone",
+          "name": "Super Cyclone",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 2
+          },
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hallebarde",
+      "name": "Hallebarde",
+      "family": "longues",
+      "baseReach": 3,
+      "techniques": [
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 4,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "super-cyclone",
+          "name": "Super Cyclone",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 2
+          },
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "faux",
+      "name": "Faux",
+      "family": "longues",
+      "baseReach": 2,
+      "techniques": [
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "super-cyclone",
+          "name": "Super Cyclone",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 2
+          },
+          "range": {
+            "min": 2,
+            "max": 2,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fleau",
+      "name": "Fléau",
+      "family": "longues",
+      "baseReach": 2,
+      "techniques": [
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "super-cyclone",
+          "name": "Super Cyclone",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 2
+          },
+          "range": {
+            "min": 2,
+            "max": 2,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "greatspear",
+      "name": "Great spear",
+      "family": "longues",
+      "baseReach": 3,
+      "techniques": [
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 4,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "super-cyclone",
+          "name": "Super Cyclone",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 2
+          },
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fouet",
+      "name": "Fouet",
+      "family": "longues",
+      "baseReach": 3,
+      "techniques": [
+        {
+          "id": "swipe",
+          "name": "Swipe",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 4,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "cyclone",
+          "name": "Cyclone",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "super-cyclone",
+          "name": "Super Cyclone",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -3,
+                "y": -3
+              },
+              {
+                "x": -2,
+                "y": -3
+              },
+              {
+                "x": -1,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 1,
+                "y": -3
+              },
+              {
+                "x": 2,
+                "y": -3
+              },
+              {
+                "x": 3,
+                "y": -3
+              },
+              {
+                "x": -3,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": 3,
+                "y": -2
+              },
+              {
+                "x": -3,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": 3,
+                "y": -1
+              },
+              {
+                "x": -3,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": 3,
+                "y": 0
+              },
+              {
+                "x": -3,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": 3,
+                "y": 1
+              },
+              {
+                "x": -3,
+                "y": 2
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 3,
+                "y": 2
+              },
+              {
+                "x": -3,
+                "y": 3
+              },
+              {
+                "x": -2,
+                "y": 3
+              },
+              {
+                "x": -1,
+                "y": 3
+              },
+              {
+                "x": 0,
+                "y": 3
+              },
+              {
+                "x": 1,
+                "y": 3
+              },
+              {
+                "x": 2,
+                "y": 3
+              },
+              {
+                "x": 3,
+                "y": 3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 2
+          },
+          "range": {
+            "min": 2,
+            "max": 3,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "marteau",
+      "name": "Marteau",
+      "family": "impact",
+      "baseReach": 1,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe avec recul",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "earth",
+          "name": "Earth Smasher",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              }
+            ]
+          },
+          "effects": {
+            "immobilize": "until-end-of-target-next-turn"
+          },
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "greathammer",
+      "name": "Great hammer",
+      "family": "impact",
+      "baseReach": 2,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe avec recul",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "earth",
+          "name": "Earth Smasher",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {
+            "immobilize": "until-end-of-target-next-turn"
+          },
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hache",
+      "name": "Hache",
+      "family": "impact",
+      "baseReach": 1,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe avec recul",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "earth",
+          "name": "Earth Smasher",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              }
+            ]
+          },
+          "effects": {
+            "immobilize": "until-end-of-target-next-turn"
+          },
+          "range": {
+            "min": 1,
+            "max": 1,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "greataxe",
+      "name": "Great axe",
+      "family": "impact",
+      "baseReach": 2,
+      "techniques": [
+        {
+          "id": "swing",
+          "name": "Swing",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "slam",
+          "name": "Slam",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "swipe",
+          "name": "Swipe avec recul",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Jump Attack",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "earth",
+          "name": "Earth Smasher",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": -2,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 1,
+                "y": -2
+              },
+              {
+                "x": 2,
+                "y": -2
+              },
+              {
+                "x": -2,
+                "y": -1
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": 2,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -2,
+                "y": 1
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 2,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": -1,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 1,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {
+            "immobilize": "until-end-of-target-next-turn"
+          },
+          "range": {
+            "min": 1,
+            "max": 2,
+            "kind": "attack"
+          }
+        }
+      ]
+    },
+    {
+      "id": "arc",
+      "name": "Arc",
+      "family": "tir",
+      "baseReach": 6,
+      "techniques": [
+        {
+          "id": "simple",
+          "name": "Tir simple",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -6
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 6,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "charge",
+          "name": "Tir chargé",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -4
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 4,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "perce",
+          "name": "Flèche perçante",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -6
+              },
+              {
+                "x": 0,
+                "y": -5
+              },
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 6,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "rafale",
+          "name": "Tir en rafale",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "custom",
+            "cells": [
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 2
+              },
+              {
+                "x": 0,
+                "y": 1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 6,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "pluie",
+          "name": "Pluie de flèches",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 6,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "greatbow",
+      "name": "Great bow",
+      "family": "tir",
+      "baseReach": 8,
+      "techniques": [
+        {
+          "id": "simple",
+          "name": "Tir simple",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -8
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "charge",
+          "name": "Tir chargé",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -6
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 6,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "perce",
+          "name": "Flèche perçante",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -8
+              },
+              {
+                "x": 0,
+                "y": -7
+              },
+              {
+                "x": 0,
+                "y": -6
+              },
+              {
+                "x": 0,
+                "y": -5
+              },
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "rafale",
+          "name": "Tir en rafale",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "pluie",
+          "name": "Pluie de flèches",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "balliste",
+      "name": "Balliste",
+      "family": "tir",
+      "baseReach": 8,
+      "techniques": [
+        {
+          "id": "simple",
+          "name": "Tir simple",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -8
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "charge",
+          "name": "Tir chargé",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -6
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 6,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "perce",
+          "name": "Flèche perçante",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -8
+              },
+              {
+                "x": 0,
+                "y": -7
+              },
+              {
+                "x": 0,
+                "y": -6
+              },
+              {
+                "x": 0,
+                "y": -5
+              },
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "rafale",
+          "name": "Tir en rafale",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "pluie",
+          "name": "Pluie de flèches",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 8,
+            "kind": "placement"
+          }
+        }
+      ]
+    },
+    {
+      "id": "arbalete",
+      "name": "Arbalète",
+      "family": "tir",
+      "baseReach": 5,
+      "techniques": [
+        {
+          "id": "simple",
+          "name": "Tir simple",
+          "end": 1,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -5
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 5,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "charge",
+          "name": "Tir chargé",
+          "end": 2,
+          "rank": "debutant",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -3
+              }
+            ]
+          },
+          "effects": {
+            "knockback": 1
+          },
+          "range": {
+            "min": 1,
+            "max": 3,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "perce",
+          "name": "Flèche perçante",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "user",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -5
+              },
+              {
+                "x": 0,
+                "y": -4
+              },
+              {
+                "x": 0,
+                "y": -3
+              },
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": 0,
+                "y": -1
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 5,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "rafale",
+          "name": "Tir en rafale",
+          "end": 2,
+          "rank": "initie",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": -2,
+                "y": 2
+              },
+              {
+                "x": 2,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 5,
+            "kind": "placement"
+          }
+        },
+        {
+          "id": "pluie",
+          "name": "Pluie de flèches",
+          "end": 3,
+          "rank": "expert",
+          "rangeOverride": null,
+          "pattern": {
+            "origin": "target",
+            "mode": "generated",
+            "cells": [
+              {
+                "x": 0,
+                "y": -2
+              },
+              {
+                "x": -1,
+                "y": -1
+              },
+              {
+                "x": 0,
+                "y": -1
+              },
+              {
+                "x": 1,
+                "y": -1
+              },
+              {
+                "x": -2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 0
+              },
+              {
+                "x": 0,
+                "y": 0
+              },
+              {
+                "x": 1,
+                "y": 0
+              },
+              {
+                "x": 2,
+                "y": 0
+              },
+              {
+                "x": -1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 1
+              },
+              {
+                "x": 1,
+                "y": 1
+              },
+              {
+                "x": 0,
+                "y": 2
+              }
+            ]
+          },
+          "effects": {},
+          "range": {
+            "min": 1,
+            "max": 5,
+            "kind": "placement"
+          }
+        }
+      ]
+    }
+  ]
+}

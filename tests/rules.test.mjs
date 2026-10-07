@@ -168,6 +168,8 @@ test("character review cannot be forged and stat edits reset it", () => {
 test("target origins persist, trigger revalidation and reject invalid values", () => {
   const old = fresh(),
     c = copy(old);
+  old.inventory[0].category = "Bâtons";
+  c.inventory[0].category = "Bâtons";
   c.inventory[0].techniques[0].origin = "target";
   validate(c, old);
   assert.equal(c.inventory[0].status, "pending");
@@ -183,4 +185,165 @@ test("legacy weapons are normalized without revoking approval", async () => {
   validate(c, old);
   assert.equal(c.inventory[0].status, "approved");
   assert.equal(c.inventory[0].equipped, true);
+});
+
+test("all 95 catalog techniques preserve supplied zones, range, effects and END", async () => {
+  const { combatCatalog, categoryIds, predefinedTechniques } =
+    await import("../lib/combat.ts");
+  let count = 0;
+  for (const w of combatCatalog.weapons) {
+    const category = Object.keys(categoryIds).find(
+      (k) => categoryIds[k] === w.id,
+    );
+    const ts = predefinedTechniques({ category, damage: "2d6+2" });
+    assert.equal(ts.length, 5);
+    for (let i = 0; i < ts.length; i++) {
+      const t = ts[i],
+        raw = w.techniques[i];
+      assert.deepEqual(
+        t.pattern,
+        raw.pattern.cells.map((p) => [p.x, p.y]),
+      );
+      assert.deepEqual(t.effects, raw.effects);
+      assert.equal(t.end, raw.end);
+      assert.equal(t.range, raw.range.max);
+      assert.equal(t.rangeMin, raw.range.min);
+      assert.equal(t.rangeKind, raw.range.kind);
+      assert.equal(t.origin, raw.pattern.origin === "user" ? "self" : "target");
+      assert.equal(t.damage, "2d6+2");
+      assert.equal(t.mana, 0);
+      count++;
+    }
+  }
+  assert.equal(count, 95);
+});
+test("weapon types absent from the supplied catalog are not fabricated", async () => {
+  const { predefinedTechniques } = await import("../lib/combat.ts");
+  for (const category of [
+    "Bâtons",
+    "Sceaux",
+    "Arcs courts",
+    "Great Staves",
+    "Colossal Weapons",
+  ])
+    assert.deepEqual(predefinedTechniques({ category, damage: "1d6" }), []);
+});
+test("one weapon type is fully learned at level 8 and applies to multiple weapons", async () => {
+  const {
+    predefinedTechniques,
+    learnTechnique,
+    techniqueProgress,
+    techniqueKnown,
+  } = await import("../lib/combat.ts");
+  let c = fresh();
+  c.level = 1;
+  const ts = predefinedTechniques(c.inventory[0]);
+  assert.equal(ts.filter((t) => techniqueKnown(c, t)).length, 2);
+  assert.throws(() => learnTechnique(c, "epee", "swipe"), /insuffisants/);
+  c.level = 3;
+  c = learnTechnique(c, "epee", "swipe");
+  assert.equal(techniqueProgress(c).available, 0);
+  assert.throws(() => learnTechnique(c, "epee", "swipe"), /déjà/);
+  assert.throws(() => learnTechnique(c, "epee", "jump"), /initiées/);
+  c.level = 5;
+  c = learnTechnique(c, "epee", "cyclone");
+  c.level = 7;
+  assert.throws(() => learnTechnique(c, "epee", "jump"), /insuffisants/);
+  c.level = 8;
+  c = learnTechnique(c, "epee", "jump");
+  assert.equal(techniqueProgress(c).spent, 7);
+  assert.equal(ts.filter((t) => techniqueKnown(c, t)).length, 5);
+  const other = entry("Autre épée", "weapon", { damage: "1d4" });
+  assert.equal(
+    predefinedTechniques(other).filter((t) => techniqueKnown(c, t)).length,
+    5,
+  );
+  assert.ok(predefinedTechniques(other).every((t) => t.damage === "1d4"));
+});
+test("learning cannot be forged through generic saves or refunded by changing level", async () => {
+  const { learnTechnique } = await import("../lib/combat.ts");
+  const old = fresh(),
+    c = copy(old);
+  c.weaponTraining = ["epee:jump"];
+  validate(c, old);
+  assert.deepEqual(c.weaponTraining, []);
+  let learned = learnTechnique(old, "epee", "swipe");
+  const lower = copy(learned);
+  lower.level = 1;
+  assert.throws(() => validate(lower, learned), /points de technique/);
+  const changed = copy(learned);
+  changed.weaponTraining = [];
+  validate(changed, learned);
+  assert.deepEqual(changed.weaponTraining, ["epee:swipe"]);
+});
+test("catalog-backed weapons cannot override preset mechanics or damage", async () => {
+  const { referencedTechniques } = await import("../lib/combat.ts");
+  const old = fresh(),
+    c = copy(old);
+  c.inventory[0].techniques[0].damage = "99d99";
+  c.inventory[0].techniques[0].end = 99;
+  validate(c, old);
+  const ts = referencedTechniques(c.inventory[0]);
+  assert.ok(ts.every((t) => t.damage === c.inventory[0].damage));
+  assert.equal(ts[0].end, 1);
+  assert.equal(c.inventory[0].status, "approved");
+});
+test("large patterns remain inside dynamic bounds in every orientation", async () => {
+  const { patternBounds, combatCatalog } = await import("../lib/combat.ts");
+  for (const w of combatCatalog.weapons)
+    for (const t of w.techniques)
+      for (let r = 0; r < 4; r++) {
+        const pts = t.pattern.cells.map(({ x, y }) =>
+          r === 1 ? [-y, x] : r === 2 ? [-x, -y] : r === 3 ? [y, -x] : [x, y],
+        );
+        const b = patternBounds(pts);
+        assert.ok(
+          pts.every(
+            ([x, y]) =>
+              x >= b.minX && x <= b.maxX && y >= b.minY && y <= b.maxY,
+          ),
+        );
+      }
+  const b = patternBounds([[0, -8]]);
+  assert.equal(b.minY, -8);
+});
+test("personal skills require DM approval and use an independent capped pool", async () => {
+  const { learnTechnique, learnPersonalSkill, personalProgress } =
+    await import("../lib/combat.ts");
+  let c = fresh();
+  c.level = 8;
+  c.personalSkills = Array.from({ length: 7 }, (_, i) => ({
+    id: String(i),
+    name: "Talent " + i,
+    description: "Effet",
+    status: "pending",
+  }));
+  assert.throws(() => learnPersonalSkill(c, "0"), /validée/);
+  for (const skill of c.personalSkills) skill.status = "approved";
+  c = learnTechnique(c, "epee", "swipe");
+  c = learnTechnique(c, "epee", "cyclone");
+  c = learnTechnique(c, "epee", "jump");
+  for (const skill of c.personalSkills) c = learnPersonalSkill(c, skill.id);
+  assert.equal(personalProgress(c).spent, 7);
+  assert.equal(personalProgress(c).available, 0);
+  c.level = 20;
+  assert.equal(personalProgress(c).earned, 7);
+  assert.throws(() => learnPersonalSkill(c, "0"), /déjà/);
+});
+test("player-created personal skills cannot self-approve or bypass learning", () => {
+  const old = fresh(),
+    c = copy(old);
+  c.personalSkills = [
+    { id: "talent", name: "Talent", description: "Effet", status: "approved" },
+  ];
+  c.personalTraining = ["talent"];
+  validate(c, old);
+  assert.equal(c.personalSkills[0].status, "pending");
+  assert.deepEqual(c.personalTraining, []);
+  const approved = copy(c);
+  approved.personalSkills[0].status = "approved";
+  const edited = copy(approved);
+  edited.personalSkills[0].description = "Autre effet";
+  validate(edited, approved);
+  assert.equal(edited.personalSkills[0].status, "pending");
 });

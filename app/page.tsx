@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Check,
   CheckCheck,
+  LockKeyhole,
   Shield,
   Sword,
   Heart,
@@ -54,6 +55,21 @@ import {
   itemWeight,
   weaponCategory,
 } from "../lib/rules";
+import {
+  catalogueFor,
+  predefinedTechniques,
+  referencedTechniques,
+  rankLabels,
+  effectText,
+  patternBounds,
+  type CatalogTechnique,
+  techniqueProgress,
+  techniqueKnown,
+  techniqueCosts,
+  techniqueKey,
+  personalProgress,
+  type PersonalSkill,
+} from "../lib/combat";
 const icons: Record<string, any> = {
   weapon: Sword,
   armor: Shield,
@@ -112,25 +128,31 @@ function Pattern({
           ? [y, -x]
           : [x, y],
   );
+  const bounds = patternBounds(rotated);
   return (
     <div className="pattern-wrap">
       <small>{origin === "self" ? "◆ Personnage" : "◆ Cible choisie"}</small>
-      <div className="pattern">
-        {Array.from({ length: 25 }, (_, i) => {
-          const x = (i % 5) - 2,
-            y = Math.floor(i / 5) - 2;
-          return (
-            <span
-              key={i}
-              className={[
-                x === 0 && y === 0 ? "origin" : "",
-                rotated.some((p) => p[0] === x && p[1] === y) ? "hit" : "",
-              ].join(" ")}
-            >
-              {x === 0 && y === 0 ? "◆" : ""}
-            </span>
-          );
-        })}
+      <div className="pattern-scroll">
+        <div
+          className="pattern"
+          style={{ gridTemplateColumns: `repeat(${bounds.columns},15px)` }}
+        >
+          {Array.from({ length: bounds.columns * bounds.rows }, (_, i) => {
+            const x = (i % bounds.columns) + bounds.minX,
+              y = Math.floor(i / bounds.columns) + bounds.minY;
+            return (
+              <span
+                key={i}
+                className={[
+                  x === 0 && y === 0 ? "origin" : "",
+                  rotated.some((p) => p[0] === x && p[1] === y) ? "hit" : "",
+                ].join(" ")}
+              >
+                {x === 0 && y === 0 ? "◆" : ""}
+              </span>
+            );
+          })}
+        </div>
       </div>
       <button
         className="text-button"
@@ -139,6 +161,45 @@ function Pattern({
         <RotateCcw size={11} />
         {["Nord", "Est", "Sud", "Ouest"][rotation]}
       </button>
+    </div>
+  );
+}
+
+function CatalogPreview({ item }: { item: Entry }) {
+  const techniques = predefinedTechniques(item);
+  if (!techniques.length)
+    return (
+      <p className="subtle">
+        Aucune technique prédéfinie fournie pour {item.category}.
+      </p>
+    );
+  return (
+    <div className="catalog-preview">
+      <p className="subtle">
+        {techniques.length} techniques · Dégâts de l’arme :{" "}
+        {item.damage || "à définir"}
+      </p>
+      {techniques.map((t) => (
+        <details className="catalog-technique" key={t.catalogId}>
+          <summary>
+            <b>{t.name}</b>
+            <span>{rankLabels[t.rank]}</span>
+            <strong>{t.end} END</strong>
+          </summary>
+          <div className="technique">
+            <div>
+              <p>
+                {t.rangeKind === "placement"
+                  ? "Portée de placement"
+                  : "Portée d’attaque"}{" "}
+                : {t.rangeMin}–{t.range} cases
+              </p>
+              {effectText(t.effects) && <p>{effectText(t.effects)}</p>}
+            </div>
+            <Pattern points={t.pattern} origin={t.origin} />
+          </div>
+        </details>
+      ))}
     </div>
   );
 }
@@ -205,7 +266,9 @@ function TechniqueEditor({
   value,
   onChange,
   onRemove,
+  special = false,
 }: {
+  special?: boolean;
   value: Technique;
   onChange: (v: Technique) => void;
   onRemove: () => void;
@@ -233,37 +296,41 @@ function TechniqueEditor({
             required
           />
         </label>
-        <label>
-          Dégâts
-          <input
-            value={value.damage}
-            placeholder="1d8"
-            pattern="[0-9]+d[0-9]+([+-][0-9]+)?"
-            onChange={(e) => onChange({ ...value, damage: e.target.value })}
-          />
-        </label>
-      </div>
-      <div className="form-grid three">
-        {(["end", "mana", "range"] as const).map((key, i) => (
-          <label key={key}>
-            {
-              [
-                "Coût END",
-                "Coût Mana",
-                value.origin === "target" ? "Portée de placement" : "Portée",
-              ][i]
-            }
+        {special && (
+          <label>
+            Dégâts
             <input
-              type="number"
-              min="0"
-              max={key === "range" ? 1000 : 100}
-              value={value[key]}
-              onChange={(e) =>
-                onChange({ ...value, [key]: Number(e.target.value) })
-              }
+              value={value.damage}
+              placeholder="1d8"
+              pattern="[0-9]+d[0-9]+([+-][0-9]+)?"
+              onChange={(e) => onChange({ ...value, damage: e.target.value })}
             />
           </label>
-        ))}
+        )}
+      </div>
+      <div className="form-grid three">
+        {(["end", "mana", "range"] as const)
+          .filter((key) => special || key !== "mana")
+          .map((key) => (
+            <label key={key}>
+              {
+                [
+                  "Coût END",
+                  "Coût Mana",
+                  value.origin === "target" ? "Portée de placement" : "Portée",
+                ][key === "end" ? 0 : key === "mana" ? 1 : 2]
+              }
+              <input
+                type="number"
+                min="0"
+                max={key === "range" ? 1000 : 100}
+                value={value[key]}
+                onChange={(e) =>
+                  onChange({ ...value, [key]: Number(e.target.value) })
+                }
+              />
+            </label>
+          ))}
       </div>
       <label>
         Description
@@ -304,7 +371,9 @@ export default function Page({
     [search, setSearch] = useState(""),
     [modal, setModal] = useState(""),
     [edit, setEdit] = useState<Entry | null>(null),
+    [editSkill, setEditSkill] = useState<PersonalSkill | null>(null),
     [detail, setDetail] = useState<Entry | null>(null),
+    [detailOwner, setDetailOwner] = useState<Character | null>(null),
     [toast, setToast] = useState(""),
     [saving, setSaving] = useState(false),
     [ready, setReady] = useState(false),
@@ -453,6 +522,51 @@ export default function Page({
       }
     });
   }
+  function learn(t: CatalogTechnique) {
+    if (!current.current?.id) return;
+    queue.current = queue.current.then(async () => {
+      setSaving(true);
+      try {
+        const r = await api({
+          op: "learnTechnique",
+          id: current.current!.id,
+          token: token.current,
+          gmToken: gmToken.current,
+          revision: current.current!.revision,
+          weaponTypeId: t.weaponTypeId,
+          techniqueId: t.catalogId,
+        });
+        apply(r.character);
+        notify(`${t.name} apprise pour toutes les armes de ce type.`);
+      } catch (e) {
+        notify((e as Error).message);
+      } finally {
+        setSaving(false);
+      }
+    });
+  }
+  function learnSkill(id: string) {
+    if (!current.current?.id) return;
+    queue.current = queue.current.then(async () => {
+      setSaving(true);
+      try {
+        const r = await api({
+          op: "learnSkill",
+          id: current.current!.id,
+          token: token.current,
+          gmToken: gmToken.current,
+          revision: current.current!.revision,
+          skillId: id,
+        });
+        apply(r.character);
+        notify("Compétence personnelle acquise.");
+      } catch (e) {
+        notify((e as Error).message);
+      } finally {
+        setSaving(false);
+      }
+    });
+  }
   async function choose(id: string) {
     await queue.current;
     try {
@@ -571,7 +685,7 @@ export default function Page({
   }
   async function reviewItem(
     character: Character,
-    item: Entry,
+    item: Entry | PersonalSkill,
     status: "approved" | "rejected",
   ) {
     try {
@@ -589,9 +703,10 @@ export default function Page({
       const target = [
         ...loaded.character.inventory,
         ...loaded.character.spells,
+        ...(loaded.character.personalSkills ?? []),
       ].find((i: Entry) => i.id === item.id);
       target.status = status;
-      if (status === "rejected") {
+      if (status === "rejected" && "equipped" in target) {
         target.equipped = false;
         target.memorized = false;
       }
@@ -672,14 +787,20 @@ export default function Page({
         <span>Les braises s’éveillent…</span>
       </div>
     );
+  const detailCharacter =
+    detailOwner && detailOwner.id !== c.id ? detailOwner : c;
+  const detailTraining = techniqueProgress(detailCharacter);
+  const training = techniqueProgress(c),
+    personal = personalProgress(c);
   const d = derive(c),
-    pending = [...c.inventory, ...c.spells].filter(
+    pending = [...c.inventory, ...c.spells, ...(c.personalSkills ?? [])].filter(
       (i) => i.status === "pending",
     ).length;
   const nav = [
     { name: "Fiche", icon: LayoutDashboard },
     { name: "Inventaire", icon: Backpack },
     { name: "Grimoire", icon: Sparkles },
+    { name: "Techniques", icon: Sword },
     { name: "Notes", icon: ScrollText },
   ];
   const items = c.inventory.filter(
@@ -1497,6 +1618,143 @@ export default function Page({
               </div>
             </>
           )}
+          {tab === "Techniques" && (
+            <div className="training-sections">
+              <section className="panel training-panel">
+                {sectionTitle(
+                  Sword,
+                  "Techniques d’armes",
+                  <span className="accent">
+                    {training.available} points disponibles
+                  </span>,
+                )}
+                <div className="training-intro">
+                  <p>
+                    Débutant : gratuit · Initié : 2 points · Expert : 3 points
+                  </p>
+                  <p>
+                    1 point par niveau après le niveau 1. Une famille complète
+                    demande 7 points, disponibles au niveau 8. La technique
+                    experte demande les deux techniques initiées.
+                  </p>
+                </div>
+                {c.inventory
+                  .filter((i) => i.type === "weapon")
+                  .map((item) => (
+                    <div className="spell-row" key={item.id}>
+                      <Sword size={18} />
+                      <div className="spell-title">
+                        <b>{item.name}</b>
+                        <small>
+                          {item.category} ·{" "}
+                          {
+                            predefinedTechniques(item).filter((t) =>
+                              techniqueKnown(c, t),
+                            ).length
+                          }
+                          /{predefinedTechniques(item).length} techniques
+                          acquises
+                        </small>
+                      </div>
+                      <button
+                        className="button"
+                        onClick={() => setDetail(item)}
+                      >
+                        Voir les techniques
+                      </button>
+                    </div>
+                  ))}
+                {!c.inventory.some((i) => i.type === "weapon") && (
+                  <p className="empty">
+                    Ajoutez une arme à l’inventaire pour consulter ses
+                    techniques.
+                  </p>
+                )}
+              </section>
+              <section className="panel">
+                {sectionTitle(
+                  Sparkles,
+                  "Compétences personnelles",
+                  <button
+                    className="text-button accent"
+                    disabled={(c.personalSkills?.length ?? 0) >= 7}
+                    onClick={() => {
+                      setEditSkill({
+                        id: crypto.randomUUID(),
+                        name: "",
+                        description: "",
+                        status: "pending",
+                      });
+                      setModal("skill");
+                    }}
+                  >
+                    <Plus size={13} />
+                    Créer une compétence
+                  </button>,
+                )}
+                <div className="training-intro">
+                  <p>
+                    {personal.available} points disponibles · {personal.spent}/7
+                    compétences acquises
+                  </p>
+                  <p>
+                    Réserve indépendante : 1 point par niveau après le niveau 1,
+                    jusqu’à 7 au niveau 8. Coût : 1 point par compétence, après
+                    validation du DM.
+                  </p>
+                </div>
+                {(c.personalSkills ?? []).map((skill) => (
+                  <div className="personal-skill" key={skill.id}>
+                    <div>
+                      <h3>{skill.name}</h3>
+                      <p>{skill.description}</p>
+                      <span className={"status " + skill.status}>
+                        {skill.status === "approved"
+                          ? "Validée"
+                          : skill.status === "rejected"
+                            ? "Refusée"
+                            : "En attente DM"}
+                      </span>
+                    </div>
+                    {c.personalTraining?.includes(skill.id) ? (
+                      <span className="subtle">
+                        {skill.status === "approved"
+                          ? "Acquise"
+                          : "Acquise · inactive"}
+                      </span>
+                    ) : (
+                      <button
+                        className="button"
+                        disabled={
+                          skill.status !== "approved" ||
+                          personal.available < 1 ||
+                          saving
+                        }
+                        onClick={() => learnSkill(skill.id)}
+                      >
+                        Apprendre · 1 pt
+                      </button>
+                    )}
+                    <button
+                      className="icon-button"
+                      aria-label={"Modifier " + skill.name}
+                      onClick={() => {
+                        setEditSkill(skill);
+                        setModal("skill");
+                      }}
+                    >
+                      <Settings2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                {!c.personalSkills?.length && (
+                  <p className="empty">
+                    Créez votre première compétence et soumettez-la au DM.
+                  </p>
+                )}
+              </section>
+            </div>
+          )}
           {tab === "Notes" && (
             <section className="panel notes-full">
               {sectionTitle(ScrollText, "Journal du personnage")}
@@ -1707,11 +1965,15 @@ export default function Page({
                             .flatMap((ch: Character) => [
                               ...ch.inventory,
                               ...ch.spells,
+                              ...(ch.personalSkills ?? []),
                             ])
-                            .filter((i: Entry) => i.status === "pending").length
+                            .filter(
+                              (i: Entry | PersonalSkill) =>
+                                i.status === "pending",
+                            ).length
                         }
                       </b>{" "}
-                      objets / sorts à valider
+                      objets / sorts / compétences à valider
                     </div>
                     <div className="filters">
                       <button
@@ -1733,9 +1995,11 @@ export default function Page({
                       (ch: Character) =>
                         reviewFilter === "all" ||
                         (ch.reviewStatus ?? "pending") === "pending" ||
-                        [...ch.inventory, ...ch.spells].some(
-                          (i) => i.status === "pending",
-                        ),
+                        [
+                          ...ch.inventory,
+                          ...ch.spells,
+                          ...(ch.personalSkills ?? []),
+                        ].some((i) => i.status === "pending"),
                     )
                     .map((character: Character) => (
                       <section
@@ -1827,7 +2091,10 @@ export default function Page({
                               </span>
                               <button
                                 className="text-button"
-                                onClick={() => setDetail(i)}
+                                onClick={() => {
+                                  setDetailOwner(character);
+                                  setDetail(i);
+                                }}
                               >
                                 Détails
                               </button>
@@ -1846,6 +2113,46 @@ export default function Page({
                                 }
                               >
                                 <Check size={13} />
+                                Valider
+                              </button>
+                            </div>
+                          ))}
+                        {(character.personalSkills ?? [])
+                          .filter(
+                            (skill) =>
+                              reviewFilter === "all" ||
+                              skill.status === "pending",
+                          )
+                          .map((skill) => (
+                            <div className="review-row" key={skill.id}>
+                              <div>
+                                <b>{skill.name}</b>
+                                <small>Compétence personnelle · 1 point</small>
+                                <p className="skill-description">
+                                  {skill.description}
+                                </p>
+                              </div>
+                              <span className={"status " + skill.status}>
+                                {skill.status === "approved"
+                                  ? "Validée"
+                                  : skill.status === "rejected"
+                                    ? "Refusée"
+                                    : "À valider"}
+                              </span>
+                              <button
+                                className="button"
+                                onClick={() =>
+                                  reviewItem(character, skill, "rejected")
+                                }
+                              >
+                                Refuser
+                              </button>
+                              <button
+                                className="button primary"
+                                onClick={() =>
+                                  reviewItem(character, skill, "approved")
+                                }
+                              >
                                 Valider
                               </button>
                             </div>
@@ -1892,6 +2199,60 @@ export default function Page({
             >
               <X size={18} />
             </button>
+            {modal === "skill" && editSkill && (
+              <>
+                <h2>
+                  {editSkill.name
+                    ? "Modifier la compétence"
+                    : "Nouvelle compétence personnelle"}
+                </h2>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const f = new FormData(e.currentTarget);
+                    const skill = {
+                      ...editSkill,
+                      name: String(f.get("name")),
+                      description: String(f.get("description")),
+                      status: gm ? ("approved" as const) : editSkill.status,
+                    };
+                    change((n) => {
+                      const list = (n.personalSkills ??= []);
+                      const at = list.findIndex((s) => s.id === skill.id);
+                      if (at < 0) list.push(skill);
+                      else list[at] = skill;
+                    });
+                    setModal("");
+                  }}
+                >
+                  <label>
+                    Nom de la compétence
+                    <input
+                      name="name"
+                      defaultValue={editSkill.name}
+                      maxLength={100}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Effet de la compétence
+                    <textarea
+                      name="description"
+                      defaultValue={editSkill.description}
+                      maxLength={3000}
+                      required
+                    />
+                  </label>
+                  <p>
+                    Coût : 1 point de compétence personnelle. La création et les
+                    modifications sont soumises au DM.
+                  </p>
+                  <button className="button primary submit">
+                    Enregistrer la compétence
+                  </button>
+                </form>
+              </>
+            )}
             {modal === "identity" && (
               <>
                 <div className="eyebrow">IDENTITÉ & ATTRIBUTS</div>
@@ -2425,43 +2786,56 @@ export default function Page({
                   {["weapon", "shield"].includes(edit.type) && (
                     <details open>
                       <summary>Techniques et compétence spéciale</summary>
-                      {edit.techniques.map((t, index) => (
-                        <TechniqueEditor
-                          key={index}
-                          value={t}
-                          onChange={(value) =>
-                            setEdit({
-                              ...edit,
-                              techniques: edit.techniques.map((x, i) =>
-                                i === index ? value : x,
-                              ),
-                            })
-                          }
-                          onRemove={() =>
-                            setEdit({
-                              ...edit,
-                              techniques: edit.techniques.filter(
-                                (_, i) => i !== index,
-                              ),
-                            })
-                          }
+                      {edit.type === "weapon" && (
+                        <CatalogPreview
+                          item={{ ...edit, damage: edit.damage }}
                         />
-                      ))}
-                      <button
-                        type="button"
-                        className="button"
-                        onClick={() =>
-                          setEdit({
-                            ...edit,
-                            techniques: [...edit.techniques, blankTechnique()],
-                          })
-                        }
-                      >
-                        <Plus size={12} />
-                        Ajouter une technique
-                      </button>
+                      )}
+                      {edit.type === "shield" && (
+                        <>
+                          {edit.techniques.map((t, index) => (
+                            <TechniqueEditor
+                              key={index}
+                              value={t}
+                              onChange={(value) =>
+                                setEdit({
+                                  ...edit,
+                                  techniques: edit.techniques.map((x, i) =>
+                                    i === index ? value : x,
+                                  ),
+                                })
+                              }
+                              onRemove={() =>
+                                setEdit({
+                                  ...edit,
+                                  techniques: edit.techniques.filter(
+                                    (_, i) => i !== index,
+                                  ),
+                                })
+                              }
+                            />
+                          ))}
+                          <button
+                            type="button"
+                            className="button"
+                            onClick={() =>
+                              setEdit({
+                                ...edit,
+                                techniques: [
+                                  ...edit.techniques,
+                                  blankTechnique(),
+                                ],
+                              })
+                            }
+                          >
+                            <Plus size={12} />
+                            Ajouter une technique
+                          </button>
+                        </>
+                      )}
                       {edit.special ? (
                         <TechniqueEditor
+                          special
                           value={edit.special}
                           onChange={(special) => setEdit({ ...edit, special })}
                           onRemove={() => setEdit({ ...edit, special: null })}
@@ -2493,7 +2867,13 @@ export default function Page({
         </div>
       )}
       {detail && (
-        <div className="modal-backdrop" onClick={() => setDetail(null)}>
+        <div
+          className="modal-backdrop"
+          onClick={() => {
+            setDetail(null);
+            setDetailOwner(null);
+          }}
+        >
           <section
             className="modal"
             role="dialog"
@@ -2504,7 +2884,10 @@ export default function Page({
             <button
               className="modal-close icon-button"
               aria-label="Fermer"
-              onClick={() => setDetail(null)}
+              onClick={() => {
+                setDetail(null);
+                setDetailOwner(null);
+              }}
             >
               <X size={18} />
             </button>
@@ -2552,26 +2935,89 @@ export default function Page({
                 <Pattern points={detail.pattern} origin={detail.origin} />
               </div>
             )}
-            {[
-              ...detail.techniques,
-              ...(detail.special ? [detail.special] : []),
-            ].map((t, i) => (
-              <div className="technique" key={i}>
-                <div>
-                  <h3>{t.name}</h3>
-                  <p>{t.description}</p>
-                  <small>
-                    {t.end} END · {t.mana} Mana ·{" "}
-                    {t.origin === "target" ? "Portée de placement" : "Portée"}{" "}
-                    {t.range}
-                    <br />
-                    {t.damage} ·{" "}
-                    {t.friendlyFire ? "Alliés affectés" : "Sans tir allié"}
-                  </small>
-                </div>
-                <Pattern points={t.pattern} origin={t.origin} />
+            {detail.type === "weapon" && (
+              <div className="training-balance">
+                <span>
+                  Points d’arme <b>{detailTraining.available}</b> disponibles
+                </span>
+                <small>
+                  {detailTraining.spent} dépensés / {detailTraining.earned}{" "}
+                  gagnés · 1 par niveau après le niveau 1
+                </small>
               </div>
-            ))}
+            )}
+            {detail.type === "weapon" && (
+              <p className="subtle">
+                Dégâts identiques pour toutes les techniques :{" "}
+                {detail.damage || "non définis"}.
+              </p>
+            )}
+            {[
+              ...referencedTechniques(detail),
+              ...(detail.special ? [detail.special] : []),
+            ].map((t, i) => {
+              const catalog = "catalogId" in t ? (t as CatalogTechnique) : null;
+              const special = t === detail.special;
+              const known =
+                !catalog || techniqueKnown(detailCharacter, catalog);
+              const canLearn =
+                catalog &&
+                c.inventory.some((i) => i.id === detail.id) &&
+                detailTraining.available >= techniqueCosts[catalog.rank] &&
+                (catalog.rank !== "expert" ||
+                  predefinedTechniques(detail)
+                    .filter((t) => t.rank === "initie")
+                    .every((t) => techniqueKnown(detailCharacter, t)));
+              return (
+                <div className="technique" key={catalog?.catalogId ?? i}>
+                  <div>
+                    <h3>{t.name}</h3>
+                    {catalog && (
+                      <span className="technique-rank">
+                        {rankLabels[catalog.rank]} ·{" "}
+                        {known
+                          ? "Acquise"
+                          : `${techniqueCosts[catalog.rank]} points`}
+                      </span>
+                    )}
+                    {t.description && <p>{t.description}</p>}
+                    <small>
+                      {t.end} END
+                      {special ? ` · ${t.mana} Mana · ${t.damage}` : ""}
+                      <br />
+                      {(
+                        catalog
+                          ? catalog.rangeKind === "placement"
+                          : t.origin === "target"
+                      )
+                        ? "Portée de placement"
+                        : "Portée d’attaque"}{" "}
+                      {catalog ? `${catalog.rangeMin}–` : ""}
+                      {t.range} cases
+                    </small>
+                    {catalog && effectText(catalog.effects) && (
+                      <p>{effectText(catalog.effects)}</p>
+                    )}
+                    {catalog && !known && (
+                      <button
+                        className="button learn-button"
+                        disabled={!canLearn || saving}
+                        title={
+                          catalog.rank === "expert"
+                            ? "Les deux techniques initiées sont requises."
+                            : "Apprentissage partagé entre les armes du même type."
+                        }
+                        onClick={() => learn(catalog)}
+                      >
+                        <LockKeyhole size={12} />
+                        Débloquer · {techniqueCosts[catalog.rank]} pts
+                      </button>
+                    )}
+                  </div>
+                  <Pattern points={t.pattern} origin={t.origin} />
+                </div>
+              );
+            })}
             <p className="subtle">
               Les patterns sont des références. Aucune attaque n’est résolue.
             </p>

@@ -1,3 +1,10 @@
+import {
+  catalogueFor,
+  referencedTechniques,
+  techniqueProgress,
+  personalProgress,
+  type PersonalSkill,
+} from "./combat.ts";
 export const statNames = ["FOR", "DEX", "CON", "INT", "SAG", "CHA"] as const;
 export const armors = [
   { name: "Aucune", weight: 0, move: 0, dodge: 0, hp: 1, stability: "Normale" },
@@ -136,6 +143,9 @@ export type Entry = {
   modifiedAt: string;
 };
 export type Character = {
+  weaponTraining?: string[];
+  personalSkills?: PersonalSkill[];
+  personalTraining?: string[];
   reviewStatus?: "pending" | "approved" | "rejected";
   id: string;
   name: string;
@@ -194,6 +204,52 @@ export function validate(c: Character, old?: Character, gm = false) {
   if (!c.name?.trim() || c.name.length > 100)
     throw Error("Le nom est requis (100 caractères maximum).");
   integer(c.level, 1, 1000, "Niveau");
+  // Learning is purchased through its dedicated endpoint, never granted through a sheet save.
+  c.weaponTraining = [...(old?.weaponTraining ?? [])];
+  if (techniqueProgress(c).available < 0)
+    throw Error(
+      "Ce niveau ne couvre plus les points de technique déjà dépensés.",
+    );
+  c.personalSkills ??= [];
+  if (
+    !Array.isArray(c.personalSkills) ||
+    c.personalSkills.length > 7 ||
+    new Set(c.personalSkills.map((s) => s.id)).size !== c.personalSkills.length
+  )
+    throw Error(
+      "Sept compétences personnelles maximum, avec des identifiants uniques.",
+    );
+  for (const skill of c.personalSkills) {
+    if (
+      typeof skill.id !== "string" ||
+      !skill.id ||
+      typeof skill.name !== "string" ||
+      !skill.name.trim() ||
+      skill.name.length > 100 ||
+      typeof skill.description !== "string" ||
+      !skill.description.trim() ||
+      skill.description.length > 3000
+    )
+      throw Error(
+        "Nom et description de compétence requis (100 et 3 000 caractères maximum).",
+      );
+    const previous = old?.personalSkills?.find((s) => s.id === skill.id);
+    if (!gm) {
+      skill.status = previous?.status ?? "pending";
+      if (
+        previous &&
+        (previous.name !== skill.name ||
+          previous.description !== skill.description)
+      )
+        skill.status = "pending";
+    } else if (!["pending", "approved", "rejected"].includes(skill.status))
+      throw Error("Validation de compétence invalide.");
+  }
+  c.personalTraining = [...(old?.personalTraining ?? [])];
+  if (personalProgress(c).available < 0)
+    throw Error(
+      "Ce niveau ne couvre plus les compétences personnelles acquises.",
+    );
   for (const s of statNames) integer(c.stats[s], 2, 28, s);
   if (!["INT", "SAG", "CHA"].includes(c.magic))
     throw Error("Caractéristique magique invalide.");
@@ -244,12 +300,22 @@ export function validate(c: Character, old?: Character, gm = false) {
       integer(item.range, 0, 1000, "Portée");
       if (item.type === "armor") item.weight = armors[item.armor].weight;
       if (item.type === "shield") item.weight = item.shield;
+      if (["weapon", "shield"].includes(item.type)) {
+        if (!catalogueFor(item.category) && item.techniques.length > 5)
+          throw Error("Cinq techniques maximum par arme.");
+        // Regular techniques always inherit the weapon's damage and never consume Mana.
+        item.techniques = item.techniques.map((t) => ({
+          ...t,
+          damage: item.damage,
+          mana: 0,
+        }));
+      }
       const prev = [...(old?.inventory || []), ...(old?.spells || [])].find(
         (i) => i.id === item.id,
       );
       const mechanical = (i: Entry) => {
         const common = [i.type, itemWeight(i)];
-        const techniques = i.techniques.map((t) => ({
+        const techniques = referencedTechniques(i).map((t) => ({
           ...t,
           origin: t.origin ?? "self",
         }));
@@ -299,7 +365,7 @@ export function validate(c: Character, old?: Character, gm = false) {
         throw Error("Un sort mémorisé doit être connu.");
       const patterns = [
         item,
-        ...item.techniques,
+        ...referencedTechniques(item),
         ...(item.special ? [item.special] : []),
       ];
       for (const t of patterns) {

@@ -385,8 +385,11 @@ export default function Page({
     [saving, setSaving] = useState(false),
     [deletingCampaign, setDeletingCampaign] = useState(false),
     [ready, setReady] = useState(false),
+    [booting, setBooting] = useState(true),
     [mobile, setMobile] = useState(false),
     [saved, setSaved] = useState<any[]>([]),
+    [ownedSheets, setOwnedSheets] = useState<Character[]>([]),
+    [characterSearch, setCharacterSearch] = useState(""),
     [campaign, setCampaign] = useState<any>(null),
     [gm, setGm] = useState(false),
     [accesses, setAccesses] = useState<CampaignAccess[]>([]),
@@ -405,7 +408,7 @@ export default function Page({
     }),
     [newLevel, setNewLevel] = useState(1),
     [newMagic, setNewMagic] = useState("INT"),
-    [reviewFilter, setReviewFilter] = useState("all");
+    [reviewFilter, setReviewFilter] = useState("pending");
   const token = useRef(""),
     gmToken = useRef(""),
     campaignToken = useRef(""),
@@ -433,6 +436,10 @@ export default function Page({
     localStorage.setItem("cendres-characters", JSON.stringify(list));
     localStorage.setItem("cendres-active", character.id);
     setSaved(list);
+    setOwnedSheets((previous) => [
+      ...previous.filter((x) => x.id !== character.id),
+      character,
+    ]);
   };
   const apply = (character: Character) => {
     current.current = character;
@@ -450,7 +457,27 @@ export default function Page({
     localStorage.setItem("cendres-memberships", JSON.stringify(next));
     setMemberships(next);
   }
-  async function selectCampaign(id: string) {
+  async function navigateWorkspace(
+    event: import("react").MouseEvent<HTMLAnchorElement>,
+  ) {
+    if (
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button !== 0
+    )
+      return;
+    event.preventDefault();
+    const href = event.currentTarget.href;
+    await queue.current;
+    location.assign(href);
+  }
+  async function selectCampaign(
+    id: string,
+    destination = "Personnages",
+    replace = false,
+  ) {
     await queue.current;
     const cap = accessRef.current.find((x) => x.id === id);
     if (cap) {
@@ -472,7 +499,16 @@ export default function Page({
     }
     localStorage.setItem("cendres-active-campaign", id);
     setModal("");
-    setTab("Campagne");
+    setTab(destination);
+    setMobile(false);
+    const path =
+      destination === "Réglages"
+        ? "/campagne"
+        : destination === "Validations"
+          ? "/validations"
+          : "/personnages";
+    if (replace) history.replaceState(null, "", path);
+    else history.pushState(null, "", path);
   }
   async function acceptCharacter(r: any, key: string) {
     const cap = accessRef.current.find((x) => x.id === r.character.campaignId);
@@ -493,7 +529,7 @@ export default function Page({
   }
   function newCharacter() {
     if (!campaign?.id) {
-      setModal("campaigns");
+      setTab("Campagnes");
       return;
     }
     setNewName("");
@@ -502,6 +538,7 @@ export default function Page({
   useEffect(() => {
     let live = true;
     async function init() {
+      setBooting(true);
       try {
         accessRef.current = readCampaignAccess(localStorage);
         setAccesses(accessRef.current);
@@ -559,24 +596,68 @@ export default function Page({
           });
           if (!live) return;
           await acceptCharacter(r, params.get("key")!);
-          if (r.campaign) await selectCampaign(r.campaign.id);
+          if (r.campaign)
+            await selectCampaign(r.campaign.id, "Personnages", true);
           setTab("Fiche");
+          history.replaceState(null, "", "/");
         } else {
-          setTab("Campagne");
-          setModal("campaigns");
+          const active =
+            params.get("campaign") ||
+            localStorage.getItem("cendres-active-campaign");
+          const destination = initialTab === "DM" ? "Validations" : initialTab;
+          if (
+            active &&
+            ["Personnages", "Validations", "Réglages"].includes(destination)
+          ) {
+            await selectCampaign(active, destination, true);
+            history.replaceState(
+              null,
+              "",
+              destination === "Validations"
+                ? "/validations"
+                : destination === "Réglages"
+                  ? "/campagne"
+                  : "/personnages",
+            );
+          } else {
+            setTab(
+              ["Personnages", "Validations", "Réglages"].includes(destination)
+                ? destination
+                : "Campagnes",
+            );
+            setModal("");
+          }
         }
-        history.replaceState(null, "", "/");
       } catch (e) {
         notify((e as Error).message);
         if (live) {
           apply(draftCharacter());
-          setModal("campaigns");
+          setTab("Campagnes");
         }
+      } finally {
+        if (live) setBooting(false);
       }
     }
     init();
+    const onBack = () => {
+      setModal("");
+      setMobile(false);
+      setTab(
+        location.pathname === "/personnages"
+          ? "Personnages"
+          : location.pathname === "/validations"
+            ? "Validations"
+            : location.pathname === "/campagne"
+              ? "Réglages"
+              : location.pathname === "/campagnes" || !current.current?.id
+                ? "Campagnes"
+                : "Fiche",
+      );
+    };
+    window.addEventListener("popstate", onBack);
     window.addEventListener("hashchange", init);
     return () => {
+      window.removeEventListener("popstate", onBack);
       window.removeEventListener("hashchange", init);
       live = false;
     };
@@ -675,6 +756,7 @@ export default function Page({
         await selectCampaign(r.campaign.id);
       await acceptCharacter(r, access?.token || "");
       setTab("Fiche");
+      history.pushState(null, "", "/");
     } catch (e) {
       notify((e as Error).message);
     }
@@ -757,8 +839,11 @@ export default function Page({
       }
       campaignToken.current = "";
       setCampaign(null);
-      setTab("Campagne");
-      setModal("campaigns");
+      setTab("Campagnes");
+      history.replaceState(null, "", "/campagnes");
+      setModal("");
+      setTab("Campagnes");
+      history.replaceState(null, "", "/campagnes");
       notify("Campagne supprimée. Les personnages sont conservés.");
     } catch (e) {
       notify((e as Error).message);
@@ -792,9 +877,7 @@ export default function Page({
       notify((e as Error).message);
     }
   }
-  async function openCampaign() {
-    setModal("campaigns");
-  }
+
   async function refreshCampaign() {
     const r = await api({
       op: "campaign",
@@ -918,7 +1001,7 @@ export default function Page({
     });
     setModal("");
   }
-  if (!c)
+  if (!c || booting)
     return (
       <div className="loading">
         <Flame />
@@ -931,9 +1014,36 @@ export default function Page({
   const training = techniqueProgress(c),
     personal = personalProgress(c);
   const d = derive(c),
-    pending = [...c.inventory, ...c.spells, ...(c.personalSkills ?? [])].filter(
-      (i) => i.status === "pending",
-    ).length;
+    pending = campaign?.isAdmin
+      ? campaign.characters.reduce(
+          (count: number, ch: Character) =>
+            count +
+            (ch.reviewStatus === "pending" ? 1 : 0) +
+            [
+              ...ch.inventory,
+              ...ch.spells,
+              ...(ch.personalSkills ?? []),
+            ].filter((i) => i.status === "pending").length,
+          0,
+        )
+      : 0;
+  const campaignChoices = Array.from(
+    new Map([...memberships, ...accesses].map((x) => [x.id, x])).values(),
+  );
+  const characterMap = new Map<string, Character>();
+  for (const ch of [
+    ...(campaign?.isAdmin ? campaign.characters : []),
+    ...ownedSheets,
+    ...(c.id ? [c] : []),
+  ]) {
+    if (
+      ch.campaignId === campaign?.id &&
+      (!characterMap.has(ch.id) ||
+        characterMap.get(ch.id)!.revision <= ch.revision)
+    )
+      characterMap.set(ch.id, ch);
+  }
+  const visibleCharacters = [...characterMap.values()];
   const nav = [
     { name: "Fiche", icon: LayoutDashboard },
     { name: "Inventaire", icon: Backpack },
@@ -1190,56 +1300,88 @@ export default function Page({
             CENDRES<small>CHARACTER COMPANION</small>
           </span>
         </a>
-        <div className="workspace-label">VOTRE ESPACE</div>
-        <button
-          className="character-select"
-          onClick={() => (c.id ? setModal("characters") : newCharacter())}
-        >
-          <span className="mini-portrait">
+        <nav className="workspace-navigation" aria-label="Gestion">
+          <a
+            href="/campagnes"
+            onClick={navigateWorkspace}
+            className={["Campagnes", "Réglages"].includes(tab) ? "active" : ""}
+          >
+            <Users size={20} />
+            Campagnes
+          </a>
+          <a
+            href="/personnages"
+            onClick={navigateWorkspace}
+            className={tab === "Personnages" ? "active" : ""}
+          >
             <Shield size={20} />
-          </span>
-          <span>
-            <b>{c.id ? c.name : "Créer un personnage"}</b>
-            <small>
-              {c.id
-                ? `Niveau ${c.level} · Personnage`
-                : "Choisir les caractéristiques"}
-            </small>
-          </span>
-          <ChevronDown size={14} />
-        </button>
-        <nav>
-          {nav.map(({ name, icon: Icon }) => (
-            <button
-              key={name}
-              disabled={!ready || !c.campaignId}
-              className={tab === name ? "active" : ""}
-              onClick={() => {
-                setTab(name);
-                setMobile(false);
-              }}
+            Personnages
+          </a>
+          {(campaign?.isAdmin || accesses.length > 0) && (
+            <a
+              href="/validations"
+              onClick={navigateWorkspace}
+              className={tab === "Validations" ? "active" : ""}
             >
-              <Icon size={17} />
-              {name}
-              {name === "Inventaire" && (
-                <span className="nav-count">{c.inventory.length}</span>
-              )}
-              {name === "Grimoire" && (
-                <span className="nav-count">{c.spells.length}</span>
-              )}
-            </button>
-          ))}
+              <CheckCheck size={20} />
+              Validations
+              {pending > 0 && <span className="nav-count">{pending}</span>}
+            </a>
+          )}
         </nav>
         <div className="sidebar-divider" />
-        <div className="workspace-label">AUTOUR DE LA TABLE</div>
+        {ready && c.id && (
+          <>
+            <div className="workspace-label">FICHE ACTIVE</div>
+
+            <button
+              className="character-select"
+              onClick={() => {
+                setTab("Personnages");
+                setMobile(false);
+                history.pushState(null, "", "/personnages");
+              }}
+            >
+              <span className="mini-portrait">
+                <Shield size={20} />
+              </span>
+              <span>
+                <b>{c.id ? c.name : "Choisir un personnage"}</b>
+                <small>
+                  {c.id
+                    ? `Niveau ${c.level} · Personnage`
+                    : campaign?.name || "Sélectionnez une campagne"}
+                </small>
+              </span>
+              <ChevronDown size={14} />
+            </button>
+            <nav>
+              {nav.map(({ name, icon: Icon }) => (
+                <button
+                  key={name}
+                  disabled={!ready || !c.campaignId}
+                  className={tab === name ? "active" : ""}
+                  onClick={() => {
+                    setTab(name);
+                    setMobile(false);
+                  }}
+                >
+                  <Icon size={17} />
+                  {name}
+                  {name === "Inventaire" && (
+                    <span className="nav-count">{c.inventory.length}</span>
+                  )}
+                  {name === "Grimoire" && (
+                    <span className="nav-count">{c.spells.length}</span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </>
+        )}
+        <div className="sidebar-divider" />
+
         <nav>
-          <button
-            className={tab === "Campagne" ? "active" : ""}
-            onClick={openCampaign}
-          >
-            <Users size={17} />
-            Campagne{pending > 0 && <span className="notification-dot" />}
-          </button>
           <button
             className={tab === "Règles" ? "active" : ""}
             onClick={() => setTab("Règles")}
@@ -1250,9 +1392,6 @@ export default function Page({
           </button>
         </nav>
         <div className="sidebar-bottom">
-          <button className="text-button" onClick={newCharacter}>
-            <Plus size={15} /> Nouveau personnage
-          </button>
           <div className="version">
             CENDRES <span>v1.0 · Soulslike</span>
           </div>
@@ -1268,35 +1407,69 @@ export default function Page({
             <Menu />
           </button>
           <div className="breadcrumb">
-            {tab === "DM" ? "Campagnes" : "Personnages"}{" "}
-            <ChevronRight size={12} />
-            <span>{tab === "DM" ? campaign?.name || "Espace DM" : c.name}</span>
-            <ChevronRight size={12} />
+            <span>{campaign?.name || "Mon espace"}</span>
+            <ChevronRight size={14} />
             <b>{tab}</b>
           </div>
           <div className="save-state">
-            <span className={"dot " + (!ready && !gm ? "offline" : "")} />
-            {tab === "DM"
-              ? gm
-                ? "Accès DM"
-                : "Créer ou ouvrir une campagne"
-              : !c.id
-                ? "Aucun personnage créé"
-                : !ready
-                  ? "Connexion indisponible"
-                  : saving
-                    ? "Sauvegarde…"
-                    : "Sauvegardé"}
-            <span className="topbar-divider" />
-            <span className="mode-pill">
-              {accesses.length ? "ADMIN · JOUEUR" : "JOUEUR"}
-            </span>
+            {["Campagnes", "Personnages", "Validations", "Réglages"].includes(
+              tab,
+            )
+              ? (campaign ? campaign.isAdmin : accesses.length > 0)
+                ? "Admin et joueur"
+                : "Joueur"
+              : saving
+                ? "Sauvegarde…"
+                : ready
+                  ? "Sauvegardé"
+                  : "Choisir un personnage"}
           </div>
         </header>
         <main>
+          <nav
+            className="mobile-workspace-navigation"
+            aria-label="Gestion mobile"
+          >
+            <a
+              href="/campagnes"
+              onClick={navigateWorkspace}
+              aria-current={
+                ["Campagnes", "Réglages"].includes(tab) ? "page" : undefined
+              }
+            >
+              <Users size={18} />
+              Campagnes
+            </a>
+            <a
+              href="/personnages"
+              onClick={navigateWorkspace}
+              aria-current={tab === "Personnages" ? "page" : undefined}
+            >
+              <Shield size={18} />
+              Personnages
+            </a>
+            {(campaign?.isAdmin || accesses.length > 0) && (
+              <a
+                href="/validations"
+                onClick={navigateWorkspace}
+                aria-current={tab === "Validations" ? "page" : undefined}
+              >
+                <CheckCheck size={18} />
+                Validations
+              </a>
+            )}
+          </nav>
           <div className="page-heading">
             <div>
-              {campaign && <div className="eyebrow">{campaign.name}</div>}
+              {campaign &&
+                ![
+                  "Campagnes",
+                  "Personnages",
+                  "Validations",
+                  "Réglages",
+                ].includes(tab) && (
+                  <div className="eyebrow">{campaign.name}</div>
+                )}
               <h1>
                 {tab === "Fiche"
                   ? "Fiche de personnage"
@@ -1305,25 +1478,32 @@ export default function Page({
                     : tab}
               </h1>
             </div>
-            {c.id && tab !== "Campagne" && tab !== "DM" && (
-              <div className="heading-actions">
-                <button
-                  className="button"
-                  onClick={copyLink}
-                  disabled={!token.current || !ready}
-                >
-                  <LinkIcon size={14} />
-                  Partager
-                </button>
-                <button
-                  className="button primary"
-                  onClick={() => setModal("identity")}
-                >
-                  <Settings2 size={14} />
-                  Modifier le personnage
-                </button>
-              </div>
-            )}
+            {c.id &&
+              ![
+                "Campagnes",
+                "Personnages",
+                "Validations",
+                "Réglages",
+                "DM",
+              ].includes(tab) && (
+                <div className="heading-actions">
+                  <button
+                    className="button"
+                    onClick={copyLink}
+                    disabled={!token.current || !ready}
+                  >
+                    <LinkIcon size={14} />
+                    Partager
+                  </button>
+                  <button
+                    className="button primary"
+                    onClick={() => setModal("identity")}
+                  >
+                    <Settings2 size={14} />
+                    Modifier le personnage
+                  </button>
+                </div>
+              )}
           </div>
           {(tab === "Fiche" || tab === "Inventaire" || tab === "Grimoire") && (
             <>
@@ -2008,70 +2188,179 @@ export default function Page({
               </section>
             </div>
           )}
-          {(tab === "Campagne" || tab === "DM") && (
-            <div className="campaign-view">
-              <section className="panel campaign-head">
-                <Users size={28} />
+          {tab === "Campagnes" && (
+            <div className="management-page">
+              <div className="management-toolbar">
+                <p>Choisissez votre campagne pour retrouver ses personnages.</p>
                 <div>
-                  <h2>{campaign?.name || "Choisir une campagne"}</h2>
-                  <p>
-                    {campaign?.isAdmin
-                      ? "Administrateur et joueur · Personnages, équipement et validations"
-                      : "Joueur · Vos personnages dans cette campagne"}
-                  </p>
-                </div>
-                <button
-                  className="button"
-                  onClick={() => setModal("campaigns")}
-                >
-                  Mes campagnes
-                </button>
-                {campaign && (
-                  <button className="button primary" onClick={newCharacter}>
-                    Créer un personnage
-                  </button>
-                )}
-                {campaign?.isAdmin && (
                   <button
                     className="button"
-                    onClick={() =>
-                      refreshCampaign().catch((e) => notify(e.message))
-                    }
+                    onClick={() => {
+                      setCampaignCode("");
+                      setModal("join");
+                    }}
                   >
-                    Actualiser
+                    Rejoindre avec un code
                   </button>
-                )}
-                {campaign?.isAdmin && (
                   <button
-                    className="button danger"
-                    onClick={() => setModal("deleteCampaign")}
+                    className="button primary"
+                    onClick={() => {
+                      setNewName("");
+                      setModal("campaign");
+                    }}
                   >
-                    <Trash2 size={16} />
-                    Supprimer la campagne
+                    <Plus size={18} />
+                    Créer une campagne
                   </button>
-                )}
-              </section>
-              {campaign && (
-                <section className="panel">
-                  <h3>Personnages de la campagne</h3>
-                  {(campaign.isAdmin
-                    ? campaign.characters
-                    : saved.filter((x) => x.campaignId === campaign.id)
-                  ).map((ch: any) => (
-                    <button
-                      key={ch.id}
-                      className="character-list-item"
-                      onClick={() => choose(ch.id)}
-                    >
-                      {ch.name}
-                      <ChevronRight size={16} />
+                </div>
+              </div>
+              <div className="management-grid">
+                {campaignChoices.map((x) => (
+                  <article className="panel management-card" key={x.id}>
+                    <Users size={28} />
+                    <h2>{x.name}</h2>
+                    <p>
+                      {accesses.some((a) => a.id === x.id)
+                        ? "Administrateur et joueur"
+                        : "Joueur"}
+                      {campaign?.id === x.id ? " · Campagne active" : ""}
+                    </p>
+                    <div className="card-actions">
+                      <button
+                        className="button primary"
+                        onClick={() =>
+                          selectCampaign(x.id).catch((e) => notify(e.message))
+                        }
+                      >
+                        Voir les personnages
+                      </button>
+                      {accesses.some((a) => a.id === x.id) && (
+                        <button
+                          className="button"
+                          aria-label={"Gérer " + x.name}
+                          onClick={() =>
+                            selectCampaign(x.id, "Réglages").catch((e) =>
+                              notify(e.message),
+                            )
+                          }
+                        >
+                          <Settings2 size={18} />
+                          Réglages
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+              {!campaignChoices.length && (
+                <div className="panel management-empty">
+                  <Users size={36} />
+                  <h2>Aucune campagne</h2>
+                  <p>
+                    Créez votre campagne ou rejoignez celle de votre GM avec son
+                    code.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          {tab === "Personnages" && (
+            <div className="management-page">
+              <div className="management-toolbar">
+                <div>
+                  <h2>{campaign?.name || "Sélectionnez une campagne"}</h2>
+                  <p>
+                    {campaign?.isAdmin
+                      ? "Tous les personnages de cette campagne."
+                      : "Vos personnages dans cette campagne."}
+                  </p>
+                </div>
+                <div>
+                  <a
+                    className="button"
+                    href="/campagnes"
+                    onClick={navigateWorkspace}
+                  >
+                    Changer de campagne
+                  </a>
+                  {campaign && (
+                    <button className="button primary" onClick={newCharacter}>
+                      <Plus size={18} />
+                      Créer un personnage
                     </button>
-                  ))}
-                </section>
+                  )}
+                </div>
+              </div>
+              {campaign && (
+                <>
+                  <label className="management-search">
+                    <Search size={18} />
+                    <input
+                      aria-label="Rechercher un personnage"
+                      placeholder="Rechercher un personnage…"
+                      value={characterSearch}
+                      onChange={(e) => setCharacterSearch(e.target.value)}
+                    />
+                  </label>
+                  <div className="management-grid">
+                    {visibleCharacters
+                      .filter((ch) =>
+                        ch.name
+                          .toLocaleLowerCase()
+                          .includes(characterSearch.toLocaleLowerCase()),
+                      )
+                      .map((ch) => (
+                        <article className="panel character-card" key={ch.id}>
+                          <div className="character-card-portrait">
+                            {ch.portrait ? (
+                              <img src={ch.portrait} alt={ch.name} />
+                            ) : (
+                              <Shield size={44} />
+                            )}
+                          </div>
+                          <div>
+                            <h2>{ch.name}</h2>
+                            <p>
+                              Niveau {ch.level} ·{" "}
+                              {ch.reviewStatus === "approved"
+                                ? "Validé"
+                                : ch.reviewStatus === "rejected"
+                                  ? "Refusé"
+                                  : "À valider"}
+                            </p>
+                            <button
+                              className="button primary"
+                              aria-label={"Ouvrir la fiche de " + ch.name}
+                              onClick={() => choose(ch.id)}
+                            >
+                              Ouvrir la fiche
+                              <ChevronRight size={16} />
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                  </div>
+                  {!visibleCharacters.length && (
+                    <div className="panel management-empty">
+                      <Shield size={36} />
+                      <h2>Aucun personnage</h2>
+                      <p>Créez votre premier personnage dans cette campagne.</p>
+                    </div>
+                  )}
+                  {visibleCharacters.length > 0 &&
+                    !visibleCharacters.some((ch) =>
+                      ch.name
+                        .toLocaleLowerCase()
+                        .includes(characterSearch.toLocaleLowerCase()),
+                    ) && (
+                      <p>Aucun personnage ne correspond à cette recherche.</p>
+                    )}
+                </>
               )}
               {campaign && saved.some((x) => !x.campaignId) && (
-                <section className="panel">
-                  <h3>Rattacher un ancien personnage</h3>
+                <section className="panel management-card">
+                  <h2>Personnages à rattacher</h2>
+                  <p>Ces personnages ont été conservés sans campagne.</p>
                   {saved
                     .filter((x) => !x.campaignId)
                     .map((x) => (
@@ -2080,12 +2369,27 @@ export default function Page({
                         key={x.id}
                         onClick={() => attachLegacy(x)}
                       >
-                        Ajouter {x.name} à {campaign.name}
+                        Rattacher {x.name} à {campaign.name}
+                        <ChevronRight size={16} />
                       </button>
                     ))}
                 </section>
               )}
-              {campaign?.isAdmin && (
+            </div>
+          )}
+          {tab === "Réglages" && (
+            <div className="management-page">
+              <div className="management-toolbar">
+                <h2>{campaign?.name || "Choisir une campagne"}</h2>
+                <a
+                  className="button"
+                  href="/campagnes"
+                  onClick={navigateWorkspace}
+                >
+                  Retour aux campagnes
+                </a>
+              </div>
+              {campaign?.isAdmin ? (
                 <>
                   <section className="panel campaign-access">
                     <p>
@@ -2118,18 +2422,51 @@ export default function Page({
                       Sauvegarder mon accès admin
                     </button>
                   </section>
-                  {campaign.characters.length === 0 && (
-                    <div className="empty campaign-empty">
-                      <Users size={30} />
-                      <h3>Aucun personnage</h3>
-                      <p>
-                        Transmettez le code d’invitation aux joueurs.
-                        <br />
-                        Leurs fiches apparaîtront après avoir rejoint la
-                        campagne.
-                      </p>
-                    </div>
-                  )}
+                  <section className="panel management-card">
+                    <h2>Supprimer la campagne</h2>
+                    <p>
+                      Les personnages seront conservés et pourront être
+                      rattachés ailleurs.
+                    </p>
+                    <button
+                      className="button danger"
+                      onClick={() => setModal("deleteCampaign")}
+                    >
+                      <Trash2 size={16} />
+                      Supprimer la campagne
+                    </button>
+                  </section>
+                </>
+              ) : (
+                <p>
+                  Les réglages sont réservés à l’administrateur de la campagne.
+                </p>
+              )}
+            </div>
+          )}
+          {tab === "Validations" && (
+            <div className="campaign-view">
+              <div className="management-toolbar">
+                <div>
+                  <h2>{campaign?.name || "Choisir une campagne"}</h2>
+                  <p>
+                    Vérifiez les personnages, objets, sorts et compétences
+                    proposés par les joueurs.
+                  </p>
+                </div>
+                {campaign?.isAdmin && (
+                  <button
+                    className="button"
+                    onClick={() =>
+                      refreshCampaign().catch((e) => notify(e.message))
+                    }
+                  >
+                    Actualiser
+                  </button>
+                )}
+              </div>
+              {campaign?.isAdmin ? (
+                <>
                   <div className="panel dm-summary">
                     <div>
                       <b>
@@ -2343,7 +2680,36 @@ export default function Page({
                           ))}
                       </section>
                     ))}
+                  {reviewFilter === "pending" &&
+                    !campaign.characters.some(
+                      (ch: Character) =>
+                        ch.reviewStatus === "pending" ||
+                        [
+                          ...ch.inventory,
+                          ...ch.spells,
+                          ...(ch.personalSkills ?? []),
+                        ].some((i) => i.status === "pending"),
+                    ) && (
+                      <div className="panel management-empty">
+                        <CheckCheck size={36} />
+                        <h2>Aucune validation en attente</h2>
+                      </div>
+                    )}
                 </>
+              ) : (
+                <div className="panel management-empty">
+                  <p>
+                    Sélectionnez une campagne que vous administrez pour traiter
+                    ses validations.
+                  </p>
+                  <a
+                    className="button"
+                    href="/campagnes"
+                    onClick={navigateWorkspace}
+                  >
+                    Choisir une campagne
+                  </a>
+                </div>
               )}
             </div>
           )}
@@ -2717,86 +3083,6 @@ export default function Page({
                   {deletingCampaign
                     ? "Suppression…"
                     : "Confirmer la suppression"}
-                </button>
-              </>
-            )}
-            {modal === "campaigns" && (
-              <>
-                <h2>Mes campagnes</h2>
-                <p>Choisissez une campagne pour jouer ou l’administrer.</p>
-                {Array.from(
-                  new Map(
-                    [...memberships, ...accesses].map((x) => [x.id, x]),
-                  ).values(),
-                ).map((x) => (
-                  <button
-                    className="character-list-item"
-                    key={x.id}
-                    onClick={() =>
-                      selectCampaign(x.id).catch((e) => notify(e.message))
-                    }
-                  >
-                    <Users size={20} />
-                    {x.name}
-                    <small>
-                      {accesses.some((a) => a.id === x.id)
-                        ? "Admin et joueur"
-                        : "Joueur"}
-                    </small>
-                  </button>
-                ))}
-                <button
-                  className="button primary submit"
-                  onClick={() => {
-                    setNewName("");
-                    setModal("campaign");
-                  }}
-                >
-                  Créer une campagne
-                </button>
-                <button
-                  className="button submit"
-                  onClick={() => {
-                    setCampaignCode("");
-                    setModal("join");
-                  }}
-                >
-                  Rejoindre avec un code
-                </button>
-                <p>
-                  Accès conservés dans ce navigateur, sans compte. Sauvegardez
-                  vos liens secrets pour changer d’appareil.
-                </p>
-              </>
-            )}
-            {modal === "characters" && (
-              <>
-                <h2>Vos personnages</h2>
-                {saved
-                  .filter((s) => !campaign || s.campaignId === campaign.id)
-                  .map((s) => (
-                    <button
-                      className="character-list-item"
-                      key={s.id}
-                      onClick={() => {
-                        choose(s.id);
-                        setModal("");
-                      }}
-                    >
-                      <Shield size={18} />
-                      {s.name}
-                      <ChevronRight size={14} />
-                    </button>
-                  ))}
-                <button
-                  className="button primary submit"
-                  onClick={() => {
-                    setNewName("");
-                    newCharacter();
-                  }}
-                >
-                  <Plus size={14} />
-                  Nouveau personnage
                 </button>
               </>
             )}

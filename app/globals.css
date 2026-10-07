@@ -2755,3 +2755,160 @@ select,
 .button.danger:hover:not(:disabled) {
   background: #492b2b;
 }
+
+/* Workspace navigation and management pages. */
+.workspace-navigation {
+  display: grid;
+  gap: 6px;
+}
+.workspace-navigation a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  color: var(--text);
+}
+.workspace-navigation a.active,
+.workspace-navigation a:hover {
+  background: #302b22;
+  color: #e6bc81;
+}
+.management-page {
+  display: grid;
+  gap: 24px;
+}
+.management-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.management-toolbar > div:last-child,
+.card-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.management-toolbar p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
+  gap: 20px;
+}
+.management-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+}
+.management-card .card-actions {
+  margin-top: auto;
+}
+.management-card h2,
+.character-card h2 {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+.management-card p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.management-empty {
+  padding: 48px 24px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+.management-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 460px;
+}
+.management-search input {
+  width: 100%;
+  padding: 12px;
+}
+.character-card {
+  overflow: hidden;
+}
+.character-card-portrait {
+  height: 180px;
+  background: #22251f;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.character-card-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.character-card > div:last-child {
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+}
+.character-card p {
+  color: var(--muted);
+}
+a.button {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.mobile-workspace-navigation {
+  display: none;
+}
+@media (max-width: 800px) {
+  .mobile-workspace-navigation {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .mobile-workspace-navigation a {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .mobile-workspace-navigation a[aria-current="page"] {
+    color: #e6bc81;
+    background: #302b22;
+    border-color: #716044;
+  }
+  .management-toolbar > div:last-child {
+    width: 100%;
+  }
+  .management-card {
+    padding: 20px;
+  }
+  .sidebar {
+    overflow-y: auto;
+  }
+}
+
+.sidebar {
+  overflow-y: auto;
+}
+.workspace-navigation a {
+  flex-shrink: 0;
+}

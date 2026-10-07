@@ -2747,3 +2747,11 @@ select,
     flex-wrap: wrap;
   }
 }
+
+.button.danger {
+  color: #f0a2a2;
+  border-color: #815252;
+}
+.button.danger:hover:not(:disabled) {
+  background: #492b2b;
+}

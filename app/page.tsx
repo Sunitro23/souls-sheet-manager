@@ -6,6 +6,7 @@ import {
 } from "../lib/access";
 import { useState, useEffect, useRef } from "react";
 import {
+  Trash2,
   Flame,
   LayoutDashboard,
   Backpack,
@@ -382,6 +383,7 @@ export default function Page({
     [detailOwner, setDetailOwner] = useState<Character | null>(null),
     [toast, setToast] = useState(""),
     [saving, setSaving] = useState(false),
+    [deletingCampaign, setDeletingCampaign] = useState(false),
     [ready, setReady] = useState(false),
     [mobile, setMobile] = useState(false),
     [saved, setSaved] = useState<any[]>([]),
@@ -518,21 +520,36 @@ export default function Page({
           const data = await api({ op: "campaign", id, token: key });
           storeAdmin({ id, token: key, name: data.name });
         }
-        // Recover campaign memberships from older locally saved character links.
+        // Refresh memberships, including characters preserved after campaign deletion.
         for (const item of list) {
-          if (!item.campaignId) {
-            try {
-              const r = await api({
-                op: "load",
-                id: item.id,
-                token: item.token,
-              });
-              if (r.campaign) {
-                rememberMembership(r.campaign);
-                remember(r.character, item.token);
-              }
-            } catch {}
-          }
+          try {
+            const r = await api({ op: "load", id: item.id, token: item.token });
+            remember(r.character, item.token);
+            if (r.campaign) rememberMembership(r.campaign);
+            else if (item.campaignId) {
+              const remaining = JSON.parse(
+                localStorage.getItem("cendres-memberships") || "[]",
+              ).filter((x: any) => x.id !== item.campaignId);
+              localStorage.setItem(
+                "cendres-memberships",
+                JSON.stringify(remaining),
+              );
+              setMemberships(remaining);
+              accessRef.current = accessRef.current.filter(
+                (x) => x.id !== item.campaignId,
+              );
+              setAccesses(accessRef.current);
+              localStorage.setItem(
+                "cendres-campaigns",
+                JSON.stringify(accessRef.current),
+              );
+              const legacy = JSON.parse(
+                localStorage.getItem("cendres-gm") || "null",
+              );
+              if (legacy?.id === item.campaignId)
+                localStorage.removeItem("cendres-gm");
+            }
+          } catch {}
         }
         if (params.get("character") && params.get("key")) {
           const r = await api({
@@ -705,6 +722,48 @@ export default function Page({
       );
     } catch (e) {
       notify((e as Error).message);
+    }
+  }
+  async function deleteCampaign() {
+    if (!campaign?.isAdmin || deletingCampaign) return;
+    setDeletingCampaign(true);
+    try {
+      await queue.current;
+      const id = campaign.id;
+      await api({ op: "campaignDelete", id, token: campaignToken.current });
+      accessRef.current = accessRef.current.filter((x) => x.id !== id);
+      setAccesses(accessRef.current);
+      localStorage.setItem(
+        "cendres-campaigns",
+        JSON.stringify(accessRef.current),
+      );
+      const legacy = JSON.parse(localStorage.getItem("cendres-gm") || "null");
+      if (legacy?.id === id) localStorage.removeItem("cendres-gm");
+      localStorage.removeItem("cendres-active-campaign");
+      const remaining = memberships.filter((x) => x.id !== id);
+      setMemberships(remaining);
+      localStorage.setItem("cendres-memberships", JSON.stringify(remaining));
+      const characters = saved.map((x) =>
+        x.campaignId === id ? { ...x, campaignId: null } : x,
+      );
+      setSaved(characters);
+      localStorage.setItem("cendres-characters", JSON.stringify(characters));
+      if (current.current?.campaignId === id) {
+        apply(draftCharacter());
+        token.current = "";
+        gmToken.current = "";
+        setReady(false);
+        setGm(false);
+      }
+      campaignToken.current = "";
+      setCampaign(null);
+      setTab("Campagne");
+      setModal("campaigns");
+      notify("Campagne supprimée. Les personnages sont conservés.");
+    } catch (e) {
+      notify((e as Error).message);
+    } finally {
+      setDeletingCampaign(false);
     }
   }
   async function join() {
@@ -1982,6 +2041,15 @@ export default function Page({
                     Actualiser
                   </button>
                 )}
+                {campaign?.isAdmin && (
+                  <button
+                    className="button danger"
+                    onClick={() => setModal("deleteCampaign")}
+                  >
+                    <Trash2 size={16} />
+                    Supprimer la campagne
+                  </button>
+                )}
               </section>
               {campaign && (
                 <section className="panel">
@@ -2620,6 +2688,36 @@ export default function Page({
                 <p>
                   Toute personne disposant de ce lien peut modifier la fiche.
                 </p>
+              </>
+            )}
+            {modal === "deleteCampaign" && campaign?.isAdmin && (
+              <>
+                <h2>Supprimer cette campagne ?</h2>
+                <p>
+                  <strong>{campaign.name}</strong> sera définitivement
+                  supprimée. Son code d’invitation et son accès administrateur
+                  ne fonctionneront plus.
+                </p>
+                <p>
+                  Les personnages et leur équipement seront conservés. Leurs
+                  propriétaires pourront les rattacher à une autre campagne.
+                </p>
+                <button
+                  className="button"
+                  disabled={deletingCampaign}
+                  onClick={() => setModal("")}
+                >
+                  Annuler
+                </button>
+                <button
+                  className="button danger submit"
+                  disabled={deletingCampaign}
+                  onClick={deleteCampaign}
+                >
+                  {deletingCampaign
+                    ? "Suppression…"
+                    : "Confirmer la suppression"}
+                </button>
               </>
             )}
             {modal === "campaigns" && (

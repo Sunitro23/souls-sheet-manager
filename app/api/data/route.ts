@@ -157,6 +157,29 @@ export async function POST(req: Request) {
         permissions: character ? { isOwner: true, canValidate: true } : null,
       });
     }
+    if (op === "campaignDelete") {
+      const [campaign] = await db
+        .select()
+        .from(campaigns)
+        .where(eq(campaigns.id, id || ""));
+      if (!campaign || campaign.tokenHash !== (await hash(token || "")))
+        return Response.json(
+          { error: "Seul l’administrateur peut supprimer cette campagne." },
+          { status: 403 },
+        );
+      await db.batch([
+        db
+          .update(characters)
+          .set({
+            campaignId: null,
+            revision: sql`${characters.revision} + 1`,
+            data: sql`json_set(${characters.data}, '$.campaignId', NULL, '$.reviewStatus', 'pending', '$.revision', ${characters.revision} + 1)`,
+          })
+          .where(eq(characters.campaignId, id)),
+        db.delete(campaigns).where(eq(campaigns.id, id)),
+      ]);
+      return Response.json({ deleted: true });
+    }
     if (op === "campaign") {
       const [campaign] = await db
         .select()

@@ -188,8 +188,9 @@ test("legacy weapons are normalized without revoking approval", async () => {
 });
 
 test("all 95 catalog techniques preserve supplied zones, range, effects and END", async () => {
-  const { combatCatalog, categoryIds, predefinedTechniques } =
-    await import("../lib/combat.ts");
+  const { combatCatalog, categoryIds, predefinedTechniques } = await import(
+    "../lib/combat.ts"
+  );
   let count = 0;
   for (const w of combatCatalog.weapons) {
     const category = Object.keys(categoryIds).find(
@@ -308,8 +309,9 @@ test("large patterns remain inside dynamic bounds in every orientation", async (
   assert.equal(b.minY, -8);
 });
 test("personal skills require DM approval and use an independent capped pool", async () => {
-  const { learnTechnique, learnPersonalSkill, personalProgress } =
-    await import("../lib/combat.ts");
+  const { learnTechnique, learnPersonalSkill, personalProgress } = await import(
+    "../lib/combat.ts"
+  );
   let c = fresh();
   c.level = 8;
   c.personalSkills = Array.from({ length: 7 }, (_, i) => ({
@@ -346,4 +348,47 @@ test("player-created personal skills cannot self-approve or bypass learning", ()
   edited.personalSkills[0].description = "Autre effet";
   validate(edited, approved);
   assert.equal(edited.personalSkills[0].status, "pending");
+});
+
+test("PV and Mana modifiers adjust maxima and reject invalid values", () => {
+  const c = fresh(),
+    base = derive(c);
+  c.hpBonus = 8;
+  c.hpMalus = 3;
+  c.manaBonus = 4;
+  c.manaMalus = 1;
+  assert.equal(derive(c).hp, base.hp + 5);
+  assert.equal(derive(c).mana, base.mana + 3);
+  c.hpMalus = 100;
+  c.manaMalus = 100;
+  assert.equal(derive(c).hp, 0);
+  assert.equal(derive(c).mana, 0);
+  c.hpBonus = -1;
+  assert.throws(() => validate(c), /hpBonus/);
+  c.hpBonus = NaN;
+  assert.throws(() => validate(c), /hpBonus/);
+});
+
+import { readCampaignAccess, rememberCampaignAccess } from "../lib/access.ts";
+test("admin access migrates and keeps independent campaign capabilities", () => {
+  const values = new Map(),
+    storage = {
+      getItem: (k) => values.get(k) ?? null,
+      setItem: (k, v) => values.set(k, v),
+    };
+  storage.setItem(
+    "cendres-gm",
+    JSON.stringify({ id: "a", token: "secret-a", name: "A" }),
+  );
+  assert.equal(readCampaignAccess(storage)[0].id, "a");
+  rememberCampaignAccess(storage, { id: "b", token: "secret-b", name: "B" });
+  assert.equal(readCampaignAccess(storage).length, 2);
+  rememberCampaignAccess(storage, { id: "a", token: "renewed", name: "A" });
+  assert.equal(readCampaignAccess(storage).length, 2);
+  assert.equal(
+    readCampaignAccess(storage).find((x) => x.id === "b").token,
+    "secret-b",
+  );
+  storage.setItem("cendres-campaigns", "broken");
+  assert.equal(readCampaignAccess(storage)[0].token, "renewed");
 });

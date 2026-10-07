@@ -1,4 +1,9 @@
 "use client";
+import {
+  readCampaignAccess,
+  rememberCampaignAccess,
+  type CampaignAccess,
+} from "../lib/access";
 import { useState, useEffect, useRef } from "react";
 import {
   Flame,
@@ -56,6 +61,7 @@ import {
   weaponCategory,
 } from "../lib/rules";
 import {
+  categoryIds,
   catalogueFor,
   predefinedTechniques,
   referencedTechniques,
@@ -381,6 +387,10 @@ export default function Page({
     [saved, setSaved] = useState<any[]>([]),
     [campaign, setCampaign] = useState<any>(null),
     [gm, setGm] = useState(false),
+    [accesses, setAccesses] = useState<CampaignAccess[]>([]),
+    [memberships, setMemberships] = useState<{ id: string; name: string }[]>(
+      [],
+    ),
     [newName, setNewName] = useState(""),
     [campaignCode, setCampaignCode] = useState(""),
     [newStats, setNewStats] = useState<Record<string, number>>({
@@ -393,9 +403,11 @@ export default function Page({
     }),
     [newLevel, setNewLevel] = useState(1),
     [newMagic, setNewMagic] = useState("INT"),
-    [reviewFilter, setReviewFilter] = useState("pending");
+    [reviewFilter, setReviewFilter] = useState("all");
   const token = useRef(""),
     gmToken = useRef(""),
+    campaignToken = useRef(""),
+    accessRef = useRef<CampaignAccess[]>([]),
     current = useRef<Character | null>(null),
     queue = useRef(Promise.resolve()),
     portrait = useRef<HTMLInputElement>(null);
@@ -409,7 +421,12 @@ export default function Page({
     );
     const list = [
       ...existing.filter((x: any) => x.id !== character.id),
-      { id: character.id, token: key, name: character.name },
+      {
+        id: character.id,
+        token: key,
+        name: character.name,
+        campaignId: character.campaignId,
+      },
     ];
     localStorage.setItem("cendres-characters", JSON.stringify(list));
     localStorage.setItem("cendres-active", character.id);
@@ -419,73 +436,131 @@ export default function Page({
     current.current = character;
     setC(character);
   };
+  function storeAdmin(access: CampaignAccess) {
+    accessRef.current = rememberCampaignAccess(localStorage, access);
+    setAccesses(accessRef.current);
+  }
+  function rememberMembership(info: { id: string; name: string }) {
+    const list = JSON.parse(
+      localStorage.getItem("cendres-memberships") || "[]",
+    );
+    const next = [...list.filter((x: any) => x.id !== info.id), info];
+    localStorage.setItem("cendres-memberships", JSON.stringify(next));
+    setMemberships(next);
+  }
+  async function selectCampaign(id: string) {
+    await queue.current;
+    const cap = accessRef.current.find((x) => x.id === id);
+    if (cap) {
+      const data = await api({ op: "campaign", id, token: cap.token });
+      campaignToken.current = cap.token;
+      setCampaign({ ...data, id, isAdmin: true });
+    } else {
+      const data = await api({ op: "campaignInfo", id });
+      campaignToken.current = "";
+      setCampaign({ ...data, isAdmin: false, characters: [] });
+      rememberMembership(data);
+    }
+    if (current.current?.campaignId !== id) {
+      apply(draftCharacter());
+      token.current = "";
+      gmToken.current = "";
+      setGm(false);
+      setReady(false);
+    }
+    localStorage.setItem("cendres-active-campaign", id);
+    setModal("");
+    setTab("Campagne");
+  }
+  async function acceptCharacter(r: any, key: string) {
+    const cap = accessRef.current.find((x) => x.id === r.character.campaignId);
+    if (cap && !r.permissions?.canValidate)
+      r = await api({
+        op: "load",
+        id: r.character.id,
+        token: key,
+        gmToken: cap.token,
+      });
+    gmToken.current = cap?.token || "";
+    token.current = key;
+    setGm(!!r.permissions?.canValidate);
+    apply(r.character);
+    setReady(true);
+    if (key) remember(r.character, key);
+    if (r.campaign) rememberMembership(r.campaign);
+  }
+  function newCharacter() {
+    if (!campaign?.id) {
+      setModal("campaigns");
+      return;
+    }
+    setNewName("");
+    setModal("new");
+  }
   useEffect(() => {
     let live = true;
     async function init() {
       try {
-        const params = new URLSearchParams(location.hash.slice(1));
+        accessRef.current = readCampaignAccess(localStorage);
+        setAccesses(accessRef.current);
+        setMemberships(
+          JSON.parse(localStorage.getItem("cendres-memberships") || "[]"),
+        );
         const list = JSON.parse(
           localStorage.getItem("cendres-characters") || "[]",
         );
         setSaved(list);
-        const localDM =
-          initialTab === "DM"
-            ? JSON.parse(localStorage.getItem("cendres-gm") || "null")
-            : null;
-        if (localDM && !params.get("gm")) {
-          params.set("gm", localDM.token);
-          params.set("campaign", localDM.id);
+        apply(draftCharacter());
+        const params = new URLSearchParams(location.hash.slice(1));
+        if (params.get("gm") && params.get("campaign")) {
+          const id = params.get("campaign")!,
+            key = params.get("gm")!;
+          const data = await api({ op: "campaign", id, token: key });
+          storeAdmin({ id, token: key, name: data.name });
         }
-        if (params.get("gm")) {
-          gmToken.current = params.get("gm")!;
-          const data = await api({
-            op: "campaign",
-            id: params.get("campaign"),
-            token: gmToken.current,
+        // Recover campaign memberships from older locally saved character links.
+        for (const item of list) {
+          if (!item.campaignId) {
+            try {
+              const r = await api({
+                op: "load",
+                id: item.id,
+                token: item.token,
+              });
+              if (r.campaign) {
+                rememberMembership(r.campaign);
+                remember(r.character, item.token);
+              }
+            } catch {}
+          }
+        }
+        if (params.get("character") && params.get("key")) {
+          const r = await api({
+            op: "load",
+            id: params.get("character"),
+            token: params.get("key"),
           });
           if (!live) return;
-          setCampaign({ ...data, id: params.get("campaign") });
-          localStorage.setItem(
-            "cendres-gm",
-            JSON.stringify({
-              id: params.get("campaign"),
-              token: gmToken.current,
-              name: data.name,
-            }),
-          );
-          setGm(true);
-          setTab("DM");
-          apply(data.characters[0] || draftCharacter());
-          setReady(true);
-          return;
+          await acceptCharacter(r, params.get("key")!);
+          if (r.campaign) await selectCampaign(r.campaign.id);
+          setTab("Fiche");
+        } else {
+          setTab("Campagne");
+          setModal("campaigns");
         }
-        const active = list.find(
-          (x: any) => x.id === localStorage.getItem("cendres-active"),
-        );
-        const id = params.get("character") || active?.id;
-        const key = params.get("key") || active?.token;
-        if (!id) {
-          if (!live) return;
-          apply(draftCharacter());
-          if (initialTab !== "DM") setModal("new");
-          return;
-        }
-        const r = await api({ op: "load", id, token: key });
-        if (!live) return;
-        token.current = r.token || key;
-        apply(r.character);
-        remember(r.character, token.current);
-        setReady(true);
+        history.replaceState(null, "", "/");
       } catch (e) {
-        notify(String((e as Error).message));
+        notify((e as Error).message);
         if (live) {
           apply(draftCharacter());
-          setReady(false);
+          setModal("campaigns");
         }
       }
     }
     init();
+    window.addEventListener("hashchange", init);
     return () => {
+      window.removeEventListener("hashchange", init);
       live = false;
     };
   }, []);
@@ -513,7 +588,7 @@ export default function Page({
           character: next,
         });
         apply(r.character);
-        if (!gm) remember(r.character, token.current);
+        if (token.current) remember(r.character, token.current);
       } catch (e) {
         apply(before);
         notify((e as Error).message);
@@ -575,15 +650,13 @@ export default function Page({
         op: "load",
         id,
         token: access?.token,
-        gmToken: gmToken.current,
+        gmToken: accessRef.current.find(
+          (x) => x.id === (access?.campaignId || campaign?.id),
+        )?.token,
       });
-      token.current = access?.token || "";
-      apply(r.character);
-      setReady(true);
-      if (access) {
-        remember(r.character, access.token);
-        if (!gmToken.current) history.replaceState(null, "", "/");
-      }
+      if (r.campaign && r.campaign.id !== campaign?.id)
+        await selectCampaign(r.campaign.id);
+      await acceptCharacter(r, access?.token || "");
       setTab("Fiche");
     } catch (e) {
       notify((e as Error).message);
@@ -593,17 +666,14 @@ export default function Page({
     try {
       const r = await api({
         op: "create",
+        campaignId: campaign?.id,
+        gmToken: accessRef.current.find((x) => x.id === campaign?.id)?.token,
         name: newName,
         stats: newStats,
         level: newLevel,
         magic: newMagic,
       });
-      token.current = r.token;
-      gmToken.current = "";
-      setGm(false);
-      apply(r.character);
-      remember(r.character, r.token);
-      setReady(true);
+      await acceptCharacter(r, r.token);
       setModal("");
       setNewName("");
       setTab("Fiche");
@@ -626,44 +696,53 @@ export default function Page({
   async function createCampaign() {
     try {
       const r = await api({ op: "campaignCreate", name: newName });
-      gmToken.current = r.token;
-      localStorage.setItem("cendres-gm", JSON.stringify(r));
-      setCampaign({ ...r, characters: [] });
-      setGm(true);
+      storeAdmin({ id: r.id, token: r.token, name: r.name });
+      rememberMembership({ id: r.id, name: r.name });
+      await selectCampaign(r.id);
       setNewName("");
-      setModal("");
-      setTab("DM");
-      history.replaceState(null, "", "/dm");
-      notify("Campagne créée. Conservez votre lien DM.");
+      notify(
+        "Campagne créée. Vous pouvez jouer et administrer depuis ce même espace.",
+      );
     } catch (e) {
       notify((e as Error).message);
     }
   }
   async function join() {
     try {
+      await selectCampaign(campaignCode.trim());
+      notify("Campagne sélectionnée. Créez votre personnage.");
+    } catch (e) {
+      notify((e as Error).message);
+    }
+  }
+  async function attachLegacy(access: any) {
+    try {
+      await queue.current;
       const r = await api({
         op: "join",
-        id: c!.id,
-        token: token.current,
-        campaignId: campaignCode.trim(),
+        id: access.id,
+        token: access.token,
+        campaignId: campaign.id,
+        gmToken: accessRef.current.find((x) => x.id === campaign.id)?.token,
       });
-      apply(r.character);
-      setModal("");
+      await acceptCharacter(r, access.token);
+      if (campaign.isAdmin) await refreshCampaign();
+      setTab("Fiche");
       notify("Personnage rattaché à la campagne.");
     } catch (e) {
       notify((e as Error).message);
     }
   }
   async function openCampaign() {
-    setTab("Campagne");
+    setModal("campaigns");
   }
   async function refreshCampaign() {
     const r = await api({
       op: "campaign",
       id: campaign.id,
-      token: gmToken.current,
+      token: campaignToken.current,
     });
-    setCampaign({ ...r, id: campaign.id });
+    setCampaign({ ...r, id: campaign.id, isAdmin: true });
   }
   async function reviewCharacter(
     character: Character,
@@ -673,7 +752,7 @@ export default function Page({
       await api({
         op: "reviewCharacter",
         id: character.id,
-        gmToken: gmToken.current,
+        gmToken: campaignToken.current,
         revision: character.revision,
         status,
       });
@@ -692,7 +771,7 @@ export default function Page({
       const loaded = await api({
         op: "load",
         id: character.id,
-        gmToken: gmToken.current,
+        gmToken: campaignToken.current,
       });
       if (loaded.character.revision !== character.revision) {
         await refreshCampaign();
@@ -713,7 +792,7 @@ export default function Page({
       await api({
         op: "save",
         id: character.id,
-        gmToken: gmToken.current,
+        gmToken: campaignToken.current,
         character: loaded.character,
       });
       await refreshCampaign();
@@ -784,7 +863,7 @@ export default function Page({
     return (
       <div className="loading">
         <Flame />
-        <span>Les braises s’éveillent…</span>
+        <span>Chargement…</span>
       </div>
     );
   const detailCharacter =
@@ -866,7 +945,7 @@ export default function Page({
             <tr>
               <th>OBJET</th>
               <th>POIDS</th>
-              <th>VALIDATION</th>
+              <th>DÉGÂTS</th>
               <th>ÉQUIPÉ</th>
               <th />
             </tr>
@@ -875,7 +954,17 @@ export default function Page({
             {items.map((i) => {
               const Icon = icons[i.type] || Feather;
               return (
-                <tr key={i.id}>
+                <tr
+                  key={i.id}
+                  className={i.status !== "approved" ? "item-unvalidated" : ""}
+                  title={
+                    i.status === "pending"
+                      ? "En attente de validation"
+                      : i.status === "rejected"
+                        ? "Refusé"
+                        : undefined
+                  }
+                >
                   <td>
                     <button className="item-name" onClick={() => setDetail(i)}>
                       <span className={"item-icon " + i.type}>
@@ -898,20 +987,7 @@ export default function Page({
                     {itemWeight(i)}
                     <Weight size={11} />
                   </td>
-                  <td>
-                    <span className={"status " + i.status}>
-                      {i.status === "approved" ? (
-                        <Check size={10} />
-                      ) : (
-                        <Clock size={10} />
-                      )}{" "}
-                      {i.status === "approved"
-                        ? "Validé"
-                        : i.status === "pending"
-                          ? "En attente"
-                          : "Refusé"}
-                    </span>
-                  </td>
+                  <td>{i.type === "weapon" ? i.damage || "—" : "—"}</td>
                   <td>
                     <button
                       aria-label={
@@ -1043,9 +1119,7 @@ export default function Page({
           </button>
         </div>
       ))}
-      {!c.spells.length && (
-        <p className="empty">Votre grimoire attend ses premiers sorts.</p>
-      )}
+      {!c.spells.length && <p className="empty">Aucun sort.</p>}
     </section>
   );
   return (
@@ -1060,7 +1134,7 @@ export default function Page({
         <div className="workspace-label">VOTRE ESPACE</div>
         <button
           className="character-select"
-          onClick={() => setModal(c.id ? "characters" : "new")}
+          onClick={() => (c.id ? setModal("characters") : newCharacter())}
         >
           <span className="mini-portrait">
             <Shield size={20} />
@@ -1079,6 +1153,7 @@ export default function Page({
           {nav.map(({ name, icon: Icon }) => (
             <button
               key={name}
+              disabled={!ready || !c.campaignId}
               className={tab === name ? "active" : ""}
               onClick={() => {
                 setTab(name);
@@ -1107,15 +1182,6 @@ export default function Page({
             Campagne{pending > 0 && <span className="notification-dot" />}
           </button>
           <button
-            className={tab === "DM" ? "active" : ""}
-            onClick={() => {
-              location.href = "/dm";
-            }}
-          >
-            <Shield size={17} />
-            Espace DM
-          </button>
-          <button
             className={tab === "Règles" ? "active" : ""}
             onClick={() => setTab("Règles")}
           >
@@ -1125,16 +1191,7 @@ export default function Page({
           </button>
         </nav>
         <div className="sidebar-bottom">
-          <div className="ember-box">
-            <Flame size={19} />
-            <b>La flamme persiste.</b>
-            <p>
-              Vos histoires méritent
-              <br />
-              de ne pas être oubliées.
-            </p>
-          </div>
-          <button className="text-button" onClick={() => setModal("new")}>
+          <button className="text-button" onClick={newCharacter}>
             <Plus size={15} /> Nouveau personnage
           </button>
           <div className="version">
@@ -1172,13 +1229,15 @@ export default function Page({
                     ? "Sauvegarde…"
                     : "Sauvegardé"}
             <span className="topbar-divider" />
-            <span className="mode-pill">{gm ? "MAÎTRE DU JEU" : "JOUEUR"}</span>
+            <span className="mode-pill">
+              {accesses.length ? "ADMIN · JOUEUR" : "JOUEUR"}
+            </span>
           </div>
         </header>
         <main>
           <div className="page-heading">
             <div>
-              <div className="eyebrow">LE REGISTRE DES ÂMES</div>
+              {campaign && <div className="eyebrow">{campaign.name}</div>}
               <h1>
                 {tab === "Fiche"
                   ? "Fiche de personnage"
@@ -1186,26 +1245,13 @@ export default function Page({
                     ? "Espace DM"
                     : tab}
               </h1>
-              <p>
-                {tab === "Fiche"
-                  ? "Chaque détail compte. Chaque braise aussi."
-                  : tab === "Inventaire"
-                    ? "Tout ce que vous emportez dans les ténèbres."
-                    : tab === "Grimoire"
-                      ? "Les savoirs qui survivent à l’oubli."
-                      : tab === "Campagne" || tab === "DM"
-                        ? "Rassemblez les personnages et validez leurs créations."
-                        : tab === "Règles"
-                          ? "Vos règles, toujours à portée de main."
-                          : "Les traces laissées sur votre chemin."}
-              </p>
             </div>
-            {tab !== "DM" && (
+            {c.id && tab !== "Campagne" && tab !== "DM" && (
               <div className="heading-actions">
                 <button
                   className="button"
                   onClick={copyLink}
-                  disabled={gm || !ready}
+                  disabled={!token.current || !ready}
                 >
                   <LinkIcon size={14} />
                   Partager
@@ -1357,15 +1403,15 @@ export default function Page({
                     ).map(({ key, label, icon: Icon, color }) => (
                       <section className={"panel resource " + color} key={key}>
                         <div className="resource-label">
-                          {key === "end" && (
+                          {
                             <button
                               className="icon-button"
-                              aria-label="Ajuster l’endurance"
+                              aria-label={"Ajuster " + label}
                               onClick={() => setModal("end")}
                             >
                               <Settings2 size={12} />
                             </button>
-                          )}
+                          }
                           <Icon size={15} />
                           {label}
                           <button
@@ -1498,7 +1544,11 @@ export default function Page({
                                           " · PV ×" +
                                           armors[item.armor].hp
                                         : item.weight + " poids"
-                                    : "Équiper un bouclier"}
+                                    : type === "weapon"
+                                      ? "Équiper une arme"
+                                      : type === "armor"
+                                        ? "Équiper une armure"
+                                        : "Équiper un bouclier"}
                                 </small>
                                 {item && (
                                   <span className="slot-weight">
@@ -1638,38 +1688,93 @@ export default function Page({
                     experte demande les deux techniques initiées.
                   </p>
                 </div>
-                {c.inventory
-                  .filter((i) => i.type === "weapon")
-                  .map((item) => (
-                    <div className="spell-row" key={item.id}>
-                      <Sword size={18} />
-                      <div className="spell-title">
-                        <b>{item.name}</b>
-                        <small>
-                          {item.category} ·{" "}
-                          {
-                            predefinedTechniques(item).filter((t) =>
-                              techniqueKnown(c, t),
-                            ).length
-                          }
-                          /{predefinedTechniques(item).length} techniques
-                          acquises
-                        </small>
-                      </div>
-                      <button
-                        className="button"
-                        onClick={() => setDetail(item)}
-                      >
-                        Voir les techniques
-                      </button>
-                    </div>
-                  ))}
-                {!c.inventory.some((i) => i.type === "weapon") && (
-                  <p className="empty">
-                    Ajoutez une arme à l’inventaire pour consulter ses
-                    techniques.
-                  </p>
-                )}
+                <div className="skill-forest">
+                  {Object.keys(categoryIds)
+                    .filter(
+                      (category, index, all) =>
+                        all.findIndex(
+                          (x) => categoryIds[x] === categoryIds[category],
+                        ) === index,
+                    )
+                    .map((category) => {
+                      const techniques = predefinedTechniques({
+                        category,
+                        damage: "",
+                      });
+                      const expertReady = techniques
+                        .filter((t) => t.rank === "initie")
+                        .every((t) => techniqueKnown(c, t));
+                      return (
+                        <details className="skill-tree" key={category}>
+                          <summary>
+                            <Sword size={20} />
+                            <strong>{category}</strong>
+                            <span>
+                              {
+                                techniques.filter((t) => techniqueKnown(c, t))
+                                  .length
+                              }
+                              /{techniques.length} acquises
+                            </span>
+                          </summary>
+                          <div className="tree-branches">
+                            {(["debutant", "initie", "expert"] as const).map(
+                              (rank) => (
+                                <section className="tree-rank" key={rank}>
+                                  <h3>{rankLabels[rank]}</h3>
+                                  {techniques
+                                    .filter((t) => t.rank === rank)
+                                    .map((t) => {
+                                      const known = techniqueKnown(c, t),
+                                        locked =
+                                          rank === "expert" && !expertReady;
+                                      return (
+                                        <article
+                                          className={
+                                            "skill-node " +
+                                            (known
+                                              ? "known"
+                                              : locked
+                                                ? "locked"
+                                                : "available")
+                                          }
+                                          key={t.catalogId}
+                                        >
+                                          <b>{t.name}</b>
+                                          <small>
+                                            {t.end} END · Portée {t.rangeMin}–
+                                            {t.range}
+                                          </small>
+                                          <p>{effectText(t.effects)}</p>
+                                          <button
+                                            className="button"
+                                            disabled={
+                                              !ready ||
+                                              known ||
+                                              locked ||
+                                              saving ||
+                                              training.available <
+                                                techniqueCosts[rank]
+                                            }
+                                            onClick={() => learn(t)}
+                                          >
+                                            {known
+                                              ? "Acquise"
+                                              : locked
+                                                ? "Requiert les deux techniques initiées"
+                                                : `Investir ${techniqueCosts[rank]} points`}
+                                          </button>
+                                        </article>
+                                      );
+                                    })}
+                                </section>
+                              ),
+                            )}
+                          </div>
+                        </details>
+                      );
+                    })}
+                </div>
               </section>
               <section className="panel">
                 {sectionTitle(
@@ -1849,59 +1954,70 @@ export default function Page({
               <section className="panel campaign-head">
                 <Users size={28} />
                 <div>
-                  <h2>
-                    {campaign?.name ||
-                      (tab === "DM" ? "Espace DM" : "Campagne")}
-                  </h2>
+                  <h2>{campaign?.name || "Choisir une campagne"}</h2>
                   <p>
-                    {gm
-                      ? "Accès maître du jeu · Validation et suivi des personnages"
-                      : c.campaignId
-                        ? "Ce personnage est rattaché à une campagne."
-                        : "Créez une campagne ou rejoignez celle de votre GM."}
+                    {campaign?.isAdmin
+                      ? "Administrateur et joueur · Personnages, équipement et validations"
+                      : "Joueur · Vos personnages dans cette campagne"}
                   </p>
                 </div>
-                {!gm && (
-                  <>
-                    <button
-                      className="button"
-                      disabled={!c.id}
-                      onClick={() => {
-                        setCampaignCode("");
-                        setModal("join");
-                      }}
-                    >
-                      Rejoindre
-                    </button>
-                    <button
-                      className="button primary"
-                      onClick={() => {
-                        setNewName("");
-                        setModal("campaign");
-                      }}
-                    >
-                      <Plus size={14} />
-                      Créer une campagne
-                    </button>
-                  </>
+                <button
+                  className="button"
+                  onClick={() => setModal("campaigns")}
+                >
+                  Mes campagnes
+                </button>
+                {campaign && (
+                  <button className="button primary" onClick={newCharacter}>
+                    Créer un personnage
+                  </button>
                 )}
-                {gm && (
+                {campaign?.isAdmin && (
                   <button
                     className="button"
-                    onClick={async () => {
-                      const r = await api({
-                        op: "campaign",
-                        id: campaign.id,
-                        token: gmToken.current,
-                      });
-                      setCampaign({ ...r, id: campaign.id });
-                    }}
+                    onClick={() =>
+                      refreshCampaign().catch((e) => notify(e.message))
+                    }
                   >
                     Actualiser
                   </button>
                 )}
               </section>
-              {gm && campaign && (
+              {campaign && (
+                <section className="panel">
+                  <h3>Personnages de la campagne</h3>
+                  {(campaign.isAdmin
+                    ? campaign.characters
+                    : saved.filter((x) => x.campaignId === campaign.id)
+                  ).map((ch: any) => (
+                    <button
+                      key={ch.id}
+                      className="character-list-item"
+                      onClick={() => choose(ch.id)}
+                    >
+                      {ch.name}
+                      <ChevronRight size={16} />
+                    </button>
+                  ))}
+                </section>
+              )}
+              {campaign && saved.some((x) => !x.campaignId) && (
+                <section className="panel">
+                  <h3>Rattacher un ancien personnage</h3>
+                  {saved
+                    .filter((x) => !x.campaignId)
+                    .map((x) => (
+                      <button
+                        className="character-list-item"
+                        key={x.id}
+                        onClick={() => attachLegacy(x)}
+                      >
+                        Ajouter {x.name} à {campaign.name}
+                      </button>
+                    ))}
+                </section>
+              )}
+              {campaign?.isAdmin && (
                 <>
                   <section className="panel campaign-access">
                     <p>
@@ -1925,19 +2041,19 @@ export default function Page({
                             "/dm#campaign=" +
                             campaign.id +
                             "&gm=" +
-                            gmToken.current,
+                            campaignToken.current,
                         );
                         notify("Lien secret GM copié.");
                       }}
                     >
                       <LinkIcon size={13} />
-                      Conserver le lien GM
+                      Sauvegarder mon accès admin
                     </button>
                   </section>
                   {campaign.characters.length === 0 && (
                     <div className="empty campaign-empty">
                       <Users size={30} />
-                      <h3>Le groupe se forme ici</h3>
+                      <h3>Aucun personnage</h3>
                       <p>
                         Transmettez le code d’invitation aux joueurs.
                         <br />
@@ -2164,9 +2280,6 @@ export default function Page({
             </div>
           )}
           <footer>
-            <span>
-              <Flame size={12} /> Une fiche. Une histoire. Une flamme.
-            </span>
             <span>Gestion de personnage · Aucun combat automatisé</span>
           </footer>
         </main>
@@ -2314,7 +2427,7 @@ export default function Page({
             )}
             {modal === "end" && (
               <>
-                <h2>Endurance temporaire</h2>
+                <h2>Bonus et malus des ressources</h2>
                 <p>
                   Les effets sont saisis manuellement, quelle que soit leur
                   origine.
@@ -2326,10 +2439,38 @@ export default function Page({
                     change((n) => {
                       n.bonus = Number(f.get("bonus"));
                       n.malus = Number(f.get("malus"));
+                      for (const key of [
+                        "hpBonus",
+                        "hpMalus",
+                        "manaBonus",
+                        "manaMalus",
+                      ] as const)
+                        n[key] = Number(f.get(key));
                     });
                     setModal("");
                   }}
                 >
+                  <div className="form-grid">
+                    {(
+                      [
+                        ["hpBonus", "Bonus PV"],
+                        ["hpMalus", "Malus PV"],
+                        ["manaBonus", "Bonus Mana"],
+                        ["manaMalus", "Malus Mana"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <label key={key}>
+                        {label}
+                        <input
+                          type="number"
+                          name={key}
+                          min="0"
+                          max="100"
+                          defaultValue={c[key] ?? 0}
+                        />
+                      </label>
+                    ))}
+                  </div>
                   <div className="form-grid">
                     <label>
                       Bonus END
@@ -2358,11 +2499,10 @@ export default function Page({
             )}
             {(modal === "new" || modal === "campaign") && (
               <>
-                <div className="eyebrow">UN NOUVEAU CHAPITRE</div>
                 <h2>
                   {modal === "new"
-                    ? "Un nom dans les cendres"
-                    : "Rassemblez votre campagne"}
+                    ? "Créer un personnage"
+                    : "Créer une campagne"}
                 </h2>
                 <form
                   onSubmit={(e) => {
@@ -2384,6 +2524,9 @@ export default function Page({
                   </label>
                   {modal === "new" && (
                     <>
+                      <p>
+                        Campagne : <strong>{campaign?.name}</strong>
+                      </p>
                       <div className="form-grid">
                         <label>
                           Niveau
@@ -2461,7 +2604,7 @@ export default function Page({
                     />
                   </label>
                   <button className="button primary submit">
-                    Rattacher ce personnage
+                    Choisir cette campagne
                   </button>
                 </form>
               </>
@@ -2479,30 +2622,79 @@ export default function Page({
                 </p>
               </>
             )}
-            {modal === "characters" && (
+            {modal === "campaigns" && (
               <>
-                <h2>Vos personnages</h2>
-                {saved.map((s) => (
+                <h2>Mes campagnes</h2>
+                <p>Choisissez une campagne pour jouer ou l’administrer.</p>
+                {Array.from(
+                  new Map(
+                    [...memberships, ...accesses].map((x) => [x.id, x]),
+                  ).values(),
+                ).map((x) => (
                   <button
                     className="character-list-item"
-                    key={s.id}
-                    onClick={() => {
-                      setGm(false);
-                      gmToken.current = "";
-                      choose(s.id);
-                      setModal("");
-                    }}
+                    key={x.id}
+                    onClick={() =>
+                      selectCampaign(x.id).catch((e) => notify(e.message))
+                    }
                   >
-                    <Shield size={18} />
-                    {s.name}
-                    <ChevronRight size={14} />
+                    <Users size={20} />
+                    {x.name}
+                    <small>
+                      {accesses.some((a) => a.id === x.id)
+                        ? "Admin et joueur"
+                        : "Joueur"}
+                    </small>
                   </button>
                 ))}
                 <button
                   className="button primary submit"
                   onClick={() => {
                     setNewName("");
-                    setModal("new");
+                    setModal("campaign");
+                  }}
+                >
+                  Créer une campagne
+                </button>
+                <button
+                  className="button submit"
+                  onClick={() => {
+                    setCampaignCode("");
+                    setModal("join");
+                  }}
+                >
+                  Rejoindre avec un code
+                </button>
+                <p>
+                  Accès conservés dans ce navigateur, sans compte. Sauvegardez
+                  vos liens secrets pour changer d’appareil.
+                </p>
+              </>
+            )}
+            {modal === "characters" && (
+              <>
+                <h2>Vos personnages</h2>
+                {saved
+                  .filter((s) => !campaign || s.campaignId === campaign.id)
+                  .map((s) => (
+                    <button
+                      className="character-list-item"
+                      key={s.id}
+                      onClick={() => {
+                        choose(s.id);
+                        setModal("");
+                      }}
+                    >
+                      <Shield size={18} />
+                      {s.name}
+                      <ChevronRight size={14} />
+                    </button>
+                  ))}
+                <button
+                  className="button primary submit"
+                  onClick={() => {
+                    setNewName("");
+                    newCharacter();
                   }}
                 >
                   <Plus size={14} />

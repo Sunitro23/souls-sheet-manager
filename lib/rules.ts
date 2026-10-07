@@ -157,6 +157,10 @@ export type Character = {
   end: number;
   mana: number;
   death: number;
+  hpBonus?: number;
+  hpMalus?: number;
+  manaBonus?: number;
+  manaMalus?: number;
   bonus: number;
   malus: number;
   portrait: string;
@@ -187,10 +191,15 @@ export function derive(c: Character) {
     dodge: Math.max(1, mobility - armor.dodge),
     hp: Math.max(
       0,
-      Math.round((4 + 3 * c.level + 2 * mod(c.stats.CON)) * armor.hp),
+      Math.round((4 + 3 * c.level + 2 * mod(c.stats.CON)) * armor.hp) +
+        (c.hpBonus ?? 0) -
+        (c.hpMalus ?? 0),
     ),
     end: Math.max(0, 3 - overload - c.malus + c.bonus),
-    mana: Math.max(4, 6 + magic),
+    mana: Math.max(
+      0,
+      Math.max(4, 6 + magic) + (c.manaBonus ?? 0) - (c.manaMalus ?? 0),
+    ),
     magic,
     memory: Math.max(0, magic),
     used: c.spells.filter((s) => s.memorized).reduce((n, s) => n + s.rank, 0),
@@ -254,6 +263,8 @@ export function validate(c: Character, old?: Character, gm = false) {
   if (!["INT", "SAG", "CHA"].includes(c.magic))
     throw Error("Caractéristique magique invalide.");
   integer(c.death, 0, 3, "Dégâts mortels");
+  for (const key of ["hpBonus", "hpMalus", "manaBonus", "manaMalus"] as const)
+    integer(c[key] ?? 0, 0, 100, key);
   integer(c.bonus, -100, 100, "Bonus END");
   integer(c.malus, -100, 100, "Malus END");
   if (

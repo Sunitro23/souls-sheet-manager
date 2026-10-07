@@ -5,7 +5,7 @@
   --panel: #1a1b1b;
   --line: #2a2b29;
   --text: #deded8;
-  --muted: #80837e;
+  --muted: #a2a59f;
   --accent: #c7a16a;
   --green: #8da98f;
   --red: #ba7675;
@@ -19,7 +19,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "DM Sans", sans-serif;
-  font-size: 12px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
 }
 button,
@@ -128,7 +128,7 @@ input::-webkit-outer-spin-button {
 }
 .brand > span {
   font-family: Manrope, sans-serif;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 750;
   letter-spacing: 4px;
   line-height: 1.15;
@@ -136,12 +136,12 @@ input::-webkit-outer-spin-button {
 .brand small {
   display: block;
   letter-spacing: 1.75px;
-  font-size: 6px;
+  font-size: 14px;
   color: #939086;
   margin-top: 8px;
 }
 .workspace-label {
-  font-size: 8px;
+  font-size: 14px;
   letter-spacing: 1.6px;
   color: #6b6e69;
   font-weight: 700;
@@ -172,14 +172,14 @@ input::-webkit-outer-spin-button {
   flex: 1;
 }
 .character-select b {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   display: block;
 }
 .character-select small {
   display: block;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 14px;
   margin-top: 4px;
 }
 .character-select > svg {
@@ -198,7 +198,7 @@ input::-webkit-outer-spin-button {
   text-align: left;
   padding: 12px 13px;
   border-radius: 5px;
-  font-size: 11px;
+  font-size: 14px;
   color: #94968f;
   position: relative;
 }
@@ -223,7 +223,7 @@ input::-webkit-outer-spin-button {
   background: #252622;
   border: 1px solid #34352d;
   color: #90938a;
-  font-size: 9px;
+  font-size: 14px;
   padding: 0px 5px;
   border-radius: 3px;
 }
@@ -259,22 +259,22 @@ input::-webkit-outer-spin-button {
   margin-bottom: 11px;
 }
 .ember-box b {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
   color: #c7b99f;
 }
 .ember-box p {
-  font-size: 10px;
+  font-size: 14px;
   color: #6f726c;
   line-height: 1.8;
   margin-top: 6px;
 }
 .sidebar-bottom > .text-button {
-  font-size: 11px;
+  font-size: 14px;
   margin: 0 auto 26px;
 }
 .version {
-  font-size: 8px;
+  font-size: 14px;
   letter-spacing: 1px;
   display: flex;
   justify-content: space-between;
@@ -302,7 +302,7 @@ input::-webkit-outer-spin-button {
   display: flex;
   align-items: center;
   gap: 13px;
-  font-size: 10px;
+  font-size: 14px;
   color: #6f736d;
 }
 .breadcrumb span {
@@ -320,7 +320,7 @@ input::-webkit-outer-spin-button {
   align-items: center;
   gap: 7px;
   color: #92998b;
-  font-size: 9px;
+  font-size: 14px;
 }
 .dot {
   width: 5px;
@@ -340,7 +340,7 @@ input::-webkit-outer-spin-button {
   margin: 0 12px;
 }
 .mode-pill {
-  font-size: 8px;
+  font-size: 14px;
   border: 1px solid #34332b;
   color: #b3a588;
   padding: 5px 8px;
@@ -363,7 +363,7 @@ main {
   margin-bottom: 29px;
 }
 .eyebrow {
-  font-size: 8px;
+  font-size: 14px;
   letter-spacing: 2.2px;
   font-weight: 600;
   color: var(--accent);
@@ -371,13 +371,13 @@ main {
 }
 h1 {
   font-family: Manrope, sans-serif;
-  font-size: 27px;
+  font-size: 32px;
   font-weight: 600;
   letter-spacing: -1.1px;
   line-height: 1.3;
 }
 .page-heading p {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
   margin-top: 8px;
 }
@@ -395,7 +395,7 @@ h1 {
   background: #1b1c19;
   border-radius: 5px;
   padding: 10px 12px;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -470,7 +470,7 @@ h1 {
   color: #9997806e;
 }
 .portrait-frame span {
-  font-size: 7px;
+  font-size: 14px;
   letter-spacing: 2.3px;
 }
 .portrait-caption {
@@ -480,7 +480,7 @@ h1 {
   gap: 6px;
   align-items: center;
   color: #aaa78c;
-  font-size: 9px;
+  font-size: 14px;
   opacity: 0.8;
 }
 .portrait:hover .portrait-caption {
@@ -500,13 +500,13 @@ h1 {
   background: #1f221ee6;
   border-radius: 3px;
   padding: 5px 7px;
-  font-size: 7px;
+  font-size: 14px;
   color: #c5b38d;
   letter-spacing: 0.5px;
   z-index: 1;
 }
 .level-badge b {
-  font-size: 11px;
+  font-size: 14px;
   margin-left: 4px;
 }
 .identity-text {
@@ -515,17 +515,17 @@ h1 {
 }
 .identity-text h2 {
   font-family: Manrope, sans-serif;
-  font-size: 24px;
+  font-size: 29px;
   letter-spacing: -0.7px;
   font-weight: 600;
 }
 .identity-text p {
-  font-size: 10px;
+  font-size: 14px;
   color: #a6977e;
   margin-top: 5px;
 }
 .character-state {
-  font-size: 8px;
+  font-size: 14px;
   color: #898e80;
   display: flex;
   justify-content: center;
@@ -545,7 +545,7 @@ h1 {
   padding: 15px 16px 13px;
 }
 .section-title h2 {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 550;
   display: flex;
   gap: 8px;
@@ -555,7 +555,7 @@ h1 {
   color: #949583;
 }
 .section-caption {
-  font-size: 9px;
+  font-size: 14px;
   color: #686f62;
 }
 .icon-button {
@@ -573,7 +573,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 9px;
+  font-size: 14px;
   color: #8f9686;
   padding: 0;
 }
@@ -597,19 +597,19 @@ h1 {
   position: relative;
 }
 .stat > span {
-  font-size: 8px;
+  font-size: 14px;
   letter-spacing: 1.1px;
   color: #929888;
 }
 .stat strong {
   font-family: Manrope, sans-serif;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 550;
   margin: 3px 0 6px;
   line-height: 1.4;
 }
 .stat > b {
-  font-size: 10px;
+  font-size: 14px;
   color: #c6b18a;
   background: #2b2b22;
   border: 1px solid #39392c;
@@ -637,19 +637,19 @@ h1 {
 }
 .mobility-grid strong {
   display: block;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 500;
   margin-top: 8px;
 }
 .mobility-grid strong small {
-  font-size: 8px;
+  font-size: 14px;
   font-weight: 400;
   color: #6f7766;
   margin-left: 4px;
 }
 .mobility-grid > div > span {
   display: block;
-  font-size: 8px;
+  font-size: 14px;
   color: #919884;
   margin-top: 5px;
 }
@@ -660,7 +660,7 @@ h1 {
   gap: 7px;
   border-top: 1px solid var(--line);
   padding: 11px 15px;
-  font-size: 8px;
+  font-size: 14px;
   color: #72796b;
 }
 .panel-footer > span {
@@ -670,12 +670,12 @@ h1 {
 }
 .mobility .panel-footer {
   padding: 10px;
-  font-size: 7px;
+  font-size: 14px;
   gap: 4px;
 }
 .mobility .panel-footer b {
   color: #adb098;
-  font-size: 9px;
+  font-size: 14px;
   margin-right: auto;
 }
 .quote {
@@ -684,19 +684,19 @@ h1 {
   font-family: Georgia, serif;
   font-style: italic;
   color: #727768;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.8;
 }
 .quote > span {
   display: block;
   color: #8b7754;
-  font-size: 25px;
+  font-size: 30px;
   height: 28px;
 }
 .quote small {
   display: block;
   font-family: "DM Sans", sans-serif;
-  font-size: 8px;
+  font-size: 14px;
   font-style: normal;
   color: #51594a;
   margin-top: 10px;
@@ -726,7 +726,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 8px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.8px;
   color: var(--resource);
@@ -749,7 +749,7 @@ h1 {
   border: 1px solid #42423a;
   border-radius: 4px;
   color: #949c88;
-  font-size: 15px;
+  font-size: 18px;
   line-height: 15px;
   padding: 0;
 }
@@ -767,7 +767,7 @@ h1 {
   border: 0;
   width: 48px;
   text-align: right;
-  font-size: 31px;
+  font-size: 37px;
   line-height: 1;
   letter-spacing: -1.5px;
   font-family: Manrope, sans-serif;
@@ -779,7 +779,7 @@ h1 {
   color: var(--resource);
 }
 .resource-value span {
-  font-size: 14px;
+  font-size: 17px;
   color: #6c7266;
 }
 .resource-track {
@@ -795,13 +795,13 @@ h1 {
   transition: width 0.25s;
 }
 .resource-foot {
-  font-size: 7px;
+  font-size: 14px;
   color: #77806d;
   margin-top: 10px;
   min-height: 10px;
 }
 .resource-foot button {
-  font-size: 7px;
+  font-size: 14px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -829,12 +829,12 @@ h1 {
   color: #8b927f;
 }
 .survival-bar b {
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 500;
 }
 .survival-bar > div > span {
   color: #67725e;
-  font-size: 8px;
+  font-size: 14px;
 }
 .death-counter {
   gap: 5px !important;
@@ -843,7 +843,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 14px;
   width: 22px;
   height: 23px;
   border: 1px solid #373c2d;
@@ -880,7 +880,7 @@ h1 {
   background: #20211b;
 }
 .equipment-slot > .equipment-type {
-  font-size: 7px;
+  font-size: 14px;
   color: #787e6a;
   letter-spacing: 0.8px;
   font-weight: 500;
@@ -890,11 +890,11 @@ h1 {
   margin: 16px 0 13px;
 }
 .equipment-slot b {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 500;
 }
 .equipment-slot small {
-  font-size: 8px;
+  font-size: 14px;
   color: #858d76;
   margin-top: 5px;
 }
@@ -918,7 +918,7 @@ h1 {
   display: flex;
   gap: 3px;
   align-items: center;
-  font-size: 8px;
+  font-size: 14px;
   color: #747d65;
 }
 .load-row {
@@ -938,17 +938,17 @@ h1 {
   color: #7e8870;
 }
 .load-row b {
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 400;
   color: #989f8c;
 }
 .load-row strong {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
   margin-left: 4px;
 }
 .load-row strong span {
-  font-size: 9px;
+  font-size: 14px;
   color: #6e775f;
 }
 .load-track {
@@ -965,14 +965,14 @@ h1 {
 }
 .load-row > .subtle,
 .load-row > .overload {
-  font-size: 8px;
+  font-size: 14px;
   white-space: nowrap;
 }
 .overload {
   color: #c68d72;
 }
 .extra-equipment {
-  font-size: 10px;
+  font-size: 14px;
   display: inline-flex;
   gap: 7px;
   margin: 0 15px 10px;
@@ -989,7 +989,7 @@ h1 {
   gap: 3px;
 }
 .filters button {
-  font-size: 8px;
+  font-size: 14px;
   padding: 6px 8px;
   color: #848e77;
   border-radius: 4px;
@@ -1013,7 +1013,7 @@ h1 {
   background: none;
   padding: 6px 0;
   width: 100%;
-  font-size: 8px;
+  font-size: 14px;
 }
 .search input:focus {
   outline: none;
@@ -1031,7 +1031,7 @@ thead {
   background: #171916;
 }
 th {
-  font-size: 7px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 1px;
   color: #7d856e;
@@ -1045,7 +1045,7 @@ th:first-child {
 td {
   border-bottom: 1px solid #2b3025;
   padding: 10px 12px;
-  font-size: 10px;
+  font-size: 14px;
 }
 td:first-child {
   padding-left: 16px;
@@ -1101,13 +1101,13 @@ tr:last-child td {
   border-color: #3c3a4f;
 }
 .item-name b {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 500;
   color: #c8cbbf;
 }
 .item-name small {
   display: block;
-  font-size: 8px;
+  font-size: 14px;
   color: #758168;
   margin-top: 4px;
 }
@@ -1124,7 +1124,7 @@ tr:last-child td {
   gap: 3px;
   border-radius: 4px;
   padding: 3px 5px;
-  font-size: 7px;
+  font-size: 14px;
   line-height: 1.2;
 }
 .status.approved {
@@ -1166,18 +1166,18 @@ tr:last-child td {
   gap: 22px;
 }
 .magic-numbers > div > span {
-  font-size: 7px;
+  font-size: 14px;
   color: #778568;
   letter-spacing: 0.5px;
 }
 .magic-numbers b {
   display: block;
-  font-size: 19px;
+  font-size: 23px;
   font-weight: 500;
   margin-top: 6px;
 }
 .magic-numbers small {
-  font-size: 11px;
+  font-size: 14px;
   color: #9f977d;
   margin-left: 8px;
   font-weight: 400;
@@ -1204,7 +1204,7 @@ tr:last-child td {
   padding: 0 16px 16px;
 }
 .mini-spells button {
-  font-size: 7px;
+  font-size: 14px;
   padding: 4px 7px;
   border: 1px solid #3d4131;
   background: #24281e;
@@ -1213,7 +1213,7 @@ tr:last-child td {
 }
 .notes-mini p {
   font-family: Georgia, serif;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.8;
   color: #a2a791;
   margin: 4px 16px 18px;
@@ -1224,17 +1224,17 @@ tr:last-child td {
   gap: 5px;
   align-items: center;
   margin: 0 16px 16px;
-  font-size: 8px;
+  font-size: 14px;
 }
 .subtle {
   color: #7e8970;
-  font-size: 10px;
+  font-size: 14px;
 }
 .empty {
   padding: 30px;
   text-align: center;
   color: #818a74;
-  font-size: 11px;
+  font-size: 14px;
 }
 footer {
   display: flex;
@@ -1243,7 +1243,7 @@ footer {
   margin-top: 31px;
   border-top: 1px solid var(--line);
   padding: 16px 0 20px;
-  font-size: 8px;
+  font-size: 14px;
   color: #59614f;
 }
 footer > span:first-child {
@@ -1260,14 +1260,14 @@ footer svg {
   justify-content: space-between;
   padding: 2px 16px 15px;
   border-bottom: 1px solid var(--line);
-  font-size: 10px;
+  font-size: 14px;
   color: var(--muted);
   gap: 9px;
 }
 .spell-summary select {
   padding: 5px;
   margin-left: 8px;
-  font-size: 10px;
+  font-size: 14px;
 }
 .spell-summary b {
   color: var(--accent);
@@ -1290,25 +1290,25 @@ footer svg {
 }
 .spell-title b {
   font-weight: 500;
-  font-size: 11px;
+  font-size: 14px;
 }
 .spell-title small {
   display: block;
   margin-top: 4px;
-  font-size: 9px;
+  font-size: 14px;
   color: var(--muted);
 }
 .spell-row label {
   display: flex;
   gap: 5px;
   align-items: center;
-  font-size: 8px;
+  font-size: 14px;
 }
 .memorize {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 8px;
+  font-size: 14px;
   border: 1px solid #3d4031;
   padding: 5px 7px;
   border-radius: 4px;
@@ -1326,7 +1326,7 @@ footer svg {
   padding: 20px;
   line-height: 2;
   background: transparent;
-  font-size: 13px;
+  font-size: 16px;
 }
 .rules-grid {
   display: grid;
@@ -1337,13 +1337,13 @@ footer svg {
   padding: 22px;
 }
 .rule h2 {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   color: var(--accent);
   margin-bottom: 12px;
 }
 .rule p {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.8;
   color: #939d86;
 }
@@ -1353,7 +1353,7 @@ footer svg {
 }
 .armor-rules td {
   padding: 16px;
-  font-size: 11px;
+  font-size: 14px;
 }
 .campaign-head {
   display: flex;
@@ -1368,13 +1368,13 @@ footer svg {
   flex: 1;
 }
 .campaign-head h2 {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 500;
 }
 .campaign-head p {
   color: var(--muted);
   margin-top: 7px;
-  font-size: 11px;
+  font-size: 14px;
 }
 .campaign-view {
   display: flex;
@@ -1391,12 +1391,12 @@ footer svg {
 .campaign-access p {
   flex: 1;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 14px;
 }
 .campaign-access code {
   display: block;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 14px;
   margin-top: 7px;
 }
 .campaign-empty {
@@ -1407,7 +1407,7 @@ footer svg {
   color: var(--accent);
 }
 .campaign-empty h3 {
-  font-size: 18px;
+  font-size: 22px;
   color: var(--text);
   font-weight: 500;
   margin-bottom: 12px;
@@ -1417,7 +1417,7 @@ footer svg {
 }
 .campaign-character h2 small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 400;
 }
 .review-row {
@@ -1433,7 +1433,7 @@ footer svg {
 .review-row small {
   display: block;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 14px;
   margin-top: 5px;
 }
 .toast {
@@ -1452,7 +1452,7 @@ footer svg {
   gap: 18px;
   z-index: 100;
   color: #e6dabf;
-  font-size: 12px;
+  font-size: 14px;
 }
 .modal-backdrop {
   position: fixed;
@@ -1487,14 +1487,14 @@ footer svg {
 }
 .modal h2 {
   font-family: Manrope, sans-serif;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 500;
   margin: 5px 20px 23px 0;
   letter-spacing: -0.5px;
 }
 .modal p {
   color: #98a08c;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.8;
   margin: 12px 0;
 }
@@ -1502,7 +1502,7 @@ footer svg {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  font-size: 10px;
+  font-size: 14px;
   color: #a2ab95;
   margin-bottom: 14px;
 }
@@ -1510,7 +1510,7 @@ footer svg {
 .modal select,
 .modal textarea {
   width: 100%;
-  font-size: 12px;
+  font-size: 14px;
 }
 .modal textarea {
   min-height: 75px;
@@ -1535,7 +1535,7 @@ footer svg {
 .modal summary {
   cursor: pointer;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 14px;
   margin-bottom: 15px;
 }
 .modal .inline-label {
@@ -1567,7 +1567,7 @@ footer svg {
   padding: 6px 9px;
   background: #2b2e23;
   color: #b7bfaa;
-  font-size: 10px;
+  font-size: 14px;
   border-radius: 4px;
 }
 .technique {
@@ -1579,12 +1579,12 @@ footer svg {
   justify-content: space-between;
 }
 .technique h3 {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
 }
 .technique p,
 .technique small {
-  font-size: 10px;
+  font-size: 14px;
   color: var(--muted);
   line-height: 1.8;
 }
@@ -1602,7 +1602,7 @@ footer svg {
   height: 15px;
   background: #292d24;
   border: 1px solid #3b4132;
-  font-size: 8px;
+  font-size: 14px;
 }
 .pattern .origin {
   color: var(--accent);
@@ -1642,7 +1642,7 @@ footer svg {
     margin: 17px 0;
   }
   .resource-value input {
-    font-size: 36px;
+    font-size: 43px;
   }
   .equipment-slot {
     padding: 15px;
@@ -1651,20 +1651,20 @@ footer svg {
     margin: 22px 0 18px;
   }
   .equipment-slot b {
-    font-size: 12px;
+    font-size: 14px;
   }
   .section-title {
     padding: 17px 18px;
   }
   .section-title h2 {
-    font-size: 12px;
+    font-size: 14px;
   }
   td {
     padding-top: 13px;
     padding-bottom: 13px;
   }
   .item-name b {
-    font-size: 11px;
+    font-size: 14px;
   }
   .sidebar {
     width: 230px;
@@ -1690,10 +1690,10 @@ footer svg {
     margin-left: 8px;
   }
   .brand > span {
-    font-size: 19px;
+    font-size: 23px;
   }
   .brand small {
-    font-size: 5px;
+    font-size: 14px;
   }
   .main-shell {
     margin-left: 190px;
@@ -1716,12 +1716,12 @@ footer svg {
     padding: 12px 10px 9px;
   }
   .resource-label {
-    font-size: 7px;
+    font-size: 14px;
     letter-spacing: 0.4px;
     gap: 4px;
   }
   .resource-value input {
-    font-size: 27px;
+    font-size: 32px;
     width: 38px;
   }
   .resource-value > button {
@@ -1729,7 +1729,7 @@ footer svg {
     height: 20px;
   }
   .resource-value span {
-    font-size: 12px;
+    font-size: 14px;
   }
   .resources {
     gap: 8px;
@@ -1738,7 +1738,7 @@ footer svg {
     display: none;
   }
   .heading-actions .button {
-    font-size: 9px;
+    font-size: 14px;
     padding: 9px;
   }
   .inventory-tools {
@@ -1750,7 +1750,7 @@ footer svg {
   }
   .filters button {
     padding: 6px;
-    font-size: 7px;
+    font-size: 14px;
   }
   .equipment-grid {
     gap: 7px;
@@ -1761,19 +1761,19 @@ footer svg {
     padding: 10px;
   }
   .equipment-type {
-    font-size: 6px !important;
+    font-size: 14px !important;
   }
   .slot-weight {
     top: 30px;
   }
   .equipment-slot b {
-    font-size: 9px;
+    font-size: 14px;
   }
   .equipment-slot small {
-    font-size: 7px;
+    font-size: 14px;
   }
   .panel-footer {
-    font-size: 7px;
+    font-size: 14px;
   }
   .bottom-grid {
     gap: 10px;
@@ -1785,16 +1785,16 @@ footer svg {
     gap: 3px;
   }
   .quote {
-    font-size: 10px;
+    font-size: 14px;
   }
   .portrait {
     height: 180px;
   }
   .identity-text h2 {
-    font-size: 22px;
+    font-size: 26px;
   }
   .item-name b {
-    font-size: 9px;
+    font-size: 14px;
   }
   td,
   th {
@@ -1805,7 +1805,7 @@ footer svg {
     padding: 0;
   }
   h1 {
-    font-size: 24px;
+    font-size: 29px;
   }
 }
 @media (max-width: 1000px) {
@@ -1822,7 +1822,7 @@ footer svg {
     gap: 6px;
   }
   .brand > span {
-    font-size: 17px;
+    font-size: 20px;
     letter-spacing: 3px;
   }
   .brand svg {
@@ -1832,14 +1832,14 @@ footer svg {
     letter-spacing: 1px;
   }
   .sidebar nav > button {
-    font-size: 10px;
+    font-size: 14px;
     padding: 12px 8px;
   }
   .workspace-label {
-    font-size: 7px;
+    font-size: 14px;
   }
   .resource-label {
-    font-size: 6px;
+    font-size: 14px;
   }
   .resource-label > svg {
     width: 12px;
@@ -1849,7 +1849,7 @@ footer svg {
   }
   .resource-value input {
     width: 30px;
-    font-size: 24px;
+    font-size: 29px;
   }
   .resource-value > div {
     gap: 3px;
@@ -1859,7 +1859,7 @@ footer svg {
     height: 18px;
   }
   .resource-foot {
-    font-size: 6px;
+    font-size: 14px;
   }
   .heading-actions {
     flex-direction: column;
@@ -1869,7 +1869,7 @@ footer svg {
     height: 162px;
   }
   .character-state {
-    font-size: 7px;
+    font-size: 14px;
     gap: 3px;
   }
   .stat-grid {
@@ -1880,10 +1880,10 @@ footer svg {
     padding: 13px 12px;
   }
   .section-title h2 {
-    font-size: 10px;
+    font-size: 14px;
   }
   .section-title .text-button {
-    font-size: 8px;
+    font-size: 14px;
   }
   .section-caption {
     display: none;
@@ -1892,10 +1892,10 @@ footer svg {
     gap: 8px;
   }
   .load-row > .subtle {
-    font-size: 7px;
+    font-size: 14px;
   }
   .load-row b {
-    font-size: 8px;
+    font-size: 14px;
   }
   .bottom-grid {
     grid-template-columns: 1fr;
@@ -1914,10 +1914,10 @@ footer svg {
     gap: 7px;
   }
   .item-name small {
-    font-size: 7px;
+    font-size: 14px;
   }
   .item-name b {
-    font-size: 8px;
+    font-size: 14px;
   }
   .panel-footer > span:nth-child(2) {
     display: none;
@@ -1964,7 +1964,7 @@ footer svg {
     gap: 8px;
   }
   .save-state {
-    font-size: 8px;
+    font-size: 14px;
   }
   .topbar-divider,
   .mode-pill {
@@ -1978,7 +1978,7 @@ footer svg {
     gap: 14px;
   }
   .resource-label {
-    font-size: 7px;
+    font-size: 14px;
   }
   .portrait {
     height: 180px;
@@ -1987,23 +1987,23 @@ footer svg {
     flex-direction: row;
   }
   .resource-value input {
-    font-size: 26px;
+    font-size: 31px;
     width: 34px;
   }
   .resource-value > button {
     width: 18px;
   }
   .resource-foot {
-    font-size: 7px;
+    font-size: 14px;
   }
   .brand > span {
-    font-size: 22px;
+    font-size: 26px;
   }
   .sidebar nav > button {
-    font-size: 12px;
+    font-size: 14px;
   }
   .item-name b {
-    font-size: 9px;
+    font-size: 14px;
   }
 }
 @media (max-width: 620px) {
@@ -2016,17 +2016,17 @@ footer svg {
     flex-wrap: wrap;
   }
   .page-heading h1 {
-    font-size: 24px;
+    font-size: 29px;
   }
   .page-heading p {
-    font-size: 10px;
+    font-size: 14px;
   }
   .heading-actions {
     width: 100%;
     padding-top: 0;
   }
   .heading-actions .button {
-    font-size: 10px;
+    font-size: 14px;
     padding: 10px 13px;
   }
   .sheet-grid {
@@ -2055,7 +2055,7 @@ footer svg {
     padding: 12px 10px 9px;
   }
   .attributes .section-title h2 {
-    font-size: 9px;
+    font-size: 14px;
   }
   .stat-grid {
     gap: 5px;
@@ -2065,15 +2065,15 @@ footer svg {
     padding: 5px 0;
   }
   .stat > span {
-    font-size: 7px;
+    font-size: 14px;
   }
   .stat strong {
-    font-size: 18px;
+    font-size: 22px;
     margin: 2px 0;
   }
   .stat > b {
     padding: 0 9px;
-    font-size: 9px;
+    font-size: 14px;
     line-height: 15px;
   }
   .mobility .section-title {
@@ -2087,15 +2087,15 @@ footer svg {
     height: 13px;
   }
   .mobility-grid strong {
-    font-size: 15px;
+    font-size: 18px;
     margin-top: 4px;
   }
   .mobility-grid strong small {
-    font-size: 6px;
+    font-size: 14px;
     margin-left: 2px;
   }
   .mobility-grid > div > span {
-    font-size: 6px;
+    font-size: 14px;
     margin-top: 3px;
   }
   .mobility .panel-footer {
@@ -2106,10 +2106,10 @@ footer svg {
   }
   .character-state {
     flex-wrap: wrap;
-    font-size: 6px;
+    font-size: 14px;
   }
   .identity-text h2 {
-    font-size: 23px;
+    font-size: 28px;
   }
   .content-column {
     gap: 13px;
@@ -2118,7 +2118,7 @@ footer svg {
     padding: 12px 9px 10px;
   }
   .resource-label {
-    font-size: 6px;
+    font-size: 14px;
     gap: 4px;
   }
   .resource-label > svg {
@@ -2132,27 +2132,27 @@ footer svg {
     gap: 2px;
   }
   .resource-value input {
-    font-size: 27px;
+    font-size: 32px;
     width: 34px;
   }
   .resource-value > button {
     width: 18px;
     height: 20px;
-    font-size: 12px;
+    font-size: 14px;
   }
   .resource-value > div {
     gap: 3px;
   }
   .resource-value span {
-    font-size: 11px;
+    font-size: 14px;
   }
   .resource-foot {
-    font-size: 6px;
+    font-size: 14px;
     min-height: 18px;
     line-height: 1.5;
   }
   .resource-foot button {
-    font-size: 6px;
+    font-size: 14px;
     text-align: left;
   }
   .survival-bar {
@@ -2162,13 +2162,13 @@ footer svg {
     display: none;
   }
   .survival-bar b {
-    font-size: 9px;
+    font-size: 14px;
   }
   .equipment-slot b {
-    font-size: 9px;
+    font-size: 14px;
   }
   .equipment-slot small {
-    font-size: 7px;
+    font-size: 14px;
   }
   .equipment-grid {
     gap: 7px;
@@ -2180,23 +2180,23 @@ footer svg {
     top: 28px;
   }
   .equipment-type {
-    font-size: 6px !important;
+    font-size: 14px !important;
   }
   .table-scroll table {
     min-width: 380px;
   }
   th {
-    font-size: 6px;
+    font-size: 14px;
     padding: 9px 7px;
   }
   td {
     padding: 10px 7px;
   }
   .item-name b {
-    font-size: 9px;
+    font-size: 14px;
   }
   .status {
-    font-size: 6px;
+    font-size: 14px;
   }
   .inventory-tools {
     gap: 5px;
@@ -2205,7 +2205,7 @@ footer svg {
     max-width: 100px;
   }
   .filters button {
-    font-size: 7px;
+    font-size: 14px;
     padding: 6px;
   }
   .bottom-grid {
@@ -2215,11 +2215,11 @@ footer svg {
     display: block;
   }
   .notes-mini p {
-    font-size: 10px;
+    font-size: 14px;
     margin: 4px 12px 12px;
   }
   .notes-mini > .subtle {
-    font-size: 7px;
+    font-size: 14px;
     margin-left: 12px;
   }
   .magic-numbers {
@@ -2227,10 +2227,10 @@ footer svg {
     gap: 16px;
   }
   .magic-numbers > div > span {
-    font-size: 6px;
+    font-size: 14px;
   }
   .magic-numbers b {
-    font-size: 17px;
+    font-size: 20px;
   }
   .memory-dots {
     display: none;
@@ -2240,7 +2240,7 @@ footer svg {
     gap: 4px;
   }
   .mini-spells button {
-    font-size: 6px;
+    font-size: 14px;
     padding: 3px 5px;
   }
   .rules-grid {
@@ -2257,16 +2257,16 @@ footer svg {
     gap: 10px;
   }
   .campaign-head h2 {
-    font-size: 16px;
+    font-size: 19px;
   }
   .campaign-head p {
-    font-size: 10px;
+    font-size: 14px;
   }
   .campaign-head > div {
     min-width: 180px;
   }
   .campaign-access code {
-    font-size: 9px;
+    font-size: 14px;
   }
   .review-row {
     flex-wrap: wrap;
@@ -2282,32 +2282,32 @@ footer svg {
     max-height: 94vh;
   }
   .modal h2 {
-    font-size: 20px;
+    font-size: 24px;
   }
   .form-grid.three {
     grid-template-columns: 1fr 1fr;
   }
   .spell-title b {
-    font-size: 10px;
+    font-size: 14px;
   }
   .spell-title small {
-    font-size: 8px;
+    font-size: 14px;
   }
   .memorize {
-    font-size: 7px;
+    font-size: 14px;
   }
   footer {
     margin-top: 22px;
-    font-size: 7px;
+    font-size: 14px;
   }
   footer > span:last-child {
     display: none;
   }
   .breadcrumb {
-    font-size: 9px;
+    font-size: 14px;
   }
   .save-state {
-    font-size: 7px;
+    font-size: 14px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -2324,11 +2324,11 @@ footer svg {
   gap: 20px;
 }
 .pattern-editor b {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 500;
 }
 .pattern-editor p {
-  font-size: 10px;
+  font-size: 14px;
   margin: 7px 0;
 }
 .pattern.editable {
@@ -2340,7 +2340,7 @@ footer svg {
   background: #2c3026;
   border: 1px solid #464c3b;
   padding: 0;
-  font-size: 10px;
+  font-size: 14px;
   border-radius: 3px;
 }
 .pattern.editable button.hit {
@@ -2368,11 +2368,11 @@ footer svg {
   border: 1px solid #3b4230;
   border-radius: 5px;
   color: var(--accent);
-  font-size: 13px;
+  font-size: 16px;
 }
 .pattern-wrap > small {
   display: block;
-  font-size: 8px;
+  font-size: 14px;
   color: var(--accent);
   margin-bottom: 6px;
 }
@@ -2382,11 +2382,11 @@ footer svg {
   align-items: center;
   padding: 18px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 14px;
   flex-wrap: wrap;
 }
 .dm-summary b {
-  font-size: 20px;
+  font-size: 24px;
   color: var(--accent);
   margin-right: 7px;
 }
@@ -2457,11 +2457,11 @@ footer svg {
 }
 .catalog-technique summary span,
 .technique-rank {
-  font-size: 9px;
+  font-size: 14px;
   color: var(--muted);
 }
 .catalog-technique summary strong {
-  font-size: 10px;
+  font-size: 14px;
   color: var(--accent);
   font-weight: 500;
   margin-left: auto;
@@ -2493,17 +2493,17 @@ footer svg {
   margin: 15px 0;
 }
 .training-balance span {
-  font-size: 12px;
+  font-size: 14px;
 }
 .training-balance b {
   color: var(--accent);
-  font-size: 19px;
+  font-size: 23px;
   margin: 0 5px;
 }
 .training-balance small {
   display: block;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 14px;
   margin-top: 7px;
 }
 .learn-button {
@@ -2513,7 +2513,7 @@ footer svg {
   padding: 0 16px 16px;
   color: var(--muted);
   line-height: 1.8;
-  font-size: 11px;
+  font-size: 14px;
 }
 .training-sections {
   display: flex;
@@ -2532,13 +2532,13 @@ footer svg {
   min-width: 0;
 }
 .personal-skill h3 {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 .personal-skill p,
 .skill-description {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.7;
   margin: 8px 0;
   white-space: pre-wrap;
@@ -2553,5 +2553,197 @@ footer svg {
   }
   .personal-skill > div {
     min-width: 100%;
+  }
+}
+
+/* Readable sheet controls and progressive weapon trees. */
+button,
+input,
+select,
+textarea {
+  font-size: inherit;
+}
+input,
+select,
+.button {
+  min-height: 38px;
+}
+.item-unvalidated {
+  color: #929294;
+  background: #202024;
+}
+.item-unvalidated .item-icon,
+.item-unvalidated .item-name {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.skill-forest {
+  display: grid;
+  gap: 14px;
+}
+.skill-tree {
+  border: 1px solid #454044;
+  border-radius: 8px;
+  padding: 16px;
+}
+.skill-tree summary {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+.skill-tree summary span {
+  margin-left: auto;
+}
+.tree-branches {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  padding-top: 18px;
+}
+.tree-rank {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tree-rank + .tree-rank:before {
+  content: "→";
+  position: absolute;
+  left: -20px;
+  top: 70px;
+  color: #dc9b72;
+}
+.skill-node {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #665044;
+  padding: 14px;
+  border-radius: 8px;
+}
+.skill-node.known {
+  border-color: #698775;
+  background: #202b25;
+}
+.skill-node.locked {
+  border-color: #444;
+  color: #aaa;
+}
+.skill-node .button {
+  white-space: normal;
+  margin-top: auto;
+}
+.resource-label {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.character-list-item {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+@media (max-width: 900px) {
+  .tree-branches {
+    grid-template-columns: 1fr;
+  }
+  .tree-rank + .tree-rank:before {
+    content: "↓";
+    top: -24px;
+    left: 50%;
+  }
+  .campaign-head {
+    flex-wrap: wrap;
+  }
+}
+
+.section-title h2 {
+  font-size: 18px;
+}
+.item-name b,
+.equipment-slot b,
+.sidebar nav > button,
+.button {
+  font-size: 16px;
+}
+.icon-button {
+  min-width: 30px;
+  min-height: 30px;
+}
+.resource-value > button {
+  min-width: 30px;
+  min-height: 30px;
+}
+.resource-value input {
+  width: 3ch;
+}
+.equipment-slot.vacant {
+  color: #aaa99d;
+}
+@media (max-width: 800px) {
+  .sidebar:not(.open) {
+    visibility: hidden;
+  }
+}
+@media (max-width: 620px) {
+  .character-column {
+    display: flex;
+    flex-direction: column;
+  }
+  .character-column > * {
+    width: 100%;
+  }
+  .resources,
+  .equipment-grid,
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  .equipment-slot {
+    min-height: auto;
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 8px 12px;
+    text-align: left;
+  }
+  .equipment-type {
+    grid-column: 1 / -1;
+  }
+  .equipment-slot > svg {
+    grid-row: 2 / 4;
+    margin: 0;
+  }
+  .equipment-slot small {
+    grid-column: 2;
+  }
+  .resource-value {
+    justify-content: space-between;
+  }
+  .resource-label {
+    font-size: 16px;
+  }
+  .resource-value input {
+    font-size: 36px;
+  }
+  .mobility-grid {
+    gap: 12px;
+    padding: 16px;
+  }
+  .inventory-tools {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .filters {
+    flex-wrap: wrap;
+  }
+  .breadcrumb {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  .topbar {
+    height: auto;
+    min-height: 60px;
+  }
+  .magic-numbers {
+    flex-wrap: wrap;
   }
 }

@@ -1,7 +1,7 @@
 import { learnTechnique, learnPersonalSkill } from "../../../lib/combat";
 import { getDb } from "../../../db";
 import { characters, campaigns } from "../../../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull, sql } from "drizzle-orm";
 import {
   createCharacter,
   validate,
@@ -27,7 +27,17 @@ export async function POST(req: Request) {
     const body = (await req.json()) as Record<string, any>;
     const db = getDb();
     const { op, id, token } = body;
+    if (op === "campaignInfo") {
+      const [campaign] = await db
+        .select({ id: campaigns.id, name: campaigns.name })
+        .from(campaigns)
+        .where(eq(campaigns.id, id || ""));
+      if (!campaign) throw Error("Campagne introuvable.");
+      return Response.json(campaign);
+    }
     if (op === "create") {
+      if (!body.campaignId)
+        throw Error("Choisissez une campagne avant de créer un personnage.");
       const token = secret();
       const c = createCharacter({
         name: body.name,
@@ -35,24 +45,117 @@ export async function POST(req: Request) {
         stats: body.stats,
         magic: body.magic,
       });
+      let admin = false;
+      let campaignInfo: { id: string; name: string } | null = null;
+      if (body.campaignId) {
+        const [target] = await db
+          .select()
+          .from(campaigns)
+          .where(eq(campaigns.id, body.campaignId));
+        if (!target) throw Error("Campagne introuvable.");
+        if (body.gmToken) {
+          admin = target.tokenHash === (await hash(body.gmToken));
+          if (!admin)
+            return Response.json(
+              { error: "Accès administrateur invalide pour cette campagne." },
+              { status: 403 },
+            );
+        }
+        c.campaignId = target.id;
+        c.reviewStatus = admin ? "approved" : "pending";
+        campaignInfo = { id: target.id, name: target.name };
+      }
       await db.insert(characters).values({
         id: c.id,
+        campaignId: c.campaignId,
         tokenHash: await hash(token),
         data: JSON.stringify(c),
         revision: 0,
       });
-      return Response.json({ character: c, token });
+      return Response.json({
+        character: c,
+        token,
+        permissions: { isOwner: true, canValidate: admin },
+        campaign: campaignInfo,
+      });
     }
     if (op === "campaignCreate") {
-      if (!body.name?.trim()) throw Error("Nom de campagne requis.");
+      if (typeof body.name !== "string" || !body.name.trim())
+        throw Error("Nom de campagne requis.");
       const id = crypto.randomUUID(),
-        token = secret();
-      await db.insert(campaigns).values({
+        token = secret(),
+        tokenHash = await hash(token),
+        name = body.name.trim().slice(0, 100);
+      let character: Character | null = null;
+      if (body.characterId) {
+        const [row] = await db
+          .select()
+          .from(characters)
+          .where(eq(characters.id, body.characterId));
+        if (!row || row.tokenHash !== (await hash(body.characterToken || "")))
+          return Response.json(
+            { error: "Vous devez posséder le personnage pour le rattacher." },
+            { status: 403 },
+          );
+        if (row.campaignId)
+          throw Error("Ce personnage appartient déjà à une campagne.");
+        if (body.characterRevision !== row.revision)
+          return Response.json(
+            {
+              error:
+                "La fiche a changé. Actualisez-la avant de créer la campagne.",
+            },
+            { status: 409 },
+          );
+        character = normalizeStored(JSON.parse(row.data));
+        character.campaignId = id;
+        character.reviewStatus = "approved";
+        character.revision++;
+        const guard = and(
+          eq(characters.id, row.id),
+          eq(characters.revision, row.revision),
+          isNull(characters.campaignId),
+        );
+        const result = await db.batch([
+          db
+            .insert(campaigns)
+            .select(
+              db
+                .select({
+                  id: sql<string>`${id}`.as("id"),
+                  tokenHash: sql<string>`${tokenHash}`.as("tokenHash"),
+                  name: sql<string>`${name}`.as("name"),
+                })
+                .from(characters)
+                .where(guard),
+            )
+            .returning({ id: campaigns.id }),
+          db
+            .update(characters)
+            .set({
+              campaignId: id,
+              data: JSON.stringify(character),
+              revision: character.revision,
+            })
+            .where(guard)
+            .returning({ id: characters.id }),
+        ]);
+        if (!result[0].length || !result[1].length)
+          return Response.json(
+            {
+              error:
+                "La fiche a changé. Actualisez-la avant de créer la campagne.",
+            },
+            { status: 409 },
+          );
+      } else await db.insert(campaigns).values({ id, tokenHash, name });
+      return Response.json({
         id,
-        name: body.name.slice(0, 100),
-        tokenHash: await hash(token),
+        token,
+        name,
+        character,
+        permissions: character ? { isOwner: true, canValidate: true } : null,
       });
-      return Response.json({ id, token, name: body.name });
     }
     if (op === "campaign") {
       const [campaign] = await db
@@ -88,12 +191,25 @@ export async function POST(req: Request) {
         .where(eq(campaigns.id, old.campaignId));
       gm = !!campaign && campaign.tokenHash === (await hash(body.gmToken));
     }
-    if (row.tokenHash !== (await hash(token || "")) && !gm)
+    const isOwner = row.tokenHash === (await hash(token || ""));
+    if (!isOwner && !gm)
       return Response.json(
         { error: "Le lien secret est nécessaire pour accéder à cette fiche." },
         { status: 403 },
       );
-    if (op === "load") return Response.json({ character: old });
+    if (op === "load") {
+      const [campaignInfo] = old.campaignId
+        ? await db
+            .select({ id: campaigns.id, name: campaigns.name })
+            .from(campaigns)
+            .where(eq(campaigns.id, old.campaignId))
+        : [];
+      return Response.json({
+        character: old,
+        permissions: { isOwner, canValidate: gm },
+        campaign: campaignInfo ?? null,
+      });
+    }
     if (op === "join") {
       const [campaign] = await db
         .select()
@@ -103,9 +219,11 @@ export async function POST(req: Request) {
       if (old.campaignId)
         throw Error("Ce personnage appartient déjà à une campagne.");
       old.campaignId = campaign.id;
-      old.reviewStatus = "pending";
+      const targetAdmin =
+        !!body.gmToken && campaign.tokenHash === (await hash(body.gmToken));
+      old.reviewStatus = targetAdmin ? "approved" : "pending";
       old.revision++;
-      await db
+      const joined = await db
         .update(characters)
         .set({
           campaignId: campaign.id,
@@ -114,8 +232,18 @@ export async function POST(req: Request) {
         })
         .where(
           and(eq(characters.id, id), eq(characters.revision, row.revision)),
+        )
+        .returning({ id: characters.id });
+      if (!joined.length)
+        return Response.json(
+          { error: "La fiche a changé. Actualisez-la." },
+          { status: 409 },
         );
-      return Response.json({ character: old });
+      return Response.json({
+        character: old,
+        permissions: { isOwner, canValidate: targetAdmin },
+        campaign: { id: campaign.id, name: campaign.name },
+      });
     }
     if (op === "learnTechnique" || op === "learnSkill") {
       if (body.revision !== old.revision)

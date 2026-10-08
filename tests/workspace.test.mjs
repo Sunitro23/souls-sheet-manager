@@ -24,7 +24,8 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   assert.equal((await call('gm',{op:'addPlayer',campaignId,username:'alice'})).status,200);
   assert.equal((await call('gm',{op:'addPlayer',campaignId,username:'bob'})).status,200);
   const invalid=await call('alice',{op:'createCharacter',campaignId,name:'Hero',stats:{FOR:20,DEX:20,CON:20,INT:20,SAG:20,CHA:20}});assert.equal(invalid.status,400);
-  const created=await call('alice',{op:'createCharacter',campaignId,name:'Hero',race:'Humain',stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8},magic:'SAG'});assert.equal(created.status,200,created.error);const id=created.character.id;
+  const portrait='data:image/png;base64,iVBORw0KGgo=';
+  const created=await call('alice',{op:'createCharacter',campaignId,name:'Hero',race:'Humain',portrait,stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8},magic:'SAG'});assert.equal(created.status,200,created.error);const id=created.character.id;assert.equal(created.character.portrait,portrait);
   assert.equal((await call('bob',{op:'deleteCharacter',campaignId,id,revision:0,confirmName:'Hero'})).status,403);
   assert.equal((await call('outsider',{op:'campaign',campaignId})).status,403);
   assert.equal((await call('alice',{op:'deleteCharacter',campaignId,id,revision:0,confirmName:'wrong'})).status,400);
@@ -35,7 +36,7 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   assert.equal((await call('bob',{op:'trashCharacters',campaignId})).characters.length,0);
   assert.equal((await call('bob',{op:'restoreCharacter',campaignId,id})).status,403);
   assert.equal((await call('gm',{op:'restoreCharacter',campaignId,id})).status,200);
-  const restored=(await call('alice',{op:'campaign',campaignId})).characters[0];assert.equal(restored.revision,2);
+  const restored=(await call('alice',{op:'campaign',campaignId})).characters[0];assert.equal(restored.revision,2);assert.equal(restored.portrait,portrait);
   assert.equal((await call('alice',{op:'saveCharacter',campaignId,id,revision:restored.revision,character:{...restored,notes:'Retrouvé'}})).status,200);
   assert.equal((await call('alice',{op:'deleteCampaign',campaignId,revision:0,confirmName:'Test table'})).status,403);
   assert.equal((await call('gm',{op:'deleteCampaign',campaignId,revision:0,confirmName:'Test table'})).status,200);

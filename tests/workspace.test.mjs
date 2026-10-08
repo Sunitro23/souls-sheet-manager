@@ -25,7 +25,7 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   assert.equal((await call('gm',{op:'addPlayer',campaignId,username:'bob'})).status,200);
   const invalid=await call('alice',{op:'createCharacter',campaignId,name:'Hero',stats:{FOR:20,DEX:20,CON:20,INT:20,SAG:20,CHA:20}});assert.equal(invalid.status,400);
   const portrait='data:image/png;base64,iVBORw0KGgo=';
-  const created=await call('alice',{op:'createCharacter',campaignId,name:'Hero',race:'Humain',portrait,stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8},magic:'SAG'});assert.equal(created.status,200,created.error);const id=created.character.id;assert.equal(created.character.portrait,portrait);
+  const created=await call('alice',{op:'createCharacter',campaignId,name:'Hero',race:'Humains',portrait,stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8},magic:'SAG'});assert.equal(created.status,200,created.error);const id=created.character.id;assert.equal(created.character.portrait,portrait);
   assert.equal((await call('bob',{op:'deleteCharacter',campaignId,id,revision:0,confirmName:'Hero'})).status,403);
   assert.equal((await call('outsider',{op:'campaign',campaignId})).status,403);
   assert.equal((await call('alice',{op:'deleteCharacter',campaignId,id,revision:0,confirmName:'wrong'})).status,400);
@@ -48,7 +48,7 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   assert.equal((await call('alice',{op:'campaign',campaignId})).characters[0].notes,'Retrouvé');
   const current=await call('gm',{op:'campaign',campaignId});current.tree.races=['Elfe'];
   assert.equal((await call('gm',{op:'saveCampaign',campaignId,revision:current.campaign.revision,name:current.campaign.name,img:'',tree:current.tree})).status,200);
-  assert.equal((await call('alice',{op:'createCharacter',campaignId,name:'Other',race:'Humain',stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8}})).status,400);
+  assert.equal((await call('alice',{op:'createCharacter',campaignId,name:'Other',race:'Humains',stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8}})).status,400);
   assert.equal((await call('gm',{op:'removePlayer',campaignId,playerId:'alice'})).status,200);
   assert.equal((await call('alice',{op:'campaign',campaignId})).status,403);
   assert.equal((await call('gm',{op:'campaign',campaignId})).characters.length,1);

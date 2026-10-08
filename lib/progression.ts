@@ -1,9 +1,10 @@
 import { weaponTypes, statNames } from './rules.ts';
 import { predefinedTechniques, effectText } from './combat.ts';
 export const families=['Lames','Armes longues','Armes d’impact','Armes de tir','Classe','Race','Personnel'] as const;
+export const activeFamilies=families.filter(f=>f!=='Classe');
 export type Family=typeof families[number];
-export type Node = {id:string; family?:Family; characterId?:string; tier?:'base'|'advanced'|'ultimate'; draft?:boolean; name:string; description:string; kind:'technique'|'competence'|'stat'|'rp'; weapon:string; cost:number; level:number; requires:string[]; className:string; race:string; stat:string; amount:number};
-export type Tree = {version?:number; pointsPerLevel:number; nodes:Node[]; legacyNodes?:Node[]; weaponFamilies?:Record<string,Family>};
+export type Node = {id:string; family?:Family; characterId?:string; tier?:'base'|'advanced'|'ultimate'|'expert'; draft?:boolean; name:string; description:string; kind:'technique'|'competence'|'stat'|'rp'; weapon:string; cost:number; level:number; requires:string[]; className:string; race:string; stat:string; amount:number};
+export type Tree = {version?:number; races?:string[]; pointsPerLevel:number; nodes:Node[]; legacyNodes?:Node[]; weaponFamilies?:Record<string,Family>};
 function legacyDefaultTree():Tree {
  const nodes:Node[]=[];
  for(const w of weaponTypes){
@@ -21,33 +22,44 @@ export const defaultWeaponFamilies:Record<string,Family>={
 };
 export function defaultTree():Tree {
  const definitions=[
-  {family:'Lames',id:'blades',base:['Swing','Estoc'],advanced:['Swipe','Cyclone','Jump Attack']},
-  {family:'Armes longues',id:'long',base:['Swipe','Slam'],advanced:['Cyclone','Jump Attack','Super Cyclone']},
-  {family:'Armes d’impact',id:'impact',base:['Swing','Slam'],advanced:['Swipe avec recul','Jump Attack','Earth Smasher']},
-  {family:'Armes de tir',id:'ranged',base:['Tir simple','Tir chargé'],advanced:['Flèche perçante','Tir en rafale','Pluie de flèches']}
+  {family:'Lames',id:'blades',base:['Swing','Estoc'],advanced:['Swipe','Cyclone','Jump Attack'],final:1},
+  {family:'Armes longues',id:'long',base:['Swipe','Slam'],advanced:['Cyclone','Jump Attack','Super Cyclone'],final:2},
+  {family:'Armes d’impact',id:'impact',base:['Swing','Slam'],advanced:['Swipe avec recul','Jump Attack','Earth Smasher'],final:2},
+  {family:'Armes de tir',id:'ranged',base:['Tir simple','Tir chargé'],advanced:['Flèche perçante','Tir en rafale','Pluie de flèches'],final:2}
  ] as const;
  const nodes:Node[]=[];
  for(const f of definitions){
   const baseIds=f.base.map((_,i)=>`family:${f.id}:base:${i}`),advancedIds=f.advanced.map((_,i)=>`family:${f.id}:advanced:${i}`);
   const make=(id:string,name:string,tier:Node['tier'],requires:string[],cost:number):Node=>({id,name,family:f.family,tier,description:'',kind:'technique',weapon:'',cost,level:1,requires,className:'',race:'',characterId:'',stat:'',amount:0,draft:false});
   f.base.forEach((name,i)=>nodes.push(make(baseIds[i],name,'base',[],0)));
-  f.advanced.forEach((name,i)=>nodes.push(make(advancedIds[i],name,'advanced',[...baseIds],1)));
-  nodes.push({...make(`family:${f.id}:ultimate`,'Technique ultime','ultimate',[...advancedIds],3),draft:true,description:'À définir par le GM.'});
+  f.advanced.forEach((name,i)=>nodes.push(make(advancedIds[i],name,i===f.final?'expert':'advanced',i===f.final?advancedIds.filter((_,j)=>j!==f.final):[...baseIds],i===f.final?2:1)));
+  for(const n of nodes.filter(n=>n.family===f.family)){const category=({'Lames':'Épées','Armes longues':'Hallebardes','Armes d’impact':'Great Hammers','Armes de tir':'Arcs'} as Record<string,string>)[f.family];const technique=predefinedTechniques({category,damage:''}).find(t=>t.name===n.name);if(technique)n.description=[effectText(technique.effects),`END : ${technique.end}. Portée et zone selon le type d’arme.`,n.tier==='expert'?({'Lames':'Attaque circulaire couvrant toutes les directions autour du porteur.','Armes longues':'Attaque circulaire avec recul de 2 cases.','Armes d’impact':'Attaque de zone qui immobilise jusqu’à la fin du prochain tour de la cible.','Armes de tir':'Attaque de zone centrée sur une cible distante.'} as Record<string,string>)[f.family]:''].filter(Boolean).join('\n');}
  }
- return {version:2,pointsPerLevel:2,nodes,weaponFamilies:{...defaultWeaponFamilies}};
+ return {version:3,races:[],pointsPerLevel:2,nodes,weaponFamilies:{...defaultWeaponFamilies}};
 }
 export function normalizeTree(t:Tree):Tree {
- if(t.version===2)return {...t,weaponFamilies:t.weaponFamilies??{...defaultWeaponFamilies}};
- // Keep the previous catalogue intact for GM recovery and already purchased nodes.
+ if(t.version===3)return {...t,races:t.races??[],weaponFamilies:t.weaponFamilies??{...defaultWeaponFamilies}};
+ if(t.version===2){
+  const defaults=defaultTree(),finals=defaults.nodes.filter(n=>n.tier==='expert');
+  const replacements=new Map(finals.map(n=>[n.id.replace(/:advanced:\d+$/,':ultimate'),n.id]));
+  const oldUltimates=t.nodes.filter(n=>replacements.has(n.id));
+  const nodes=t.nodes.filter(n=>!replacements.has(n.id)).map(n=>{
+   const d=defaults.nodes.find(x=>x.id===n.id);
+   const updated=d?{...n,tier:d.tier,requires:d.requires.filter(id=>t.nodes.some(x=>x.id===id)),description:n.description?.trim()?n.description:d.description,draft:n.draft??false,cost:d.tier==='expert'&&n.cost===1?2:n.cost}:n;
+   return {...updated,requires:[...new Set(updated.requires.map(id=>replacements.get(id)??id))].filter(id=>id!==n.id)};
+  });
+  return {...t,version:3,races:t.races??[],nodes,legacyNodes:[...(t.legacyNodes??[]),...oldUltimates],weaponFamilies:t.weaponFamilies??{...defaultWeaponFamilies}};
+ }
  return {...defaultTree(),pointsPerLevel:t.pointsPerLevel,legacyNodes:[...(t.legacyNodes??[]),...t.nodes]};
 }
 export function matchesCharacter(n:Node,c:any){return (!n.className||n.className===c.className)&&(!n.race||n.race===c.race)&&(!n.characterId||n.characterId===c.id);}
 export function nodesForFamily(tree:Tree,family:string,c:any){return tree.nodes.filter(n=>n.family===family&&matchesCharacter(n,c));}
 export function validateTree(t:Tree){
  if(!t||!Number.isInteger(t.pointsPerLevel)||t.pointsPerLevel<0||t.pointsPerLevel>100||!Array.isArray(t.nodes)||t.nodes.length>500)throw Error('Arbre invalide.');
+ if(t.races!==undefined&&(!Array.isArray(t.races)||t.races.length>100||t.races.some(r=>typeof r!=='string'||!r.trim()||r.length>100)||new Set(t.races).size!==t.races.length))throw Error('Liste de races invalide.');
  const ids=new Set(t.nodes.map(n=>n.id));if(ids.size!==t.nodes.length)throw Error('Identifiants de nœuds dupliqués.');
  for(const n of t.nodes){if(!n.id||typeof n.name!=='string'||!n.name.trim()||n.name.length>100||typeof n.description!=='string'||n.description.length>3000||!['technique','competence','stat','rp'].includes(n.kind)||!Number.isInteger(n.cost)||n.cost<0||n.cost>100||!Number.isInteger(n.level)||n.level<1||n.level>1000||!Array.isArray(n.requires)||n.requires.some(r=>!ids.has(r)||r===n.id)||typeof n.weapon!=='string'||typeof n.className!=='string'||typeof n.race!=='string')throw Error('Nœud invalide.');
- if(t.version===2){if(!families.includes(n.family as Family))throw Error('Famille invalide.');if(n.family==='Classe'&&!n.className.trim())throw Error('Choisissez une classe.');if(n.family==='Race'&&!n.race.trim())throw Error('Choisissez une race.');if(n.family==='Personnel'&&!n.characterId)throw Error('Choisissez le personnage de cet arbre personnel.');if(n.draft!==undefined&&typeof n.draft!=='boolean')throw Error('État du déblocage invalide.');for(const id of n.requires){const p=t.nodes.find(x=>x.id===id)!;if(p.family!==n.family||p.className!==n.className||p.race!==n.race||(p.characterId??'')!==(n.characterId??''))throw Error('Un prérequis doit appartenir au même arbre.');}}
+ if((t.version??0)>=2){if(!families.includes(n.family as Family))throw Error('Famille invalide.');if(n.family==='Classe'&&!n.className.trim())throw Error('Choisissez une classe.');if(n.family==='Race'&&!n.race.trim())throw Error('Choisissez une race.');if(n.family==='Personnel'&&!n.characterId)throw Error('Choisissez le personnage de cet arbre personnel.');if(n.draft!==undefined&&typeof n.draft!=='boolean')throw Error('État du déblocage invalide.');for(const id of n.requires){const p=t.nodes.find(x=>x.id===id)!;if(p.family!==n.family||p.className!==n.className||p.race!==n.race||(p.characterId??'')!==(n.characterId??''))throw Error('Un prérequis doit appartenir au même arbre.');}}
  if(n.kind==='stat'&&(!statNames.includes(n.stat as any)||!Number.isInteger(n.amount)||n.amount<1||n.amount>10))throw Error('Bonus de caractéristique invalide.');}
  if(t.weaponFamilies&&Object.entries(t.weaponFamilies).some(([key,v])=>!weaponTypes.some(w=>w.name===key)||!families.slice(0,4).includes(v)))throw Error('Attribution de famille invalide.');
  const done=new Set<string>(),active=new Set<string>();function visit(id:string){if(active.has(id))throw Error('Les prérequis forment une boucle.');if(done.has(id))return;active.add(id);t.nodes.find(n=>n.id===id)!.requires.forEach(visit);active.delete(id);done.add(id);}t.nodes.forEach(n=>visit(n.id));return t;

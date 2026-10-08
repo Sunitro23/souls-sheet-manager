@@ -15,6 +15,13 @@
       "when": 1791465539017,
       "tag": "0001_reflective_dreadnoughts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791477636708,
+      "tag": "0002_left_masked_marvel",
+      "breakpoints": true
     }
   ]
 }

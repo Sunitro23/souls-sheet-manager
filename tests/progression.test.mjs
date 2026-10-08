@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {defaultTree,validateTree,unlock,remaining} from '../lib/progression.ts';
+const tree=defaultTree();
+test('catalogue complet sans boucle ni doublon',()=>{assert.equal(validateTree(tree),tree);assert.ok(tree.nodes.length>50)});
+test('déblocages soumis aux prérequis et au solde',()=>{const expert=tree.nodes.find(n=>n.requires.length>1);const c={level:3,stats:{FOR:10},unlocks:[],className:'',race:''};assert.throws(()=>unlock(c,tree,expert.id),/Prérequis/);let learned=c;for(const id of expert.requires)learned=unlock(learned,tree,id);learned=unlock(learned,tree,expert.id);assert.equal(remaining(learned,tree),0);assert.throws(()=>unlock(learned,tree,expert.id),/Déjà/);assert.throws(()=>unlock({...c,level:1},tree,expert.requires[0]),/Points/)});
+test('bonus de stat, classe et race',()=>{const n={id:'stat',name:'Force',description:'',kind:'stat',weapon:'',cost:1,level:2,requires:[],className:'Guerrier',race:'Humain',stat:'FOR',amount:2};const t={pointsPerLevel:2,nodes:[n]};const c={level:2,stats:{FOR:10},unlocks:[],className:'Mage',race:'Humain'};assert.throws(()=>unlock(c,t,n.id),/Prérequis/);const updated=unlock({...c,className:'Guerrier'},t,n.id);assert.equal(updated.stats.FOR,12);assert.equal(c.stats.FOR,10);assert.equal(remaining(updated,t),1)});
+test('un arbre ne peut pas contenir une boucle',()=>{const n=tree.nodes[0];assert.throws(()=>validateTree({pointsPerLevel:2,nodes:[{...n,id:'a',requires:['b']},{...n,id:'b',requires:['a']}]}),/boucle/)});
+test('changer le coût ne réécrit pas les acquisitions',()=>{const n=tree.nodes.find(n=>n.cost===1&&!n.requires.length);const c=unlock({level:2,stats:{},unlocks:[]},tree,n.id);assert.equal(remaining(c,{...tree,nodes:tree.nodes.map(x=>({...x,cost:99}))}),1)});

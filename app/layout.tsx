@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./v2.css";
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' as const };
 export const metadata: Metadata = {
   title: "Cendres — Votre personnage, chaque détail",

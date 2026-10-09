@@ -392,3 +392,19 @@ test("admin access migrates and keeps independent campaign capabilities", () => 
   storage.setItem("cendres-campaigns", "broken");
   assert.equal(readCampaignAccess(storage)[0].token, "renewed");
 });
+
+test('équipement : deux armes, une armure et deux talismans maximum',()=>{
+ const c=fresh();c.stats.FOR=28;c.inventory=[
+  entry('Dague 1','weapon',{category:'Dagues',damage:'1d4',equipped:true,status:'approved'}),
+  entry('Dague 2','weapon',{category:'Dagues',damage:'1d4',equipped:true,status:'approved'}),
+  entry('Armure','armor',{armor:1,equipped:true,status:'approved'}),
+  entry('Talisman 1','talisman',{equipped:true,status:'approved'}),
+  entry('Talisman 2','talisman',{equipped:true,status:'approved'})
+ ];
+ assert.doesNotThrow(()=>validate(copy(c),copy(c),true));
+ for(const [type,message] of [['weapon',/Deux armes/],['talisman',/Deux talismans/],['armor',/seule armure/]]){
+  const over=copy(c);over.inventory.push(entry('En trop',type,{category:type==='weapon'?'Dagues':'',damage:type==='weapon'?'1d4':'',equipped:true,status:'approved'}));
+  assert.throws(()=>validate(copy(over),copy(over),true),message);
+  over.inventory.at(-1).equipped=false;assert.doesNotThrow(()=>validate(copy(over),copy(over),true));
+ }
+});

@@ -411,6 +411,10 @@ export function validate(c: Character, old?: Character, gm = false) {
   }
   if (c.inventory.filter((i) => i.equipped && i.type === "armor").length > 1)
     throw Error("Une seule armure peut être équipée.");
+  if (c.inventory.filter(i=>i.equipped && i.type === "weapon").length > 2)
+    throw Error("Deux armes maximum peuvent être équipées.");
+  if (c.inventory.filter(i=>i.equipped && i.type === "talisman").length > 2)
+    throw Error("Deux talismans maximum peuvent être équipés.");
   const d = derive(c);
   if (d.weight > d.capacity + 2)
     throw Error("Équipement trop lourd : capacité + 2 maximum.");

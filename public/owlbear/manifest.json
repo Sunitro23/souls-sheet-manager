@@ -1,0 +1,16 @@
+{
+  "name": "Souls — Fiches & Techniques",
+  "version": "1.0.1",
+  "manifest_version": 1,
+  "description": "Fiches, inventaire, grimoire et techniques liés à votre compte Souls.",
+  "author": "Sunitro",
+  "icon": "https://souls.sunitro.de/owlbear/character.svg",
+  "background_url": "https://souls.sunitro.de/owlbear/background",
+  "action": {
+    "title": "Souls Fiche Gestion",
+    "icon": "https://souls.sunitro.de/owlbear/character.svg",
+    "popover": "https://souls.sunitro.de/owlbear",
+    "width": 440,
+    "height": 650
+  }
+}

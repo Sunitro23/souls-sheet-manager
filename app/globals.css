@@ -27,3 +27,53 @@
 
 /* Five equipped slots frame the portrait, with touch-sized read-only targets. */
 .c-loadout{margin:0 0 26px;padding:0 0 22px;border-bottom:1px solid var(--line)}.c-loadout-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.c-loadout-heading h3,.c-bag-heading{font-size:13px;font-weight:500}.c-loadout-heading>span,.c-bag-heading>span{font-size:10px;color:var(--muted)}.c-loadout-map{display:grid;grid-template-columns:minmax(0,1fr) minmax(60px,.8fr) minmax(0,1fr);grid-template-areas:'weapon-one portrait weapon-two' 'talisman-one portrait talisman-two' '. armor .';gap:10px;align-items:stretch;position:relative}.c-loadout-portrait{grid-area:portrait;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-width:0;color:var(--accent);background:radial-gradient(ellipse,#c4ae8312,transparent 70%)}.c-loadout-portrait img{width:100%;max-width:100px;aspect-ratio:3/4;object-fit:cover;border-radius:40% 40% 12px 12px;border:1px solid #6d624a;padding:3px}.c-loadout-portrait>span{font-size:10px;text-align:center;color:var(--muted);max-width:100%;overflow-wrap:anywhere}.c-gear-slot{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:96px;padding:10px 6px;border:1px solid var(--line);border-radius:12px;text-align:center;background:#141715}.c-slot-label{font-size:9px;color:var(--muted);letter-spacing:.3px}.c-gear-slot>svg{color:var(--accent)}.c-gear-slot>strong{font-size:11px;font-weight:500;line-height:1.4;overflow-wrap:anywhere;max-width:100%}.c-gear-slot>small{font-size:10px;overflow-wrap:anywhere;max-width:100%}.c-gear-slot.occupied{border-color:#665b44;background:linear-gradient(150deg,#29291f,#171b17)}.c-gear-slot.occupied:hover{border-color:var(--accent);background:#2c3023}.c-gear-slot.empty{border-style:dashed;background:transparent}.c-gear-slot.empty>svg,.c-gear-slot.empty>strong{color:#626d61}.weapon-one{grid-area:weapon-one}.weapon-two{grid-area:weapon-two}.talisman-one{grid-area:talisman-one}.talisman-two{grid-area:talisman-two}.c-gear-slot.armor{grid-area:armor}.c-bag-heading{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px}.c-extra-equipped{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.c-extra-equipped .c-button{font-size:11px}.c-modal .c-inventory-panel{background:transparent;border:0;padding:0}.c-modal .c-inventory-panel .c-item-group{margin-top:0}.c-modal .c-inventory-panel .c-item-group>h3{display:none}.c-modal .c-inventory-panel .c-equipment-card{margin:0;border:0;padding:0;background:transparent}.c-modal .c-inventory-panel .c-equipment-head{display:none}.c-modal .c-inventory-panel .c-zone{width:58px;height:58px}
+
+/* Compact inventory and spell rows; details open on demand. */
+.c-equipment-card.is-compact{padding:0;border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;background:transparent}
+.c-equipment-row{display:flex;align-items:center;gap:6px;min-width:0;min-height:44px}
+.c-equipment-summary{display:flex;align-items:center;gap:8px;flex:1;min-width:0;min-height:44px;padding:8px 0;text-align:left;white-space:nowrap;overflow-x:auto}
+.c-equipment-summary>svg{flex-shrink:0;color:var(--muted);transition:transform .15s}
+.c-equipment-summary>svg.is-open{transform:rotate(90deg)}
+.c-equipment-name{flex-shrink:0;max-width:min(220px,45%);overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.c-equipment-card.is-unvalidated .c-equipment-summary,.c-equipment-card.is-unvalidated .c-equipment-meta{color:var(--muted);opacity:.65}
+.c-equipment-meta{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11px;margin-bottom:8px}
+.c-equipment-meta>svg{flex-shrink:0}
+.c-equipment-value{font-size:11px;color:var(--muted);flex-shrink:0}
+.c-row-equip{font-size:10px;color:var(--accent);white-space:nowrap;min-height:44px;padding:6px}
+.c-equipment-row>.c-icon{flex-shrink:0;margin:0}
+.c-equipment-details:not([hidden]){padding:0 0 12px}
+
+.c-technique-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
+.c-technique-tile{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 6px;min-width:0;text-align:center}
+.c-technique-tile>strong{font-size:11px;font-weight:500;min-height:30px;display:flex;align-items:center}
+.c-technique-tile>.c-zone,.c-modal .c-inventory-panel .c-technique-tile>.c-zone{width:100%;height:auto;aspect-ratio:1;max-width:110px}
+.c-technique-tile>span:last-child{font-size:11px;color:var(--accent)}
+.c-zone-unavailable{display:grid;place-items:center;width:100%;aspect-ratio:1;max-width:110px;color:var(--muted)}
+/* Equipment silhouette, open grimoire and a portrait-only home. */
+.c-body-silhouette{width:100%;max-width:120px;height:auto;max-height:280px;color:#ae9c75}
+.c-loadout-map{grid-template-columns:minmax(0,1fr) minmax(70px,.85fr) minmax(0,1fr)}
+.c-loadout-portrait{padding:8px 0}
+.c-grimoire{margin-bottom:22px}
+.c-open-book{position:relative;min-height:250px;padding:28px 22px 30px}
+.c-book-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.c-book-pages{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 26px;align-items:start;min-height:190px}
+.c-book-spell{position:relative;min-width:0;border-bottom:1px solid #a48d5c30;padding:0 16px 10px 0}
+.c-book-spell>button:first-child{display:flex;flex-direction:column;gap:7px;align-items:flex-start;text-align:left;width:100%;min-height:110px}
+.c-book-spell strong{font-size:12px;font-weight:500;overflow-wrap:anywhere}
+.c-book-spell small{font-size:10px;color:var(--muted)}
+.c-book-spell svg{color:var(--accent)}
+.c-book-remove{position:absolute;top:-7px;right:-10px;min-height:32px;min-width:32px;display:grid;place-items:center}
+.c-book-empty{font-size:12px;line-height:1.8;color:var(--muted);align-self:center;text-align:center;padding:10px 4px}
+.c-equipment-bonuses{margin:14px 0}
+.c-equipment-bonuses .c-grid3{margin-top:14px}
+.c-campaign-picker{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.c-campaign-picker>span{color:var(--muted);font-size:11px}
+.c-campaign-picker select{min-width:0;max-width:360px;width:100%}
+.c-roster.c-roster-portraits{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:20px}
+.c-roster-portraits .c-roster-card{display:block;padding:0;background:transparent;border:0;border-radius:14px;overflow:hidden;text-align:center}
+.c-roster-portraits .c-roster-identity{display:flex;flex-direction:column;gap:12px;padding:0}
+.c-roster-portraits .c-roster-identity>img,.c-roster-portraits .c-roster-identity>.c-avatar{width:100%;height:auto;aspect-ratio:3/4;object-fit:cover;border-radius:14px;background:linear-gradient(150deg,#303529,#141814)}
+.c-roster-portraits .c-roster-identity>.c-avatar{display:grid;place-items:center;color:var(--accent)}
+.c-roster-portraits h2{font-size:15px;font-weight:500;margin:0 0 8px}
+.c-roster-portraits .c-roster-card:hover{background:#ffffff05}
+@media(max-width:420px){.c-open-book{padding:25px 16px}.c-book-pages{gap:16px 22px}.c-book-spell strong{font-size:11px}.c-campaign-picker>span{display:none}}

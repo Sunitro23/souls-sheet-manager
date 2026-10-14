@@ -1,0 +1,2 @@
+// Capture the one-shot handshake before React hydration loads the SDK.
+export const captureOwlbearReady = `(()=>{try{const ref=new URLSearchParams(location.search).get('obrref');if(!ref)return;const origin=atob(ref.replace(/-/g,'+').replace(/_/g,'/')).split(' ')[0];addEventListener('message',e=>{if(e.source===parent&&e.origin===origin&&e.data?.id==='OBR_READY')window.__soulsObrReady={data:e.data,origin:e.origin};});}catch{}})();`;

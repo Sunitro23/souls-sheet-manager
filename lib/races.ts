@@ -1,183 +1,63 @@
 export const racialCatalog = [
   {
-    "name": "Clan du Lion",
-    "paths": [
-      {
-        "name": "Crinière noble",
-        "primary": "FOR",
-        "secondary": "DEX"
-      },
-      {
-        "name": "Fauve de guerre",
-        "primary": "DEX",
-        "secondary": "CON"
-      }
-    ]
+    "id": "giant",
+    "name": "Giant",
+    "stats": [
+      "CON",
+      "FOR"
+    ],
+    "trait": "Enraciné : vous êtes indéplaçable.",
+    "weakness": "Faible aux dégâts de feu."
   },
   {
-    "name": "Corviens",
-    "paths": [
-      {
-        "name": "Confesseur de Velka",
-        "primary": "CHA",
-        "secondary": "SAG"
-      },
-      {
-        "name": "Rapace des Cimes",
-        "primary": "DEX",
-        "secondary": "SAG"
-      }
-    ]
+    "id": "godlike",
+    "name": "Godlike",
+    "stats": [
+      "SAG",
+      "CHA"
+    ],
+    "trait": "Invulnérable aux dégâts radiants.",
+    "weakness": "Faible aux dégâts de ténèbres."
   },
   {
-    "name": "Demi-Humains",
-    "paths": [
-      {
-        "name": "Chimère férale",
-        "primary": "DEX",
-        "secondary": "FOR"
-      },
-      {
-        "name": "Chimère éveillée",
-        "primary": "INT",
-        "secondary": "CHA"
-      }
-    ]
-  },
-  {
-    "name": "Dieux",
-    "paths": [
-      {
-        "name": "Dieu occulte",
-        "primary": "SAG",
-        "secondary": "INT"
-      },
-      {
-        "name": "Dieu solaire",
-        "primary": "CHA",
-        "secondary": "SAG"
-      }
-    ]
-  },
-  {
-    "name": "Dragons",
-    "paths": [
-      {
-        "name": "Dragon ancestral",
-        "primary": "FOR",
-        "secondary": "CON"
-      },
-      {
-        "name": "Dragon cristallin",
-        "primary": "INT",
-        "secondary": "SAG"
-      }
-    ]
-  },
-  {
-    "name": "Démons",
-    "paths": [
-      {
-        "name": "Démon de Feu",
-        "primary": "CON",
-        "secondary": "SAG"
-      },
-      {
-        "name": "Démon de Pierre",
-        "primary": "FOR",
-        "secondary": "DEX"
-      }
-    ]
-  },
-  {
-    "name": "Enfant des Ténèbres",
-    "paths": [
-      {
-        "name": "Enfant de la Mort",
-        "primary": "CON",
-        "secondary": "SAG"
-      },
-      {
-        "name": "Enfant des Abysses",
-        "primary": "FOR",
-        "secondary": "CON"
-      }
-    ]
-  },
-  {
+    "id": "gyrm",
     "name": "Gyrm",
-    "paths": [
-      {
-        "name": "Gardien du Roc",
-        "primary": "CON",
-        "secondary": "FOR"
-      },
-      {
-        "name": "Maître des Forges",
-        "primary": "INT",
-        "secondary": "FOR"
-      }
-    ]
+    "stats": [
+      "INT",
+      "CHA"
+    ],
+    "trait": "Invulnérable aux dégâts magiques.",
+    "weakness": "Faible aux dégâts de foudre."
   },
   {
-    "name": "Géants",
-    "paths": [
-      {
-        "name": "Géant asservi",
-        "primary": "FOR",
-        "secondary": "DEX"
-      },
-      {
-        "name": "Géant-arbre",
-        "primary": "FOR",
-        "secondary": "CON"
-      }
-    ]
+    "id": "demon",
+    "name": "Demon",
+    "stats": [
+      "SAG",
+      "FOR"
+    ],
+    "trait": "Invulnérable aux dégâts de feu.",
+    "weakness": "Faible aux dégâts magiques."
   },
   {
-    "name": "Hommes-champignons",
-    "paths": [
-      {
-        "name": "Fongique ancestral",
-        "primary": "FOR",
-        "secondary": "CON"
-      },
-      {
-        "name": "Mycélien sporifère",
-        "primary": "SAG",
-        "secondary": "CHA"
-      }
-    ]
+    "id": "human",
+    "name": "Human",
+    "stats": [
+      "DEX",
+      "INT"
+    ],
+    "trait": "Invulnérable aux dégâts de ténèbres.",
+    "weakness": "Faible aux dégâts radiants."
   },
   {
-    "name": "Hommes-Serpents",
-    "paths": [
-      {
-        "name": "Serpent quadribrachial",
-        "primary": "FOR",
-        "secondary": "DEX"
-      },
-      {
-        "name": "Serpent-oracle",
-        "primary": "INT",
-        "secondary": "SAG"
-      }
-    ]
-  },
-  {
-    "name": "Humains",
-    "paths": [
-      {
-        "name": "Mort-Vivant Élu",
-        "primary": "SAG",
-        "secondary": "CHA"
-      },
-      {
-        "name": "Porteur de la Malédiction",
-        "primary": "CON",
-        "secondary": "SAG"
-      }
-    ]
+    "id": "demi-human",
+    "name": "Demi-Human",
+    "stats": [
+      "DEX",
+      "CON"
+    ],
+    "trait": "Instinct bestial : vous ressentez le danger.",
+    "weakness": "Peu apprécié socialement."
   }
 ] as const;
 export const racialNames=racialCatalog.map(r=>r.name);

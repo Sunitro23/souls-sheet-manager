@@ -11,7 +11,7 @@ test("modifiers and derived values follow the supplied rules", () => {
   assert.equal(d.hp, 33);
   assert.equal(d.move, 2);
   assert.equal(d.dodge, 2);
-  assert.equal(d.sprint, 4);
+  assert.equal(d.sprint, 5);
   assert.equal(d.mana, 9);
   assert.equal(d.memory, 3);
   assert.equal(d.used, 3);
@@ -147,7 +147,7 @@ test("creation accepts chosen stats and fills each derived resource", async () =
     stats: { FOR: 2, DEX: 2, CON: 2, INT: 2, SAG: 2, CHA: 2 },
     magic: "INT",
   });
-  assert.equal(minimal.hp, 0);
+  assert.equal(minimal.hp, 1);
   assert.equal(minimal.mana, 4);
 });
 test("character review cannot be forged and stat edits reset it", () => {
@@ -361,7 +361,7 @@ test("PV and Mana modifiers adjust maxima and reject invalid values", () => {
   assert.equal(derive(c).mana, base.mana + 3);
   c.hpMalus = 100;
   c.manaMalus = 100;
-  assert.equal(derive(c).hp, 0);
+  assert.equal(derive(c).hp, 1);
   assert.equal(derive(c).mana, 0);
   c.hpBonus = -1;
   assert.throws(() => validate(c), /hpBonus/);

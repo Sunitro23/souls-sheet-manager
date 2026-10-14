@@ -1,3 +1,6 @@
+import {bonusKeys,equipmentBonuses,learnedBonus,spellSchools,type BonusKey} from './bonuses.ts';
+import type {AshOfWar} from './ash-of-war.ts';
+import type {Node} from './progression.ts';
 import {
   catalogueFor,
   referencedTechniques,
@@ -115,6 +118,8 @@ export type Technique = {
   description: string;
 };
 export type Entry = {
+  bonuses?: Partial<Record<BonusKey,number>>;
+  school?: typeof spellSchools[number];
   origin?: ZoneOrigin;
   id: string;
   name: string;
@@ -129,6 +134,7 @@ export type Entry = {
   category: string;
   techniques: Technique[];
   special: Technique | null;
+  ashOfWar?: AshOfWar | null;
   rank: number;
   known: boolean;
   memorized: boolean;
@@ -143,6 +149,8 @@ export type Entry = {
   modifiedAt: string;
 };
 export type Character = {
+  unlocks?: Node[];
+  className?: string;
   weaponTraining?: string[];
   personalSkills?: PersonalSkill[];
   personalTraining?: string[];
@@ -172,33 +180,37 @@ export type Character = {
 };
 export const mod = (v: number) => Math.floor((v - 10) / 2);
 export function derive(c: Character) {
-  const equipped = c.inventory.filter((i) => i.equipped);
+  const equipped = c.inventory.filter((i) => i.equipped && i.status === 'approved');
+  const bonuses=equipmentBonuses(c);
+  const stats=Object.fromEntries(statNames.map(key=>[key,Math.min(28,Math.max(2,c.stats[key]+bonuses[key]))]));
   const armor = armors[equipped.find((i) => i.type === "armor")?.armor || 0];
   const weight = equipped.reduce((s, i) => s + itemWeight(i), 0);
-  const capacity = 2 + Math.max(0, mod(c.stats.FOR));
+  const capacity = 2 + Math.max(0, mod(stats.FOR));
   const overload = Math.max(0, weight - capacity);
-  const mobility = Math.min(4, Math.max(1, Math.floor((c.stats.DEX + 4) / 6)));
+  const mobility = Math.min(4, Math.max(1, Math.floor((stats.DEX + 4) / 6)));
   const move = Math.max(1, mobility - armor.move);
-  const magic = mod(c.stats[c.magic]);
+  const magic = mod(stats[c.magic]);
   return {
+    stats,
+    bonuses,
     armor,
     weight,
     capacity,
     overload,
     mobility,
     move,
-    sprint: move * 2,
+    sprint: Math.floor(move * 2.5),
     dodge: Math.max(1, mobility - armor.dodge),
     hp: Math.max(
-      0,
-      Math.round((4 + 3 * c.level + 2 * mod(c.stats.CON)) * armor.hp) +
-        (c.hpBonus ?? 0) -
+      1,
+      Math.round((4 + 3 * c.level + 2 * mod(stats.CON)) * armor.hp) +
+        (c.hpBonus ?? 0) + bonuses.HP + learnedBonus(c,'HP') -
         (c.hpMalus ?? 0),
     ),
-    end: Math.max(0, 3 - overload - c.malus + c.bonus),
+    end: Math.max(0, 3 - overload - c.malus + c.bonus + bonuses.END + learnedBonus(c,'END')),
     mana: Math.max(
       0,
-      Math.max(4, 6 + magic) + (c.manaBonus ?? 0) - (c.manaMalus ?? 0),
+      Math.max(4, 6 + magic) + (c.manaBonus ?? 0) + bonuses.FP + learnedBonus(c,'FP') - (c.manaMalus ?? 0),
     ),
     magic,
     memory: Math.max(0, magic),
@@ -213,6 +225,7 @@ export function validate(c: Character, old?: Character, gm = false) {
   if (!c.name?.trim() || c.name.length > 100)
     throw Error("Le nom est requis (100 caractères maximum).");
   integer(c.level, 1, 1000, "Niveau");
+  c.unlocks = [...(old?.unlocks ?? [])];
   // Learning is purchased through its dedicated endpoint, never granted through a sheet save.
   c.weaponTraining = [...(old?.weaponTraining ?? [])];
   if (techniqueProgress(c).available < 0)
@@ -284,6 +297,7 @@ export function validate(c: Character, old?: Character, gm = false) {
           "armor",
           "shield",
           "talisman",
+          "catalyst",
           "consumable",
           "other",
           "spell",
@@ -301,6 +315,15 @@ export function validate(c: Character, old?: Character, gm = false) {
         )
           throw Error("Choisissez un type d’arme du barème.");
       }
+      if (item.ashOfWar != null) {
+        const ash = item.ashOfWar;
+        if (!['weapon', 'shield'].includes(item.type)) throw Error('Une Ash of War nécessite une arme ou un bouclier.');
+        if (typeof ash.name !== 'string' || !ash.name.trim()) throw Error('Nom d’Ash of War requis.');
+        if (typeof ash.description !== 'string' || typeof ash.damageType !== 'string' || typeof ash.friendlyFire !== 'boolean') throw Error('Effet d’Ash of War invalide.');
+        integer(ash.mana, 1, 100, 'Coût FP de l’Ash of War');
+        // Ashes consume FP independently of regular techniques.
+        ash.end = 0;
+      }
       item.weight = itemWeight(item);
       integer(item.weight, 0, 100, "Poids");
       integer(item.rank, 0, 4, "Rang");
@@ -308,6 +331,13 @@ export function validate(c: Character, old?: Character, gm = false) {
       integer(item.shield, 1, 4, "Bouclier");
       integer(item.end, 0, 100, "Coût END");
       integer(item.mana, 0, 100, "Coût Mana");
+      if(item.type==='spell')item.school??='Sorts';
+      if(item.type==='spell'&&!spellSchools.includes(item.school!))throw Error('Famille de sort invalide.');
+      if(item.bonuses!==undefined){
+        if(!item.bonuses||typeof item.bonuses!=='object'||Array.isArray(item.bonuses)||Object.keys(item.bonuses).some(k=>!bonusKeys.includes(k as BonusKey)))throw Error('Bonus d’équipement invalide.');
+        for(const key of bonusKeys)integer(item.bonuses[key]??0,0,100,`Bonus ${key}`);
+        if(item.type==='spell'&&Object.values(item.bonuses).some(Boolean))throw Error('Les bonus passifs sont réservés aux équipements.');
+      }
       integer(item.range, 0, 1000, "Portée");
       if (item.type === "armor") item.weight = armors[item.armor].weight;
       if (item.type === "shield") item.weight = item.shield;
@@ -325,7 +355,7 @@ export function validate(c: Character, old?: Character, gm = false) {
         (i) => i.id === item.id,
       );
       const mechanical = (i: Entry) => {
-        const common = [i.type, itemWeight(i)];
+        const common = [i.type, itemWeight(i), i.ashOfWar ? {...i.ashOfWar, origin: i.ashOfWar.origin ?? "self"} : null, ...bonusKeys.map(k=>i.bonuses?.[k]??0)];
         const techniques = referencedTechniques(i).map((t) => ({
           ...t,
           origin: t.origin ?? "self",
@@ -351,7 +381,7 @@ export function validate(c: Character, old?: Character, gm = false) {
             i.damage,
             i.end,
             i.mana,
-            i.range,
+            i.school??'Sorts',
             i.pattern,
             i.friendlyFire,
             i.target,
@@ -378,6 +408,7 @@ export function validate(c: Character, old?: Character, gm = false) {
         item,
         ...referencedTechniques(item),
         ...(item.special ? [item.special] : []),
+        ...(item.ashOfWar ? [item.ashOfWar] : []),
       ];
       for (const t of patterns) {
         if (!["self", "target"].includes(t.origin ?? "self"))
@@ -411,8 +442,8 @@ export function validate(c: Character, old?: Character, gm = false) {
   }
   if (c.inventory.filter((i) => i.equipped && i.type === "armor").length > 1)
     throw Error("Une seule armure peut être équipée.");
-  if (c.inventory.filter(i=>i.equipped && i.type === "weapon").length > 2)
-    throw Error("Deux armes maximum peuvent être équipées.");
+  if (c.inventory.filter(i=>i.equipped && ["weapon","catalyst"].includes(i.type)).length > 2)
+    throw Error("Deux armes ou catalyseurs maximum peuvent être équipés.");
   if (c.inventory.filter(i=>i.equipped && i.type === "talisman").length > 2)
     throw Error("Deux talismans maximum peuvent être équipés.");
   const d = derive(c);
@@ -426,6 +457,11 @@ export function validate(c: Character, old?: Character, gm = false) {
     integer(c[key], 0, 100000, key);
     c[key] = Math.min(c[key], Math.max(0, d[key]));
   }
+  // Preserve full health only when a newly equipped, approved armor raises the maximum.
+  if (old && c.hp === old.hp && old.hp === derive(old).hp && d.hp > old.hp &&
+      c.inventory.some(i => i.type === 'armor' && i.equipped && i.status === 'approved' &&
+        !old.inventory.some(previous => previous.id === i.id && previous.equipped && previous.status === 'approved')))
+    c.hp = d.hp;
   if (!gm) {
     c.reviewStatus = old?.reviewStatus ?? "pending";
     if (
@@ -485,6 +521,7 @@ export function entry(
     category: type === "weapon" ? "Épées" : "",
     techniques: [],
     special: null,
+    ashOfWar: null,
     rank: 1,
     known: true,
     memorized: false,

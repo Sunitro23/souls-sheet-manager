@@ -46,3 +46,8 @@ next-env.d.ts
 /work/
 
 *.tsbuildinfo
+
+.dev.vars*
+.secrets/
+
+.backups/

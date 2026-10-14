@@ -15,22 +15,34 @@ test('création, droits de suppression, corbeille et restauration via les vraies
  globalThis.__cendresTestDb=drizzle(d1);
  const folder=await mkdtemp(resolve('.openai/route-test-'));
  try{
-  await build({entryPoints:['app/api/workspace/route.ts'],outfile:join(folder,'route.mjs'),bundle:true,platform:'node',format:'esm',packages:'external',plugins:[{name:'test-db',setup(b){b.onResolve({filter:/^\.\.\/\.\.\/\.\.\/db$/},()=>({path:'db',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:'export const getDb=()=>globalThis.__cendresTestDb;',loader:'js'}));}}]});
-  const {POST}=await import(pathToFileURL(join(folder,'route.mjs')).href);
+  await build({entryPoints:['lib/workspace-service.ts'],outfile:join(folder,'route.mjs'),bundle:true,platform:'node',format:'esm',packages:'external',plugins:[{name:'test-db',setup(b){b.onResolve({filter:/^\.\.\/db$/},()=>({path:'db',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:'export const getDb=()=>globalThis.__cendresTestDb;',loader:'js'}));}}]});
+  const {executeWorkspace:POST}=await import(pathToFileURL(join(folder,'route.mjs')).href);
   for(const id of ['gm','alice','bob','outsider']){sqlite.prepare('insert into accounts(id,username,password_hash,salt) values(?,?,?,?)').run(id,id,'unused','unused');sqlite.prepare('insert into sessions(id,account_id,expires) values(?,?,?)').run(createHash('sha256').update(id).digest('hex'),id,Date.now()+60000);}
-  const call=async(user,data)=>{const r=await POST(new Request('https://cendres.test/api/workspace',{method:'POST',headers:{'Content-Type':'application/json',cookie:`cendres_session=${user}`},body:JSON.stringify(data)}));return {status:r.status,...await r.json()}};
+  const call=async(user,data)=>{const r=await POST(new Request('https://cendres.test/api/workspace',{method:'POST',headers:{origin:'https://cendres.test','Content-Type':'application/json',cookie:`cendres_session=${user}`},body:JSON.stringify(data)}));return {status:r.status,...await r.json()}};
   const campaign=await call('gm',{op:'createCampaign',name:'Test table'});assert.equal(campaign.status,200);
   const campaignId=campaign.id;
   assert.equal((await call('gm',{op:'addPlayer',campaignId,username:'alice'})).status,200);
   assert.equal((await call('gm',{op:'addPlayer',campaignId,username:'bob'})).status,200);
   const invalid=await call('alice',{op:'createCharacter',campaignId,name:'Hero',stats:{FOR:20,DEX:20,CON:20,INT:20,SAG:20,CHA:20}});assert.equal(invalid.status,400);
   const portrait='data:image/png;base64,iVBORw0KGgo=';
-  const created=await call('alice',{op:'createCharacter',campaignId,name:'Hero',race:'Humains',portrait,stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8},magic:'SAG'});assert.equal(created.status,200,created.error);const id=created.character.id;assert.equal(created.character.portrait,portrait);
+  const created=await call('alice',{op:'createCharacter',campaignId,name:'Hero',race:'Human',portrait,stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8},magic:'SAG'});assert.equal(created.status,200,created.error);const id=created.character.id;assert.equal(created.character.portrait,portrait);
+  const unlinkedOwner=await call('gm',{op:'owlbearCharacter',id});
+  assert.equal(unlinkedOwner.canAssign,true);assert.equal(unlinkedOwner.ownerId,'alice');assert.equal(unlinkedOwner.playerId,null);
+  assert.equal((await call('alice',{op:'linkOwlbear',playerId:'obr-alice'})).status,200);
+  assert.equal((await call('bob',{op:'linkOwlbear',playerId:'obr-alice'})).status,409);
+  assert.equal((await call('alice',{op:'linkOwlbear',playerId:'other'})).status,409);
+  assert.equal((await call('alice',{op:'owlbearCharacter',id})).playerId,'obr-alice');
+  assert.equal((await call('alice',{op:'owlbearCharacter',id})).canAssign,false);
+  assert.equal((await call('gm',{op:'owlbearCharacter',id})).canAssign,true);
+  assert.equal((await call('bob',{op:'owlbearCharacter',id})).status,403);
+  assert.equal((await call('outsider',{op:'owlbearCharacter',id})).status,403);
+  assert.equal((await call('',{op:'owlbearCharacter',id})).status,401);
   assert.equal((await call('bob',{op:'deleteCharacter',campaignId,id,revision:0,confirmName:'Hero'})).status,403);
   assert.equal((await call('outsider',{op:'campaign',campaignId})).status,403);
   assert.equal((await call('alice',{op:'deleteCharacter',campaignId,id,revision:0,confirmName:'wrong'})).status,400);
   assert.equal((await call('alice',{op:'deleteCharacter',campaignId,id,revision:9,confirmName:'Hero'})).status,409);
   assert.equal((await call('alice',{op:'deleteCharacter',campaignId,id,revision:0,confirmName:'Hero'})).status,200);
+  assert.equal((await call('alice',{op:'owlbearCharacter',id})).status,404);
   assert.equal((await call('alice',{op:'campaign',campaignId})).characters.length,0);
   assert.equal((await call('alice',{op:'trashCharacters',campaignId})).characters.length,1);
   assert.equal((await call('bob',{op:'trashCharacters',campaignId})).characters.length,0);
@@ -48,9 +60,10 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   assert.equal((await call('alice',{op:'campaign',campaignId})).characters[0].notes,'Retrouvé');
   const current=await call('gm',{op:'campaign',campaignId});current.tree.races=['Elfe'];
   assert.equal((await call('gm',{op:'saveCampaign',campaignId,revision:current.campaign.revision,name:current.campaign.name,img:'',tree:current.tree})).status,200);
-  assert.equal((await call('alice',{op:'createCharacter',campaignId,name:'Other',race:'Humains',stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8}})).status,400);
+  assert.equal((await call('alice',{op:'createCharacter',campaignId,name:'Other',race:'Human',stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8}})).status,400);
   assert.equal((await call('gm',{op:'removePlayer',campaignId,playerId:'alice'})).status,200);
   assert.equal((await call('alice',{op:'campaign',campaignId})).status,403);
+  assert.equal((await call('alice',{op:'owlbearCharacter',id})).status,403);
   assert.equal((await call('gm',{op:'campaign',campaignId})).characters.length,1);
  }finally{delete globalThis.__cendresTestDb;sqlite.close();await rm(folder,{recursive:true,force:true});}
 });

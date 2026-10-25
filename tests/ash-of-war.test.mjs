@@ -55,9 +55,9 @@ test('rendu AoW distinct, coût FP, effet et éditeur de zone',async()=>{
   const c=character(),item=c.inventory[0];
   const props={mode:'Inventaire',character:c,tree:defaultTree(),detailItem:item,onEdit:()=>{},onUseAsh:()=>{}};
   const html=renderToStaticMarkup(React.createElement(Inventory,props));
-  assert.match(html,/Ash of War · Quickstep/);assert.match(html,/3 FP/);assert.match(html,/Déplacement spécial/);assert.match(html,/>Utiliser · 3 FP/);
+  assert.match(html,/Cendre de guerre/);assert.match(html,/Quickstep/);assert.match(html,/3 FP/);assert.match(html,/Déplacement spécial/);assert.doesNotMatch(html,/>Utiliser|Déclencher/);
   const empty=renderToStaticMarkup(React.createElement(Inventory,{...props,character:{...c,mana:0}}));
-  assert.match(empty,/disabled=""[^>]*>Utiliser/);assert.match(empty,/FP insuffisants/);
+  assert.doesNotMatch(empty,/Utiliser|FP insuffisants/);assert.match(empty,/3 FP/);
   const fields=renderToStaticMarkup(React.createElement(Fields,{item,onChange:()=>{}}));
   assert.match(fields,/Cendre personnalisée/);assert.match(fields,/Coût FP/);assert.match(fields,/Zone de l’Ash of War/);assert.match(fields,/aria-pressed="false"/);
  }finally{await rm(folder,{recursive:true,force:true})}

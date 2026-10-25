@@ -118,6 +118,9 @@ export type Technique = {
   description: string;
 };
 export type Entry = {
+  categoryId?: string;
+  archived?: boolean;
+  effects?: string;
   bonuses?: Partial<Record<BonusKey,number>>;
   school?: typeof spellSchools[number];
   origin?: ZoneOrigin;
@@ -149,6 +152,8 @@ export type Entry = {
   modifiedAt: string;
 };
 export type Character = {
+  mode?: "custom";
+  resourceBases?: {hp:number;mana:number;end:number};
   unlocks?: Node[];
   className?: string;
   weaponTraining?: string[];
@@ -182,7 +187,7 @@ export const mod = (v: number) => Math.floor((v - 10) / 2);
 export function derive(c: Character) {
   const equipped = c.inventory.filter((i) => i.equipped && i.status === 'approved');
   const bonuses=equipmentBonuses(c);
-  const stats=Object.fromEntries(statNames.map(key=>[key,Math.min(28,Math.max(2,c.stats[key]+bonuses[key]))]));
+  const stats=Object.fromEntries(statNames.map(key=>[key,Math.min(c.mode==='custom'?Number.MAX_SAFE_INTEGER:28,Math.max(c.mode==='custom'?1:2,c.stats[key]+bonuses[key]))]));
   const armor = armors[equipped.find((i) => i.type === "armor")?.armor || 0];
   const weight = equipped.reduce((s, i) => s + itemWeight(i), 0);
   const capacity = 2 + Math.max(0, mod(stats.FOR));
@@ -200,17 +205,17 @@ export function derive(c: Character) {
     mobility,
     move,
     sprint: Math.floor(move * 2.5),
-    dodge: Math.max(1, mobility - armor.dodge),
+    dodge: 2,
     hp: Math.max(
       1,
-      Math.round((4 + 3 * c.level + 2 * mod(stats.CON)) * armor.hp) +
+      Math.round((c.mode==='custom'?c.resourceBases!.hp:4 + 3 * c.level + 2 * mod(stats.CON)) * armor.hp) +
         (c.hpBonus ?? 0) + bonuses.HP + learnedBonus(c,'HP') -
         (c.hpMalus ?? 0),
     ),
-    end: Math.max(0, 3 - overload - c.malus + c.bonus + bonuses.END + learnedBonus(c,'END')),
+    end: Math.max(0, (c.mode==='custom'?c.resourceBases!.end:3) - overload - c.malus + c.bonus + bonuses.END + learnedBonus(c,'END')),
     mana: Math.max(
       0,
-      Math.max(4, 6 + magic) + (c.manaBonus ?? 0) + bonuses.FP + learnedBonus(c,'FP') - (c.manaMalus ?? 0),
+      (c.mode==='custom'?c.resourceBases!.mana:Math.max(4, 6 + magic)) + (c.manaBonus ?? 0) + bonuses.FP + learnedBonus(c,'FP') - (c.manaMalus ?? 0),
     ),
     magic,
     memory: Math.max(0, magic),
@@ -224,6 +229,12 @@ function integer(v: unknown, min: number, max: number, label: string) {
 export function validate(c: Character, old?: Character, gm = false) {
   if (!c.name?.trim() || c.name.length > 100)
     throw Error("Le nom est requis (100 caractères maximum).");
+  if(c.mode!==undefined&&c.mode!=='custom')throw Error('Mode de personnage invalide.');
+  if(old&&c.mode!==old.mode)throw Error('Le mode de création ne peut pas changer.');
+  if(c.mode==='custom'){
+    if(!gm)throw Error('Personnage custom réservé au MJ.');
+    for(const key of ['hp','mana','end'] as const)integer(c.resourceBases?.[key],1,Number.MAX_SAFE_INTEGER,key+' de base');
+  }else if(c.resourceBases!==undefined)throw Error('Bases manuelles réservées au mode custom.');
   integer(c.level, 1, 1000, "Niveau");
   c.unlocks = [...(old?.unlocks ?? [])];
   // Learning is purchased through its dedicated endpoint, never granted through a sheet save.
@@ -272,7 +283,7 @@ export function validate(c: Character, old?: Character, gm = false) {
     throw Error(
       "Ce niveau ne couvre plus les compétences personnelles acquises.",
     );
-  for (const s of statNames) integer(c.stats[s], 2, 28, s);
+  for (const s of statNames) integer(c.stats[s], c.mode==='custom'?1:2, c.mode==='custom'?Number.MAX_SAFE_INTEGER:28, s);
   if (!["INT", "SAG", "CHA"].includes(c.magic))
     throw Error("Caractéristique magique invalide.");
   integer(c.death, 0, 3, "Dégâts mortels");
@@ -291,6 +302,9 @@ export function validate(c: Character, old?: Character, gm = false) {
       throw Error("Identifiants dupliqués.");
     for (const item of list) {
       if (!item.name?.trim()) throw Error("Nom de contenu requis.");
+      if(item.archived!==undefined&&typeof item.archived!=='boolean')throw Error('Archivage invalide.');
+      if(item.archived&&(item.equipped||item.memorized))throw Error('Un contenu archivé ne peut pas être équipé.');
+      if (item.effects !== undefined && (typeof item.effects !== "string" || item.effects.length > 3000)) throw Error("Effets invalides (3 000 caractères maximum).");
       if (
         ![
           "weapon",
@@ -390,8 +404,9 @@ export function validate(c: Character, old?: Character, gm = false) {
         return JSON.stringify(common);
       };
       if (!gm) {
+        item.archived = prev?.archived ?? false;
         item.status = prev?.status || "pending";
-        if (prev && mechanical(prev) !== mechanical(item))
+        if (prev && (mechanical(prev) !== mechanical(item)||prev.categoryId!==item.categoryId))
           item.status = "pending";
       } else if (!["approved", "pending", "rejected"].includes(item.status))
         throw Error("Validation invalide.");
@@ -454,7 +469,7 @@ export function validate(c: Character, old?: Character, gm = false) {
   if (c.spells.filter((s) => s.memorized && s.rank === 0).length > 1)
     throw Error("Un seul sort inné peut être mémorisé.");
   for (const key of ["hp", "end", "mana"] as const) {
-    integer(c[key], 0, 100000, key);
+    integer(c[key], 0, c.mode==='custom'?Number.MAX_SAFE_INTEGER:100000, key);
     c[key] = Math.min(c[key], Math.max(0, d[key]));
   }
   // Preserve full health only when a newly equipped, approved armor raises the maximum.
@@ -478,6 +493,8 @@ export function validate(c: Character, old?: Character, gm = false) {
   return c;
 }
 export function createCharacter(input: {
+  mode?: "custom";
+  resourceBases?: Character["resourceBases"];
   name: string;
   level: number;
   stats: Record<string, number>;

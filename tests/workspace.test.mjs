@@ -11,7 +11,7 @@ import {drizzle} from 'drizzle-orm/d1';
 test('création, droits de suppression, corbeille et restauration via les vraies routes',async()=>{
  const sqlite=new DatabaseSync(':memory:');
  for(const file of (await readdir('drizzle')).filter(f=>f.endsWith('.sql')).sort())sqlite.exec(await readFile(join('drizzle',file),'utf8'));
- const d1={prepare(query){let params=[];const stmt=sqlite.prepare(query);const obj={bind(...v){params=v;return obj},async raw(){stmt.setReturnArrays(true);return stmt.all(...params)},async all(){return {results:stmt.all(...params),success:true,meta:{}}},async run(){const r=stmt.run(...params);return {success:true,meta:{changes:Number(r.changes)}}}};return obj}};
+ const d1={prepare(query){let params=[];const stmt=sqlite.prepare(query);const obj={bind(...v){params=v;return obj},async raw(){stmt.setReturnArrays(true);return stmt.all(...params)},async all(){return {results:stmt.all(...params),success:true,meta:{}}},async run(){const r=stmt.run(...params);return {success:true,meta:{changes:Number(r.changes)}}}};return obj},async batch(statements){sqlite.exec('BEGIN');try{const results=[];for(const statement of statements)results.push({results:await statement.raw(),success:true,meta:{}});sqlite.exec('COMMIT');return results}catch(e){sqlite.exec('ROLLBACK');throw e}}};
  globalThis.__cendresTestDb=drizzle(d1);
  const folder=await mkdtemp(resolve('.openai/route-test-'));
  try{
@@ -19,7 +19,7 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   const {executeWorkspace:POST}=await import(pathToFileURL(join(folder,'route.mjs')).href);
   for(const id of ['gm','alice','bob','outsider']){sqlite.prepare('insert into accounts(id,username,password_hash,salt) values(?,?,?,?)').run(id,id,'unused','unused');sqlite.prepare('insert into sessions(id,account_id,expires) values(?,?,?)').run(createHash('sha256').update(id).digest('hex'),id,Date.now()+60000);}
   const call=async(user,data)=>{const r=await POST(new Request('https://cendres.test/api/workspace',{method:'POST',headers:{origin:'https://cendres.test','Content-Type':'application/json',cookie:`cendres_session=${user}`},body:JSON.stringify(data)}));return {status:r.status,...await r.json()}};
-  const campaign=await call('gm',{op:'createCampaign',name:'Test table'});assert.equal(campaign.status,200);
+  const campaign=await call('gm',{op:'createCampaign',name:'Test table'});assert.equal(campaign.status,200,campaign.error);
   const campaignId=campaign.id;
   assert.equal((await call('gm',{op:'addPlayer',campaignId,username:'alice'})).status,200);
   assert.equal((await call('gm',{op:'addPlayer',campaignId,username:'bob'})).status,200);
@@ -29,8 +29,13 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   const unlinkedOwner=await call('gm',{op:'owlbearCharacter',id});
   assert.equal(unlinkedOwner.canAssign,true);assert.equal(unlinkedOwner.ownerId,'alice');assert.equal(unlinkedOwner.playerId,null);
   assert.equal((await call('alice',{op:'linkOwlbear',playerId:'obr-alice'})).status,200);
-  assert.equal((await call('bob',{op:'linkOwlbear',playerId:'obr-alice'})).status,409);
-  assert.equal((await call('alice',{op:'linkOwlbear',playerId:'other'})).status,409);
+  assert.equal((await call('bob',{op:'linkOwlbear',playerId:'obr-alice'})).status,200);
+  assert.equal((await call('alice',{op:'owlbearCharacter',id})).playerId,null);
+  assert.equal((await call('alice',{op:'linkOwlbear',playerId:'other'})).status,200);
+  assert.equal((await call('alice',{op:'owlbearCharacter',id})).playerId,'other');
+  assert.equal((await call('alice',{op:'linkOwlbear',playerId:'obr-alice'})).status,200);
+  assert.equal((await call('alice',{op:'linkOwlbear',playerId:'obr-alice'})).status,200);
+  assert.equal(sqlite.prepare('select owlbear_id from accounts where id=?').get('bob').owlbear_id,null);
   assert.equal((await call('alice',{op:'owlbearCharacter',id})).playerId,'obr-alice');
   assert.equal((await call('alice',{op:'owlbearCharacter',id})).canAssign,false);
   assert.equal((await call('gm',{op:'owlbearCharacter',id})).canAssign,true);
@@ -61,9 +66,46 @@ test('création, droits de suppression, corbeille et restauration via les vraies
   const current=await call('gm',{op:'campaign',campaignId});current.tree.races=['Elfe'];
   assert.equal((await call('gm',{op:'saveCampaign',campaignId,revision:current.campaign.revision,name:current.campaign.name,img:'',tree:current.tree})).status,200);
   assert.equal((await call('alice',{op:'createCharacter',campaignId,name:'Other',race:'Human',stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8}})).status,400);
+  // Administration: defaults, permissions, optimistic concurrency and immutable review history.
+  const admin=await call('gm',{op:'campaign',campaignId});assert.ok(admin.settings.categories.length>0);
+  const settings=structuredClone(admin.settings);settings.categories[0].name='Arme renommée';
+  assert.equal((await call('alice',{op:'saveSettings',campaignId,revision:admin.campaign.revision,settings})).status,403);
+  assert.equal((await call('gm',{op:'saveSettings',campaignId,revision:admin.campaign.revision,settings})).status,200);
+  assert.equal((await call('gm',{op:'saveSettings',campaignId,revision:admin.campaign.revision,settings})).status,409);
+  const playerView=await call('alice',{op:'campaign',campaignId});assert.equal(playerView.settings.categories[0].name,'Arme renommée');
+  assert.equal((await call('alice',{op:'reviews',campaignId})).status,403);
+  const queue=await call('gm',{op:'reviews',campaignId});assert.ok(queue.reviews.some(r=>r.characterId===id));
+  const target=queue.reviews.find(r=>r.kind==='character'&&r.characterId===id);
+  const decision={op:'decideReview',campaignId,id,revision:target.revision,kind:'character',itemId:id,decision:'correction',comment:'Préciser les origines'};
+  assert.equal((await call('alice',decision)).status,403);
+  const correction=await call('gm',decision);assert.equal(correction.status,200,correction.error);
+  assert.equal((await call('gm',decision)).status,409);
+  const updated=(await call('alice',{op:'campaign',campaignId})).characters[0];assert.equal(updated.reviewHistory.at(-1).comment,'Préciser les origines');
+  const forgery=await call('alice',{op:'saveCharacter',campaignId,id,revision:updated.revision,character:{...updated,reviewHistory:[],reviewStatus:'approved'}});
+  assert.equal(forgery.status,200,forgery.error);assert.equal(forgery.character.reviewHistory.length,1);assert.equal(forgery.character.reviewStatus,'pending');
+  const approved=await call('gm',{...decision,revision:forgery.character.revision,decision:'approved',comment:''});assert.equal(approved.status,200,approved.error);
+  const finalQueue=await call('gm',{op:'reviews',campaignId});assert.equal(finalQueue.history.length,2);assert.equal(finalQueue.history[0].actor,'gm');
   assert.equal((await call('gm',{op:'removePlayer',campaignId,playerId:'alice'})).status,200);
   assert.equal((await call('alice',{op:'campaign',campaignId})).status,403);
   assert.equal((await call('alice',{op:'owlbearCharacter',id})).status,403);
   assert.equal((await call('gm',{op:'campaign',campaignId})).characters.length,1);
+  const customInput={op:'createCharacter',campaignId,name:'Boss custom',mode:'custom',stats:{FOR:60,DEX:40,CON:80,INT:30,SAG:30,CHA:20},resourceBases:{hp:5000,mana:200,end:30},className:'',race:''};
+  assert.equal((await call('bob',customInput)).status,403);
+  assert.equal((await call('gm',{...customInput,playerId:'bob'})).status,403);
+  const boss=await call('gm',customInput);assert.equal(boss.status,200,boss.error);assert.equal(boss.character.playerId,'gm');assert.equal(boss.character.reviewStatus,'approved');assert.equal(boss.character.hp,5000);
+  const bossId=boss.character.id;
+  assert.ok(!(await call('bob',{op:'campaign',campaignId})).characters.some(c=>c.id===bossId));
+  assert.equal((await call('bob',{op:'owlbearCharacter',id:bossId})).status,403);
+  assert.equal((await call('gm',{op:'assignPlayer',campaignId,id:bossId,revision:0,playerId:'bob'})).status,403);
+  const changed=await call('gm',{op:'saveCharacter',campaignId,id:bossId,revision:0,character:{...boss.character,level:20,resourceBases:{hp:6000,mana:250,end:40}}});assert.equal(changed.status,200,changed.error);assert.equal(changed.character.resourceBases.hp,6000);
+  assert.equal((await call('gm',{op:'saveCharacter',campaignId,id:bossId,revision:1,character:{...changed.character,mode:undefined}})).status,400);
+  const {entry}=await import('../lib/rules.ts');
+  const equipped=await call('gm',{op:'saveCharacter',campaignId,id:bossId,revision:1,character:{...changed.character,inventory:[entry('Épée du boss','weapon',{status:'pending'})]}});assert.equal(equipped.status,200,equipped.error);assert.equal(equipped.character.inventory[0].status,'approved');
+  const advanced=current.tree.nodes.find(n=>!n.draft&&!n.archived&&n.cost>0);
+  const granted=await call('gm',{op:'unlock',campaignId,id:bossId,revision:equipped.character.revision,nodeId:advanced.id});assert.equal(granted.status,200,granted.error);assert.equal(granted.character.unlocks.at(-1).cost,0);
+  const reopened=(await call('gm',{op:'campaign',campaignId})).characters.find(c=>c.id===bossId);assert.equal(reopened.mode,'custom');assert.equal(reopened.resourceBases.hp,6000);assert.equal(reopened.unlocks.at(-1).id,advanced.id);
+  const gmStandard=await call('gm',{op:'createCharacter',campaignId,name:'Créé pour Bob',playerId:'bob',className:settings.categories.find(c=>c.kind==='class'&&c.available&&!c.archived).baseKey,race:settings.categories.find(c=>c.kind==='race'&&c.available&&!c.archived).baseKey,stats:{FOR:16,DEX:16,CON:16,INT:8,SAG:8,CHA:8}});assert.equal(gmStandard.status,200,gmStandard.error);assert.equal(gmStandard.character.reviewStatus,'approved');
+  const forged=await call('bob',{op:'saveCharacter',campaignId,id:gmStandard.character.id,revision:0,character:{...gmStandard.character,mode:'custom',resourceBases:{hp:999,mana:99,end:99}}});assert.equal(forged.status,400);
+  const added=await call('bob',{op:'saveCharacter',campaignId,id:gmStandard.character.id,revision:0,character:{...gmStandard.character,inventory:[entry('Objet joueur','other',{status:'approved'})]}});assert.equal(added.status,200,added.error);assert.equal(added.character.inventory[0].status,'pending');
  }finally{delete globalThis.__cendresTestDb;sqlite.close();await rm(folder,{recursive:true,force:true});}
 });

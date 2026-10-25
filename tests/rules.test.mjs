@@ -87,7 +87,7 @@ test("armor weights, penalties and shields are derived from categories", () => {
   assert.equal(derive(c).weight, 4);
   assert.equal(derive(c).hp, 52);
   assert.equal(derive(c).move, 1);
-  assert.equal(derive(c).dodge, 1);
+  assert.equal(derive(c).dodge, 2);
 });
 test("death marks and current resources stay under player control", () => {
   const c = fresh();
@@ -407,4 +407,16 @@ test('équipement : deux armes, une armure et deux talismans maximum',()=>{
   assert.throws(()=>validate(copy(over),copy(over),true),message);
   over.inventory.at(-1).equipped=false;assert.doesNotThrow(()=>validate(copy(over),copy(over),true));
  }
+});
+
+test("separate descriptive effects preserve existing data and approval", () => {
+  const old = fresh(), c = copy(old);
+  const description = c.inventory[0].description;
+  c.inventory[0].effects = "Une lueur ancienne.";
+  const saved = validate(c, old);
+  assert.equal(saved.inventory[0].description, description);
+  assert.equal(saved.inventory[0].effects, "Une lueur ancienne.");
+  assert.equal(saved.inventory[0].status, old.inventory[0].status);
+  c.inventory[0].effects = "x".repeat(3001);
+  assert.throws(() => validate(c, old), /Effets invalides/);
 });

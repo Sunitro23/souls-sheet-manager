@@ -136,3 +136,9 @@ h2,h3,.c-loadout-heading,.c-bag-heading{font-family:Cinzel,Georgia,serif}
 
 .owlbear-assignment { display:flex; gap:8px; align-items:center; }
 .owlbear-assignment select { min-width:0; flex:1; }
+.c-combat-list { list-style:none; padding:0; margin:0; display:grid; gap:6px; }
+.c-combat-list > li { padding:8px 0; border-bottom:1px solid #44382d; }
+.c-combat-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.c-combat-row small { display:block; opacity:.65; font-size:11px; margin-top:2px; }
+.c-combat-row > b { font-size:20px; font-variant-numeric:tabular-nums; }
+.c-combat-list summary { font-size:11px; opacity:.75; cursor:pointer; margin-top:4px; }

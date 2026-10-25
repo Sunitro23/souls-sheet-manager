@@ -1,5 +1,19 @@
 import OBR, { isImage, type Image } from "@owlbear-rodeo/sdk";
 import { cellFromCenter } from "../core/projection";
+import { sharedLink } from "../core/links";
+
+export async function characterTokens(characterId: string): Promise<Image[]> {
+  if (!await OBR.scene.isReady()) return [];
+  const items = await OBR.scene.items.getItems();
+  return items.filter((item): item is Image => isImage(item) && item.layer === "CHARACTER" && sharedLink(item)?.characterId === characterId);
+}
+
+export async function characterToken(characterId: string, choice = ""): Promise<Image> {
+  const tokens = await characterTokens(characterId);
+  const token = tokens.length === 1 ? tokens[0] : tokens.find(item => item.id === choice);
+  if (!token) throw Error(tokens.length ? "Choisissez le token à utiliser." : "Aucun token associé à ce personnage dans la scène.");
+  return token;
+}
 
 export async function selectedToken(): Promise<Image | undefined> {
   if (!await OBR.scene.isReady()) return undefined;

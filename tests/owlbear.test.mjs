@@ -2,6 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { fresh, entry } from "../lib/rules.ts";
 const copy = (c) => structuredClone(c);
+test("owlbear exports only usable spells with their saved zone and range", async () => {
+  const { owlbearTechniques } = await import("../lib/owlbear.ts");
+  const character = fresh();
+  const spell = entry("Explosion", "spell", {status:"approved",known:true,memorized:true,origin:"target",range:4,pattern:[[0,0],[1,0]]});
+  character.spells = [spell, ...[
+    {status:"pending"},{known:false},{memorized:false},{archived:true},{pattern:[]},
+  ].map((patch,index)=>({...spell,id:`excluded-${index}`,...patch}))];
+  const before=copy(character);
+  assert.deepEqual(owlbearTechniques(character).spells,[{id:spell.id,name:"Explosion",origin:"target",range:4,end:0,mana:0,pattern:[[0,0],[1,0]]}]);
+  assert.deepEqual(character,before);
+});
 test("owlbear uses campaign unlocks and ignores locked techniques without patterns", async () => {
   const { owlbearTechniques } = await import("../lib/owlbear.ts");
   const { defaultTree } = await import("../lib/progression.ts");
@@ -41,10 +52,10 @@ test("owlbear exports only equipped approved weapons and acquired techniques", a
   assert.equal(result.weapons[0].id, weapon.id);
   assert.equal(result.weapons[0].name, weapon.name);
   assert.deepEqual(result.weapons[0].techniques, [
-    { name: "Swing", pattern: [[0, -2], [-1, -1], [0, -1], [1, -2]] },
-    { name: "Estoc", pattern: [[0, -3], [0, -2], [0, -1]] },
-    { name: "Swipe", pattern: [[-2, -2], [-1, -2], [0, -2], [1, -2], [2, -2], [-2, -1], [2, -1], [-2, 0], [2, 0]] },
-    { name: "Spéciale", pattern: weapon.special.pattern },
+    { name: "Swing", end: 1, mana: 0, pattern: [[0, -2], [-1, -1], [0, -1], [1, -2]] },
+    { name: "Estoc", end: 1, mana: 0, pattern: [[0, -3], [0, -2], [0, -1]] },
+    { name: "Swipe", end: 1, mana: 0, pattern: [[-2, -2], [-1, -2], [0, -2], [1, -2], [2, -2], [-2, -1], [2, -1], [-2, 0], [2, 0]] },
+    { name: "Spéciale", end: weapon.special.end, mana: weapon.special.mana, pattern: weapon.special.pattern },
   ]);
   assert.deepEqual(c, before);
 });
@@ -56,7 +67,7 @@ test("owlbear supports custom weapons and empty inventories", async () => {
     category: "Bâtons", equipped: true, status: "approved", techniques: [technique],
   })];
   assert.deepEqual(owlbearTechniques(c).weapons[0].techniques, [
-    { name: technique.name, pattern: technique.pattern },
+    { name: technique.name, end: technique.end, mana: technique.mana, pattern: technique.pattern },
   ]);
   c.inventory = [];
   assert.deepEqual(owlbearTechniques(c).weapons, []);

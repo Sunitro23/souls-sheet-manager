@@ -18,5 +18,6 @@ export async function workspaceAction(data: Record<string, unknown>, embedded = 
     const secure = true;
     jar.set(name, value, { httpOnly: true, secure, sameSite: embedded && secure ? "none" : "lax", partitioned: embedded && secure, path: "/", maxAge });
   }
-  return response.json() as Promise<any>;
+  const result: any = await response.json();
+  return response.ok ? result : {...result, status: response.status};
 }

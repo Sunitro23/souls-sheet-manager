@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./v2.css";
 import "./fantasy.css";
+import "./refinement.css";
+import "./administration.css";
+import "./owlbear.css";
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' as const };
 export const metadata: Metadata = {
   title: "Cendres",

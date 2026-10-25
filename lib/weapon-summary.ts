@@ -2,7 +2,7 @@ import {itemWeight,type Entry} from './rules.ts';
 import {predefinedTechniques,effectText} from './combat.ts';
 import {matchesCharacter,knownNodeIds,type Tree} from './progression.ts';
 export function weaponSummary(item:Entry,character:any,tree:Tree){
- const family=tree.weaponFamilies?.[item.category];
+ const family=(tree.categoryFamilies?.[item.categoryId??`weapon:${item.category}`])??tree.weaponFamilies?.[item.category];
  const catalogue=predefinedTechniques(item);
  const known=knownNodeIds(character,tree);
  const nodes=tree.nodes.filter(n=>(n.kind==='technique'||n.kind==='competence')&&matchesCharacter(n,character)&&(n.weapon?n.weapon===item.category:!!family&&n.family===family));

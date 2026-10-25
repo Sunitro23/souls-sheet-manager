@@ -24,6 +24,7 @@ export function buildPattern(origin: Point, dpi: number, technique: Technique, r
 }
 
 export class Preview {
+  constructor(private readonly key = PREVIEW_KEY) {}
   private ids: string[] = [];
   private queue: Promise<void> = Promise.resolve();
   private revision = 0;
@@ -38,7 +39,7 @@ export class Preview {
     if (!OBR.isReady) return;
     if (!await OBR.scene.isReady()) { this.ids = []; return; }
     // Retrouver aussi les résidus d’une fermeture brutale de la fenêtre précédente.
-    const leftovers = await OBR.scene.local.getItems(item => item.metadata[PREVIEW_KEY] === true);
+    const leftovers = await OBR.scene.local.getItems(item => item.metadata[this.key] === true);
     const ids = [...new Set([...this.ids, ...leftovers.map(item => item.id)])];
     if (ids.length) await OBR.scene.local.deleteItems(ids);
     this.ids = [];
@@ -52,13 +53,32 @@ export class Preview {
   show(resolve: () => Promise<Item[]>) {
     const revision = ++this.revision;
     return this.enqueue(async () => {
-      await this.remove();
       if (revision !== this.revision) return;
       const items = await resolve();
-      if (revision !== this.revision || !items.length || !await OBR.scene.isReady()) return;
-      this.ids = items.map(item => item.id);
-      await OBR.scene.local.addItems(items);
-      if (revision !== this.revision) await this.remove();
+      for (const item of items) { delete item.metadata[PREVIEW_KEY]; item.metadata[this.key] = true; }
+      if (revision !== this.revision || !await OBR.scene.isReady()) return;
+      if (!items.length) { await this.remove(); return; }
+      const existing = await OBR.scene.local.getItems(item => item.metadata[this.key] === true);
+      if (revision !== this.revision) return;
+      if (existing.length === items.length) {
+        const replacements = new Map(existing.map((item, index) => [item.id, items[index]]));
+        await OBR.scene.local.updateItems(existing.map(item => item.id), drafts => {
+          for (const draft of drafts) Object.assign(draft, replacements.get(draft.id), {id:draft.id});
+        });
+        this.ids = existing.map(item => item.id);
+      } else {
+        await OBR.scene.local.addItems(items);
+        this.ids = items.map(item => item.id);
+        if (existing.length) await OBR.scene.local.deleteItems(existing.map(item => item.id));
+      }
     });
   }
+}
+
+// This local layer survives closing action controls while defenders choose.
+export async function showAttackPreview(state: import('../core/actions').CombatView | null) {
+  const preview = new Preview('de.sunitro.cendres/pending-attack');
+  const attack = state?.attackPreview;
+  if (attack) await preview.show(async()=>buildPattern({x:0,y:0},attack.dpi,{name:attack.name,pattern:attack.cells.map(p=>[p.x,p.y])}));
+  else if (!state?.resolution) await preview.clear();
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { initiativeOrder, initiativeTotal, participantsByPlayer } from "../lib/obr/core/combat";
 import type { CombatPreparation, InitiativeAction, TurnAction } from "../lib/obr/core/combat";
 
@@ -63,14 +63,34 @@ export default function OwlbearInitiative({ combat: initialCombat, canManage, co
   const ordered = combat.phase === "ready" ? initiativeOrder(combat) : participantsByPlayer(combat.participants);
   const currentTurn = combat.turn ?? 0;
   const active = combat.phase === "ready" ? ordered[currentTurn % ordered.length] : null;
+  const strip = useRef<HTMLOListElement>(null);
+  const footer = useRef<HTMLDivElement>(null);
+  const hasFooter = canManage && combat.phase === "collecting" || !!active && (canManage || active.playerId === playerId);
+  useEffect(() => {
+    const controls = footer.current;
+    const panel = controls?.closest<HTMLElement>('.c-owlbear-panel');
+    if (!controls || !panel) return;
+    const resize = new ResizeObserver(() => panel.style.setProperty('--owlbear-footer-height', `${controls.getBoundingClientRect().height}px`));
+    resize.observe(controls);
+    return () => { resize.disconnect(); panel.style.removeProperty('--owlbear-footer-height'); };
+  }, [hasFooter]);
+  useEffect(() => {
+    const list = strip.current;
+    const current = list?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!list || !current) return;
+    const bounds = list.getBoundingClientRect(), item = current.getBoundingClientRect();
+    if (item.left < bounds.left) list.scrollLeft -= bounds.left - item.left;
+    else if (item.right > bounds.right) list.scrollLeft += item.right - bounds.right;
+  }, [combat.id, active?.id, currentTurn]);
   return <section className="owlbear-previews" aria-label="Initiatives">
+    {active&&<p className="c-owlbear-turn-label" role="status">Tour de : <strong>{active.name}</strong></p>}
     {(error || runtime.error) && <p role="alert">{error || runtime.error}</p>}
     {canManage && combat.phase === "ready" && runtime.ready && !runtime.state && <button className="c-primary" disabled={busy} onClick={async()=>{setBusy(true);try{const {startCombat}=await import('../lib/obr/owlbear/actions');await startCombat(combat);}catch(e){setError((e as Error).message)}finally{setBusy(false)}}}>Démarrer le combat</button>}
     {combat.phase === "preparing" ? <>
       {canManage && <button type="button" className="c-primary" disabled={busy || locked} onClick={() => void change({ type: "open" })}>Ouvrir la collecte des initiatives</button>}
     </> : <>
       {combat.phase === "collecting" && <p role="status">{listening ? status || "Connexion à Dice…" : "En attente des jets."}</p>}
-      <ol className={combat.phase === "ready" ? "c-combat-list c-turn-strip" : "c-combat-list"}>{ordered.map(participant => {
+      <ol ref={strip} className={combat.phase === "ready" ? "c-combat-list c-turn-strip" : "c-combat-list"}>{ordered.map(participant => {
         const roll = rolls.find(item => item.participantId === participant.id);
         return <li key={participant.id} aria-current={active?.id===participant.id?"step":undefined}>
           <div className="c-combat-row"><span title={participant.name} aria-label={participant.name}>{combat.phase === "ready" ? (() => {
@@ -90,10 +110,10 @@ export default function OwlbearInitiative({ combat: initialCombat, canManage, co
       })}</ol>
       {canManage && combat.phase === "collecting" && <>
         {(!listening || listenFailed) && <button className="c-button" disabled={busy || locked} onClick={() => void change({ type: "open" })}>Reprendre l’écoute ici</button>}
-        <div className="c-owlbear-footer"><button className="c-primary" disabled={busy || !listening || rolls.length !== combat.participants.length} onClick={() => void change({ type: "finish" })}>Valider l’ordre</button></div>
+        <div ref={footer} className="c-owlbear-footer"><button className="c-primary" disabled={busy || !listening || rolls.length !== combat.participants.length} onClick={() => void change({ type: "finish" })}>Valider l’ordre</button></div>
       </>}
       {canManage && combat.phase === "ready" && !runtime.state && <button className="c-button" disabled={busy || locked} onClick={() => void change({ type: "open" })}>Corriger les initiatives</button>}
     </>}
-    {active&&(canManage||active.playerId===playerId)&&<div className="c-owlbear-footer"><button className="c-primary" disabled={busy || locked} onClick={()=>void turn({type:"next"})}>{active.playerId===playerId?"Terminer mon tour":"Tour suivant"} →</button>{endCombatButton}</div>}
+    {active&&(canManage||active.playerId===playerId)&&<div ref={footer} className="c-owlbear-footer"><button className="c-primary" disabled={busy || locked} onClick={()=>void turn({type:"next"})}>{active.playerId===playerId?"Terminer mon tour":"Tour suivant"} →</button>{endCombatButton}</div>}
   </section>;
 }

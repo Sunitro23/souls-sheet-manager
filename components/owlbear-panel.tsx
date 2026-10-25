@@ -31,10 +31,14 @@ export default function OwlbearPanel(props: Props) {
       <button type="button" aria-current={!settings?'page':undefined} onClick={navigate}><Sparkles size={20}/>Actions</button>
       {props.canAssign&&<button type="button" aria-label="Paramètres GM" title="Paramètres GM" aria-current={settings?"page":undefined} onClick={()=>setSettingsOpen(!settings)}><Settings size={16}/></button>}
     </nav>
+    {!settings&&<header className="c-owlbear-status" aria-label="Personnage et tour">
+      <strong>{character?.name || "Aucun personnage sélectionné"}</strong>
+      <p role="status">{!props.ready ? "Connexion à Owlbear…" : runtime.error ? "Combat indisponible" : !runtime.ready ? "Chargement du combat…" : !runtime.combat ? "Hors combat" : !active ? "Préparation du combat…" : showActions ? runtime.state?.pending || runtime.state?.resolution ? "Résolution de l’attaque…" : "À vous de jouer" : `Tour de ${active.name} — en attente`}</p>
+    </header>}
     <div className="c-owlbear-content">
-      {!props.ready&&<p role="status">Connexion à Owlbear…</p>}
+      {!props.ready&&settings&&<p role="status">Connexion à Owlbear…</p>}
       {props.ready&&props.campaignId&&<section aria-label="Informations du combat" hidden={settings}><OwlbearCombat key={props.campaignId} campaignId={props.campaignId} characters={characters} canAssign={props.canAssign}/></section>}
-      {!settings&&showActions&&<>
+      {!settings&&<>
         {!character&&<p>Sélectionnez votre token sur la carte.</p>}
         {character&&derived&&<>
           <div className="c-owlbear-character-card">

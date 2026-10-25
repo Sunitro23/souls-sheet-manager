@@ -229,3 +229,17 @@
 .c-turn-portrait { display:block; width:36px; height:36px; border-radius:50%; object-fit:cover; }
 .c-turn-fallback { display:grid; place-items:center; background:#303b4c; font-weight:700; }
 .c-turn-strip .c-combat-row>b { position:absolute; right:-3px; bottom:-3px; background:#18202d; border-radius:8px; padding:0 4px; font-size:10px; }
+
+.c-owlbear-status { flex-shrink:0; padding:8px; background:#202631; border-bottom:1px solid #303a4a; overflow-wrap:anywhere; }
+.c-owlbear-status>strong { display:block; font-size:14px; }
+.c-owlbear-status>p { margin:3px 0 0; font-size:13px; color:#bdcfff; }
+.c-owlbear-panel { font-size:13px; }
+.c-owlbear-action-info strong { font-size:13px; }
+.c-owlbear-action-info small,.c-owlbear-content p { font-size:12px; }
+.c-owlbear-content .c-owlbear-weapon-group { margin:8px 0; }
+.c-owlbear-weapon-group>h3 { padding-bottom:4px; border-bottom:1px solid #303a4a; overflow-wrap:anywhere; }
+.c-owlbear .c-owlbear-action-detail { padding:8px; background:#222b39; border-radius:6px; }
+.c-owlbear-action-detail p { margin:0 0 6px; }
+.c-owlbear .c-owlbear-detail-buttons { margin-top:8px; }
+.c-owlbear-turn-label { overflow-wrap:anywhere; }
+.c-owlbear-panel:has(section[aria-label="Informations du combat"]:not([hidden]) .c-owlbear-footer) .c-owlbear-content { padding-bottom:calc(var(--owlbear-footer-height, 48px) + 8px); }

@@ -4,7 +4,7 @@ import type { Resolution } from '../core/actions';
 
 const PROGRESS = 'de.sunitro.cendres/movement-progress';
 
-export async function animateMovement(resolution: Resolution, stopped: () => boolean) {
+export async function animateMovement(resolution: Resolution, stopped: () => boolean, style: 'walk' | 'dodge' = 'walk') {
   const movement = resolution.movement!;
   let interaction: Awaited<ReturnType<typeof OBR.interaction.startItemInteraction>> | undefined;
   let interactionStarted = 0;
@@ -22,11 +22,12 @@ export async function animateMovement(resolution: Resolution, stopped: () => boo
         interactionStarted = Date.now();
       }
       const from = movement.positions[step - 1], to = movement.positions[step];
-      const height = Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y)) * 0.18;
-      const rotation = cardinalRotation(from, to);
+      const height = (style === 'dodge' ? 0 : 1) * Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y)) * 0.18;
+      const rotation = movement.rotation ?? cardinalRotation(from, to);
       // Stream visual frames without scene writes or per-frame change notifications.
       for (let frame = 1; frame <= 8; frame++) {
-        const t = frame / 8;
+        const progress = frame / 8;
+        const t = style === 'dodge' ? 1 - Math.pow(1 - progress, 3) : progress;
         interaction[0](draft => {
           const item = Array.isArray(draft) ? draft[0] : draft;
           item.rotation = rotation;
@@ -35,7 +36,7 @@ export async function animateMovement(resolution: Resolution, stopped: () => boo
             y: from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * height,
           };
         });
-        await new Promise(resolve => setTimeout(resolve, 30));
+        await new Promise(resolve => setTimeout(resolve, style === 'dodge' ? 12 : 30));
       }
       // Persist and checkpoint only the landing, so recovery never repays an action.
       await OBR.scene.items.updateItems([movement.tokenId], items => {

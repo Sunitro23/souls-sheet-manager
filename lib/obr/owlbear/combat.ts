@@ -1,3 +1,4 @@
+import { SPELL_ZONE_KEY } from '../core/spells.ts';
 import { COMBAT_KEY, readCombat, validateParticipants, changeInitiative, changeTurn } from "../core/combat.ts";
 import type { InitiativeAction, TurnAction } from "../core/combat.ts";
 import type { CombatPreparation, CombatParticipant } from "../core/combat.ts";
@@ -63,13 +64,20 @@ export function updateInitiative(source: CombatSource & { player: CombatSource["
   });
 }
 
-export async function cancelCombatPreparation(source: CombatSource, expected: Pick<CombatPreparation, "id" | "revision">) {
+export async function cancelCombatPreparation(source: CombatSource & {
+  scene: { items: {
+    getItems(): Promise<{id: string; metadata: Record<string, unknown>}[]>;
+    deleteItems(ids: string[]): Promise<void>;
+  } };
+}, expected: Pick<CombatPreparation, "id" | "revision">) {
   return enqueue(source, async () => {
   if (await source.player.getRole() !== "GM") throw Error("Seul le GM peut annuler la préparation.");
   const current = readCombat(await source.room.getMetadata());
   if (!current || current.id !== expected.id || current.revision !== expected.revision) {
     throw Error("Le combat a été modifié ailleurs. Rechargez la préparation.");
   }
+  const zones = (await source.scene.items.getItems()).filter(item => item.metadata[SPELL_ZONE_KEY]);
+  if (zones.length) await source.scene.items.deleteItems(zones.map(item => item.id));
   await source.room.setMetadata({ [COMBAT_KEY]: null });
   });
 }

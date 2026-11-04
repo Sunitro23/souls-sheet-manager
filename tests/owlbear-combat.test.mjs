@@ -1,3 +1,4 @@
+import { SPELL_ZONE_KEY } from '../lib/obr/core/spells.ts';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { COMBAT_KEY, readCombat, participantsByPlayer } from "../lib/obr/core/combat.ts";
@@ -9,8 +10,11 @@ const input = (participants = [participant()]) => ({ campaignId: "campaign", nam
 function source(role = "GM", initial = {}) {
   let metadata = structuredClone(initial);
   const writes = [];
+  let items = [];
   return {
     writes, metadata: () => metadata,
+    setItems: value => { items = value; },
+    scene: { items: { getItems: async () => items, deleteItems: async ids => { items = items.filter(item => !ids.includes(item.id)); } } },
     player: { getRole: async () => role, getId: async () => "gm" },
     room: { getMetadata: async () => structuredClone(metadata), setMetadata: async update => {
       writes.push(update); metadata = { ...metadata, ...structuredClone(update) };
@@ -95,4 +99,18 @@ test("respects the shared room metadata budget before writing", async () => {
   const sdk = source("GM", { "other-extension": "x".repeat(16000) });
   await assert.rejects(saveCombatPreparation(sdk, input(), null), /espace/);
   assert.equal(sdk.writes.length, 0);
+});
+
+test("fin du combat : toutes les zones sont effacées, les pions et dessins sont conservés", async () => {
+  const sdk = source(), combat = await saveCombatPreparation(sdk, input(), null);
+  const keep = [{id:'token',metadata:{}},{id:'drawing',metadata:{'another-extension/zone':true}}];
+  sdk.setItems([...keep,
+    {id:'attack',metadata:{[SPELL_ZONE_KEY]:{castId:'attack',casterId:'player',spellId:'combat'}}},
+    {id:'spell',metadata:{[SPELL_ZONE_KEY]:{castId:'spell',casterId:'other-player'}}},
+  ]);
+  await assert.rejects(cancelCombatPreparation(sdk, {...combat,revision:0}), /modifié ailleurs/);
+  assert.equal((await sdk.scene.items.getItems()).length,4);
+  await cancelCombatPreparation(sdk,combat);
+  assert.deepEqual(await sdk.scene.items.getItems(),keep);
+  assert.equal(readCombat(sdk.metadata()),null);
 });

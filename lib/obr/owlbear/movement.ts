@@ -1,3 +1,4 @@
+import { COMBAT_POLL_MS } from '../core/combat-sync';
 import { owlbearErrorMessage } from './error';
 import OBR, { buildText, buildPath, Command, isPath, type Item, type PathCommand } from '@owlbear-rodeo/sdk';
 import { characterForOwlbear } from '../../workspace-client';
@@ -145,7 +146,6 @@ export async function registerMovement() {
     await OBR.tool.activateTool(TOOL);
     try { await refreshPreview(); } catch (error) { await cancel(); throw error; }
     if (!automatic) await OBR.notification.show(correction ? 'Cliquez pour repositionner le pion · Échap pour annuler.' : 'Choisissez une destination · 1 END en marche, 2 END en course · Échap pour annuler.');
-    if (!automatic) await OBR.action.close();
   }
   async function clearWeapon() {
     await new Preview().clear();
@@ -302,7 +302,7 @@ export async function registerMovement() {
     OBR.scene.grid.onChange(() => run(async () => { await cancel(); await syncAutomatic(); })),
     OBR.scene.onReadyChange(() => run(async () => { turnKey = ''; await cancel(); await syncLocks(); await syncAutomatic(); })),
   ];
-  const timer = setInterval(() => run(syncAutomatic), 1500);
+  const timer = setInterval(() => run(syncAutomatic), COMBAT_POLL_MS);
   await syncLocks();
   await syncAutomatic();
   return async () => {

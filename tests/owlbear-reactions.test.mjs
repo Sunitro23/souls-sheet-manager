@@ -41,7 +41,9 @@ test('Owlbear : choix secret, déplacement avant révélation, reprise sans doub
   assert.ok(state.events.some(event=>event.channel==='de.sunitro.cendres/attack-threat'&&event.data.participantIds.includes('defender')));
   state.events=[];
   state.callbacks.get(DODGE_CHANNEL)({data:{participantId:'defender',attackId:'attack'}});await settle();
-  assert.equal(state.preview.length,8,'huit cases d’esquive prévisualisées');
+  assert.equal(state.preview.length,24,'toute la grille d’esquive est prévisualisée');
+  assert.ok(state.preview.some(item=>item.position.x===100&&item.position.y===0));
+  assert.ok(state.preview.some(item=>item.position.x===200&&item.position.y===100));
   await state.mode.onToolClick({}, {pointerPosition:{x:250,y:50}});
   assert.deepEqual(state.answer,{participantId:'defender',attackId:'attack',destination:{x:2,y:0}});
   assert.equal(state.items.length,1);assert.deepEqual(state.items[0].position,{x:50,y:50});
@@ -86,12 +88,16 @@ test('Owlbear : choix secret, déplacement avant révélation, reprise sans doub
   const state={combat:{participants:[{id:'baboon',name:'Baboon',playerId:'bob'}]},dodges:{baboon:1},pending:{id:'attack',defenders:['baboon'],answered:[]}};
   const render=(playerId,gm)=>renderToStaticMarkup(React.createElement(Reactions,{state,playerId,gm}));
   assert.doesNotMatch(render('sun',true),/<button/);
-  assert.match(render('bob',false),/Ne pas esquiver/);
+  assert.match(render('bob',false),/Encaisser/);
+  assert.match(render('bob',false),/Vous êtes en danger/);
+  assert.match(render('bob',false),/c-owlbear-encounter is-danger/);
   state.combat.participants[0].playerId='sun';
-  assert.match(render('sun',true),/Ne pas esquiver/);
+  assert.match(render('sun',true),/Encaisser/);
   state.pending=null;state.lastAttack={id:'attack',name:'Frappe',hitParticipants:['baboon']};
-  assert.match(render('anyone',false),/Touchés : Baboon/);
+  assert.equal(render('anyone',false),'');
+  assert.match(render('sun',false),/Vous êtes touché/);
+  assert.match(render('sun',false),/Baboon subit l’attaque/);
   state.lastAttack.hitParticipants=[];
-  assert.match(render('anyone',false),/Aucun participant touché/);
+  assert.equal(render('anyone',false),'');
  } finally {await rm(folder,{recursive:true,force:true});}
  });

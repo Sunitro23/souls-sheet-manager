@@ -1,4 +1,5 @@
-import { planMovement } from './obr/core/movement';
+import { weaponSummary } from './weapon-summary';
+import { planMovement, movementRotation } from './obr/core/movement';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { combatSessions, characters, accounts } from '../db/schema';
 import type { getDb } from '../db';
@@ -8,7 +9,7 @@ import type { Tree } from './progression';
 import { COMBAT_KEY, readCombat, changeTurn, type TurnAction } from './obr/core/combat';
 import { projectPattern } from './obr/core/projection';
 import { spellPosition } from './obr/core/spells';
-import { activeParticipant, publicCombat, validDodge, validPoint, sameCell, resolveAttack,
+import { activeParticipant, publicCombat, validDodge, validPoint, sameCell, resolveAttack, logCombat,
   type CombatRuntime, type BoardToken, type ActionChoice } from './obr/core/actions';
 
 type DB = ReturnType<typeof getDb>;
@@ -78,6 +79,7 @@ export async function combatSession(db: DB, input: Record<string, unknown>, cont
     character.end = derive(character).end;
     state.dodges[next.id] = 0;
     state.combat.revision++;
+    logCombat(state, { id: requestId, actorId: next.id, turn: state.combat.turn ?? 0, name: 'Début du tour', kind: 'turn' });
   } else if (input.command === 'action') {
     if (!state.receipts.includes('started')) throw fail('Le MJ doit démarrer le combat.');
     if (!participant || participant.id !== active.id || !canControl(participant)) throw fail('Ce n’est pas votre tour.', 403);
@@ -99,7 +101,7 @@ export async function combatSession(db: DB, input: Record<string, unknown>, cont
       if (state.combat.participants.some(p => !(input.board as BoardToken[]).some(t => t.tokenId === p.tokenId))) throw fail('Les pions du combat doivent être présents sur la carte.');
       const { token, path } = movement;
       const positions = [token.position, ...path.map(cell => ({ x: token.position.x + (cell.x - token.cell.x) * (input.dpi as number), y: token.position.y + (cell.y - token.cell.y) * (input.dpi as number) }))];
-      state.resolution = { id: requestId, actorId: participant.id, name: 'Mouvement', cells: [], dpi: input.dpi, moves: [], movement: { tokenId: token.tokenId, positions } };
+      state.resolution = { id: requestId, actorId: participant.id, name: 'Mouvement', cells: [], dpi: input.dpi, moves: [], movement: { tokenId: token.tokenId, positions, rotation: movementRotation(token.cell, path[path.length-1], (input.board as BoardToken[]).filter(t=>state.combat.participants.some(p=>p.tokenId===t.tokenId&&p.id!==participant.id&&p.camp!==participant.camp)).map(t=>t.cell)) } };
     }
     if (choice.kind === 'turn') {
       if (![0, 90, 180, 270].includes(choice.rotation)) throw fail('Choisissez une des quatre directions.');
@@ -127,33 +129,41 @@ export async function combatSession(db: DB, input: Record<string, unknown>, cont
       }
       const cells = projectPattern(position, technique.pattern as [number, number][], input.rotation);
       const offensive = choice.kind !== 'spell' || !!character.spells.find(spell => spell.id === choice.spellId)?.damage.trim();
-      state.pending = { id: requestId, actorId: participant.id, name: technique.name, cells, dpi: input.dpi, board,
+      const weapon = choice.kind === 'weapon' ? character.inventory.find(item => item.id === choice.weaponId) : undefined;
+      const damage = weapon ? weaponSummary(weapon, character, tree).techniques.find(item => item.name === technique.name)?.damage || weapon.damage : choice.kind === 'spell' ? character.spells.find(spell => spell.id === choice.spellId)?.damage : undefined;
+      state.pending = { effectKind: choice.kind === 'spell' ? 'spell' : 'weapon', damage, id: requestId, actorId: participant.id, name: technique.name, cells, dpi: input.dpi, board,
         defenders: state.combat.participants.filter(p => p.id !== participant.id && p.camp !== participant.camp && offensive && board.some(t => t.tokenId === p.tokenId && cells.some(cell => sameCell(cell, t.cell)))).map(p => p.id), answers: {} };
       const unprepared = state.pending.defenders.filter(id => !(state.dodges[id] > 0));
       for (const id of unprepared) state.pending.answers[id] = null;
       if (unprepared.length) state.unpreparedHit = { id: requestId, defenders: unprepared };
       resolveAttack(state);
     }
+    logCombat(state, { id: requestId, actorId: participant.id, turn: state.combat.turn ?? 0, name, kind: 'action', end, mana,
+      damage: state.pending?.damage ?? state.resolution?.damage, resolved: !state.pending && !state.resolution });
   } else if (input.command === 'answer') {
     const attack = state.pending;
     if (!attack || attack.id !== input.attackId || !participant || !attack.defenders.includes(participant.id) || participant.id in attack.answers) throw fail('Cette réaction n’est plus disponible.');
     if (!playerId || participant.playerId !== playerId) throw fail('Vous ne contrôlez pas ce personnage.', 403);
     if (input.destination !== null) {
       const destination = input.destination, from = attack.board.find(t => t.tokenId === participant.tokenId);
-      if (!validPoint(destination) || !from || !validDodge(from.cell, destination)) throw fail('Choisissez une case à exactement 2 cases dans une des 8 directions.');
+      if (!validPoint(destination) || !from || !validDodge(from.cell, destination)) throw fail('Choisissez une autre case dans la zone d’esquive, à 2 cases maximum.');
       planMovement(attack.board, participant.tokenId!, destination, 2, 2);
       if (!(state.dodges[participant.id] > 0)) throw fail('Aucune esquive préparée.');
       state.dodges[participant.id]--;
     }
     state.pending!.answers[participant.id] = input.destination as import("./obr/core/types").Point | null;
     resolveAttack(state);
+    logCombat(state, { id: requestId, actorId: participant.id, turn: state.combat.turn ?? 0, name: input.destination === null ? 'Encaisse' : 'Esquive', kind: 'reaction' });
   } else if (input.command === 'ack') {
     if (!state.resolution || state.resolution.id !== input.attackId) throw fail('Résolution expirée.');
     const attacker = state.combat.participants.find(p => p.id === state.resolution!.actorId)!;
     if (!canControl(attacker)) throw fail('Accès refusé.', 403);
-    if (state.resolution.hitParticipants) state.lastAttack = {id:state.resolution.id,name:state.resolution.name,hitParticipants:state.resolution.hitParticipants};
+    if (state.resolution.hitParticipants) state.lastAttack = {actorId:state.resolution.actorId,damage:state.resolution.damage,id:state.resolution.id,name:state.resolution.name,hitParticipants:state.resolution.hitParticipants};
+    const entry = state.history?.find(entry => entry.id === state.resolution!.id);
+    if (entry) { entry.resolved = true; entry.hitParticipants = state.resolution.hitParticipants; }
     state.resolution = null;
   } else throw fail('Commande de combat inconnue.');
+  if (input.command === 'action' || input.command === 'turn') delete state.lastAttack;
   state.revision = row.revision + 1;
   state.receipts = ['started', ...state.receipts.filter(id=>id!=='started'), requestId].slice(-2000);
   if(!state.receipts.includes('started')) state.receipts.unshift('started');

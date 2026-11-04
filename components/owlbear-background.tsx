@@ -6,22 +6,29 @@ export default function OwlbearBackground() {
     let live = true;
     const ids: string[] = [];
     let stopExpiry: (() => void) | undefined;
+    let stopEffects: (() => void) | undefined;
+    let stopFeedback: (() => Promise<void>) | undefined;
     let stopCombat: (() => Promise<void>) | undefined;
     let stopMovement: (() => Promise<void>) | undefined;
     let stopSpells: (() => Promise<void>) | undefined;
     const menuId = "de.sunitro.cendres/assign";
+    const menuIds = [menuId, "de.sunitro.cendres/link-token", "de.sunitro.cendres/unlink-token"];
     const connection = connectOwlbear();
     void connection.then(async OBR => {
       if (!OBR || !live) return;
       const {registerZoneExpiry}=await import('../lib/obr/owlbear/zone-expiry');
       stopExpiry=registerZoneExpiry();
+      const {registerZoneEffects}=await import('../lib/obr/owlbear/zone-effects');
+      stopEffects=registerZoneEffects();
+      const { registerCombatEffects } = await import('../lib/obr/owlbear/combat-effects');
+      stopFeedback = await registerCombatEffects();
       const { registerSpellPlacement } = await import('../lib/obr/owlbear/spell-placement');
       stopSpells = await registerSpellPlacement();
       const {registerCombatReactions}=await import("../lib/obr/owlbear/reactions");
       stopCombat=await registerCombatReactions();
       const { registerMovement } = await import('../lib/obr/owlbear/movement');
       stopMovement = await registerMovement();
-      if (!live) { await stopMovement(); await stopSpells(); await stopCombat(); stopExpiry(); return; }
+      if (!live) { await stopMovement(); await stopSpells(); await stopCombat(); await stopFeedback(); stopExpiry(); stopEffects(); return; }
       const open = async (section: string) => {
         sessionStorage.setItem("souls-owlbear-section", section);
         await OBR.action.open();
@@ -65,9 +72,34 @@ export default function OwlbearBackground() {
           catch { await OBR.notification.show("Ouverture de Souls impossible.", "ERROR"); }
         },
       });
-      if (!live) await OBR.contextMenu.remove(menuId);
+      for (const [index, label] of ['Associer un personnage Souls', 'Dissocier le personnage Souls'].entries()) {
+        const id = menuIds[index + 1];
+        await OBR.contextMenu.create({ id, icons: [{ icon: new URL('/owlbear/character.svg', location.origin).href, label,
+          filter: { min: 1, max: 1, roles: ['GM'], permissions: ['UPDATE'], every: [{ key: 'type', value: 'IMAGE' }, { key: 'layer', value: 'CHARACTER' },
+            ...(index === 1 ? [{ key: ['metadata', 'de.sunitro.cendres/link'], value: undefined, operator: '!=' as const }] : [])] } }],
+          onClick: async context => {
+            try {
+              if (await OBR.player.getRole() !== 'GM') throw Error('Accès MJ requis.');
+              const tokenId = context.items[0]?.id;
+              if (!tokenId) return;
+              const [token] = await OBR.scene.items.getItems([tokenId]);
+              if (!token || token.type !== 'IMAGE' || token.layer !== 'CHARACTER') throw Error('Sélection modifiée. Réessayez.');
+              if (index === 0) { await OBR.player.select([tokenId], true); await open('Paramètres'); return; }
+              const [{ sharedLink, TOKEN_LINK_KEY }, { characterForOwlbear }] = await Promise.all([import('../lib/obr/core/links'), import('../lib/workspace-client')]);
+              const link = sharedLink(token);
+              if (!link || !(await characterForOwlbear(link.characterId)).canAssign || await OBR.player.getRole() !== 'GM') throw Error('Association ou autorisation modifiée. Réessayez.');
+              await OBR.scene.items.updateItems([tokenId], items => { for (const item of items) {
+                if (sharedLink(item)?.characterId !== link.characterId) throw Error('Association modifiée. Réessayez.');
+                delete item.metadata[TOKEN_LINK_KEY];
+              } });
+              await OBR.notification.show('Personnage dissocié du token.');
+            } catch (error) { await OBR.notification.show((error as Error).message, 'ERROR'); }
+          },
+        });
+      }
+      if (!live) await Promise.all(menuIds.map(id => OBR.contextMenu.remove(id)));
     }).catch(async () => { const { default: OBR } = await import('@owlbear-rodeo/sdk'); if (OBR.isReady) await OBR.notification.show("Outils Souls indisponibles. Rechargez l’extension.", "ERROR"); });
-    return () => { live = false; void stopMovement?.().catch(() => {}); stopExpiry?.(); void stopCombat?.().catch(() => {}); void stopSpells?.().catch(() => {}); void connection.then(OBR => OBR && Promise.all([...ids.map(id => OBR.tool.remove(id)), OBR.contextMenu.remove(menuId)])).catch(() => {}); };
+    return () => { live = false; void stopMovement?.().catch(() => {}); stopExpiry?.(); stopEffects?.(); void stopFeedback?.().catch(() => {}); void stopCombat?.().catch(() => {}); void stopSpells?.().catch(() => {}); void connection.then(OBR => OBR && Promise.all([...ids.map(id => OBR.tool.remove(id)), ...menuIds.map(id => OBR.contextMenu.remove(id))])).catch(() => {}); };
   }, []);
   return null;
 }

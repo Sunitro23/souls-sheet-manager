@@ -91,7 +91,6 @@ export default function OwlbearCombat({ campaignId, canAssign, characters }: Pro
   return <section className="owlbear-previews" aria-label="Combat">
 <datalist id="combat-camps"><option value="Joueurs"/><option value="Ennemis"/></datalist>
     {error && <p role="alert">{error}</p>}
-    {!ready && !error && <p>Chargement…</p>}
     {ready && (!combat || combat.phase === "preparing") && <>
       {(combat?.participants??detected).length ? <ul className="c-combat-list">{participantsByPlayer(combat?.participants??detected).map(participant => <li key={participant.id}>
         <div className="c-combat-row"><span className="c-owlbear-participant"><span className="c-owlbear-avatar" aria-hidden="true">♟</span><span><strong>{participant.name}</strong></span></span><span className="c-owlbear-tag">{choices[participant.id]?.camp ?? participant.camp ?? "Joueurs"}</span></div>

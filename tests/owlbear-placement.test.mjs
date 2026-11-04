@@ -34,7 +34,7 @@ test('Owlbear placement: automatic token, private preview, validation, cancellat
   globalThis.__owlbearTest={sdk,state};
   let stop;
   try{
-    await build({stdin:{contents:"export {showAttackPreview,Preview} from './lib/obr/owlbear/preview'; export {onMapInteraction} from './lib/obr/owlbear/interaction'; export {clearSpellZones} from './lib/obr/owlbear/clear-zones'; export {registerSpellPlacement} from './lib/obr/owlbear/spell-placement'; export {characterToken} from './lib/obr/owlbear/token';",resolveDir:process.cwd()},outfile:join(folder,'placement.mjs'),bundle:true,platform:'node',format:'esm',plugins:[{name:'owlbear-test',setup(builder){
+    await build({stdin:{contents:"export {showAttackPreview,Preview} from './lib/obr/owlbear/preview'; export {onMapInteraction} from './lib/obr/owlbear/interaction'; export {clearSpellZones} from './lib/obr/owlbear/clear-zones'; export {registerSpellPlacement} from './lib/obr/owlbear/spell-placement'; export {characterToken,centerCombatTokens} from './lib/obr/owlbear/token'; export {startCombat} from './lib/obr/owlbear/actions';",resolveDir:process.cwd()},outfile:join(folder,'placement.mjs'),bundle:true,platform:'node',format:'esm',plugins:[{name:'owlbear-test',setup(builder){
       builder.onResolve({filter:/^@owlbear-rodeo\/sdk$/},()=>({path:'sdk',namespace:'mock'}));
       builder.onResolve({filter:/workspace-client$/},()=>({path:'client',namespace:'mock'}));
       builder.onLoad({filter:/.*/,namespace:'mock'},({path})=>({contents:path==='client'?"export async function workspaceCall(data){return globalThis.__owlbearTest.call(data)} export async function characterForOwlbear(){return {revision:0,spells:globalThis.__owlbearTest.state.spells}}":`
@@ -44,7 +44,7 @@ test('Owlbear placement: automatic token, private preview, validation, cancellat
         export function buildPath(){const item={id:crypto.randomUUID(),metadata:{}};const builder=new Proxy({}, {get:(_target,key)=>key==='build'?()=>item:value=>{item[key]=value;return builder}});return builder;}
       `}));
     }}]});
-    const {registerSpellPlacement,characterToken,clearSpellZones,onMapInteraction,showAttackPreview,Preview}=await import(pathToFileURL(join(folder,'placement.mjs')).href);
+    const {registerSpellPlacement,characterToken,centerCombatTokens,startCombat,clearSpellZones,onMapInteraction,showAttackPreview,Preview}=await import(pathToFileURL(join(folder,'placement.mjs')).href);
     assert.equal((await characterToken('hero')).id,'only');
     state.items.push(token('second'));
     await assert.rejects(characterToken('hero'),/Choisissez/);
@@ -130,7 +130,8 @@ test('Owlbear placement: automatic token, private preview, validation, cancellat
     const combatMode=state.modes.values().next().value;
     await begin();
     globalThis.confirm=()=>{throw Error('Unexpected browser confirmation')};
-    await combatMode.onToolClick({}, {pointerPosition:{x:150,y:50}});
+    combatMode.onToolMove({}, {pointerPosition:{x:150,y:50}});await settle();
+    state.callbacks.get('de.sunitro.cendres/cast')({data:{characterId:'hero',spellId:'fire',tokenId:'only',confirm:true}});await settle();
     assert.ok(!state.messages.some(message=>/Sort confirmé/.test(message)));
     assert.equal(calls.filter(c=>c.command==='action').length,1);
     const committed=calls.find(c=>c.command==='action');
@@ -147,6 +148,21 @@ test('Owlbear placement: automatic token, private preview, validation, cancellat
     assert.equal(state.local.length,1,'zone conservée pendant la résolution');
     await showAttackPreview({resolution:null});
     assert.equal(state.local.length,0,'zone privée retirée après révélation');
+    state.items=[{...token('only'),position:{x:125,y:210}}, {...token('unrelated'),position:{x:17,y:19}}];
+    sdk.scene.items.getItemBounds=async ids=>({center:{x:state.items.find(i=>i.id===ids[0]).position.x+10,y:state.items.find(i=>i.id===ids[0]).position.y-15}});
+    await centerCombatTokens(['only']);
+    assert.deepEqual(state.items[0].position,{x:140,y:165},'centre réel aligné, ancrage du pion conservé');
+    assert.deepEqual(state.items[1].position,{x:17,y:19});
+    await assert.rejects(centerCombatTokens(['missing']),/manque/);
+    state.items[0].position={x:125,y:210};state.role='GM';
+    globalThis.__owlbearTest.call=async request=>({combatState:request.command==='get'?null:{combat:state.combat}});
+    await startCombat(state.combat);
+    assert.deepEqual(state.items[0].position,{x:140,y:165},'centrage au démarrage');
+    state.items[0].position={x:125,y:210};
+    globalThis.__owlbearTest.call=async()=>({combatState:{combat:state.combat}});
+    await startCombat(state.combat);
+    assert.deepEqual(state.items[0].position,{x:125,y:210},'reprendre un combat actif ne recentre pas les pions');
+
 
   }finally{if(stop)await stop();globalThis.location=oldLocation;globalThis.confirm=oldConfirm;delete globalThis.__owlbearTest;await rm(folder,{recursive:true,force:true})}
 });

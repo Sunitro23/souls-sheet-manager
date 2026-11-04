@@ -38,3 +38,19 @@ export async function tokenOrigin(tokenId: string) {
   const center = await OBR.scene.grid.snapPosition(bounds.center, 1, false, true);
   return { origin: cellFromCenter(center, dpi), dpi, rotation: items[0].rotation };
 }
+
+export async function centerCombatTokens(tokenIds: string[]) {
+  if (!await OBR.scene.isReady()) throw Error('Ouvrez une scène Owlbear Rodeo.');
+  const [dpi, type, items] = await Promise.all([OBR.scene.grid.getDpi(), OBR.scene.grid.getType(), OBR.scene.items.getItems(tokenIds)]);
+  if (type !== 'SQUARE') throw Error('Grille non prise en charge : choisissez une grille carrée.');
+  if (tokenIds.some(id=>!items.some(item=>item.id===id&&isImage(item)&&item.layer==='CHARACTER'))) throw Error('Un pion du combat manque sur la carte.');
+  const offsets = new Map(await Promise.all(tokenIds.map(async id=>{
+    const {center} = await OBR.scene.items.getItemBounds([id]);
+    const snapped = await OBR.scene.grid.snapPosition(center,1,false,true);
+    const cell = cellFromCenter(snapped,dpi);
+    return [id,{x:(cell.x+0.5)*dpi-center.x,y:(cell.y+0.5)*dpi-center.y}] as const;
+  })));
+  await OBR.scene.items.updateItems(tokenIds, drafts=>{
+    for(const item of drafts){const offset=offsets.get(item.id)!;item.position={x:item.position.x+offset.x,y:item.position.y+offset.y};}
+  });
+}

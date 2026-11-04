@@ -5,13 +5,22 @@ import type { Point } from './types.ts';
 export type ActionChoice = { kind: 'dodge' } | { kind: 'movement' } | { kind: 'turn'; rotation: 0 | 90 | 180 | 270 } | { kind: 'weapon'; weaponId: string; index: number } | { kind: 'spell'; spellId: string } | { kind: 'item'; itemId: string };
 export type BoardToken = { tokenId: string; cell: Point; position: Point };
 export type Attack = {
-  id: string; actorId: string; name: string; cells: Point[]; dpi: number;
+  effectKind?: 'weapon' | 'spell';
+  id: string; actorId: string; name: string; damage?: string; cells: Point[]; dpi: number;
   board: BoardToken[]; defenders: string[]; answers: Record<string, Point | null>;
 };
-export type Resolution = { id: string; actorId: string; name: string; cells: Point[]; dpi: number; hitParticipants?: string[]; moves: { tokenId: string; position: Point; positions?: Point[] }[]; facing?: { tokenId: string; rotation: number }; movement?: { tokenId: string; positions: Point[] } };
+export type Resolution = { effectKind?: 'weapon' | 'spell'; id: string; actorId: string; name: string; damage?: string; cells: Point[]; dpi: number; hitParticipants?: string[]; moves: { tokenId: string; position: Point; positions?: Point[] }[]; facing?: { tokenId: string; rotation: number }; movement?: { tokenId: string; positions: Point[]; rotation?: 0 | 90 | 180 | 270 } };
+export type CombatLogEntry = {
+  id: string; actorId: string; turn: number; name: string; kind: 'action' | 'reaction' | 'turn';
+  end?: number; mana?: number; damage?: string; resolved?: boolean; hitParticipants?: string[];
+};
+export function logCombat(state: CombatRuntime, entry: CombatLogEntry) {
+  state.history = [...(state.history ?? []), entry].slice(-100);
+}
 export type CombatRuntime = {
+  history?: CombatLogEntry[];
   combat: CombatPreparation; revision: number; dodges: Record<string, number>;
-  lastAttack?: { id: string; name: string; hitParticipants: string[] };
+  lastAttack?: { id: string; actorId?: string; damage?: string; name: string; hitParticipants: string[] };
   unpreparedHit?: { id: string; defenders: string[] };
   pending: Attack | null; resolution: Resolution | null; receipts: string[];
 };
@@ -21,7 +30,13 @@ export type CombatView = Omit<CombatRuntime, 'pending' | 'receipts'> & {
 };
 export function publicCombat(state: CombatRuntime, playerId?: string, gm = false): CombatView {
   const { pending } = state;
-  return { lastAttack:state.lastAttack, ...(pending && (gm || !!playerId && state.combat.participants.find(p=>p.id===pending.actorId)?.playerId===playerId) ? {attackPreview:{id:pending.id,name:pending.name,cells:pending.cells,dpi:pending.dpi}} : {}), unpreparedHit:state.unpreparedHit, combat:state.combat, revision:state.revision, dodges:state.dodges, resolution:state.resolution, pending: pending ? { id: pending.id, actorId: pending.actorId, defenders: pending.defenders, answered: Object.keys(pending.answers) } : null };
+  const history = state.history?.flatMap(entry => {
+    const { end, mana, ...publicEntry } = entry;
+    const owns = !!playerId && state.combat.participants.find(p => p.id === entry.actorId)?.playerId === playerId;
+    if (!gm && !owns && entry.resolved === false) return [];
+    return [gm || owns ? { ...publicEntry, end, mana } : publicEntry];
+  });
+  return { ...(history ? { history } : {}), lastAttack:state.lastAttack, ...(pending && (gm || !!playerId && state.combat.participants.find(p=>p.id===pending.actorId)?.playerId===playerId) ? {attackPreview:{id:pending.id,name:pending.name,cells:pending.cells,dpi:pending.dpi}} : {}), unpreparedHit:state.unpreparedHit, combat:state.combat, revision:state.revision, dodges:state.dodges, resolution:state.resolution, pending: pending ? { id: pending.id, actorId: pending.actorId, defenders: pending.defenders, answered: Object.keys(pending.answers) } : null };
 }
 export function activeParticipant(combat: CombatPreparation) {
   const order = initiativeOrder(combat);
@@ -34,7 +49,7 @@ export function validPoint(value: unknown): value is Point {
 export function sameCell(a: Point, b: Point) { return a.x === b.x && a.y === b.y; }
 export function validDodge(from: Point, to: Point) {
   const x = Math.abs(to.x - from.x), y = Math.abs(to.y - from.y);
-  return (x === 0 || x === 2) && (y === 0 || y === 2) && Math.max(x, y) === 2;
+  return [from, to].every(p => validPoint(p) && Number.isInteger(p.x) && Number.isInteger(p.y)) && Math.max(x, y) > 0 && Math.max(x, y) <= 2;
 }
 export function resolveAttack(state: CombatRuntime) {
   const attack = state.pending;
@@ -60,6 +75,6 @@ export function resolveAttack(state: CombatRuntime) {
     const token = board.find(t=>t.tokenId===participant?.tokenId);
     return token && attack.cells.some(cell=>sameCell(cell,token.cell));
   });
-  state.resolution = { hitParticipants, id: attack.id, actorId: attack.actorId, name: attack.name, cells: attack.cells, dpi: attack.dpi, moves };
+  state.resolution = { ...(attack.effectKind ? { effectKind: attack.effectKind } : {}), damage: attack.damage, hitParticipants, id: attack.id, actorId: attack.actorId, name: attack.name, cells: attack.cells, dpi: attack.dpi, moves };
   state.pending = null;
 }

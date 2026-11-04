@@ -21,7 +21,7 @@ for (const role of ['PLAYER', 'GM']) test(`mouvement Owlbear (${role}) : son pro
   player:{getId:async()=>'alice',getRole:async()=>state.role,getSelection:async()=>[],onChange:cb=>{state.playerChanged=cb;return()=>{}}},room:{onMetadataChange:cb=>{state.roomChanged=cb;return()=>{}}},
   tool:{createMode:async mode=>{state.mode=mode},create:async()=>{state.tools++},remove:async()=>{state.tools--},removeMode:async()=>{},getActiveTool:async()=>state.tool,activateTool:async id=>{const previous=state.tool;state.tool=id;if(previous===`${channel}/tool`&&id!==previous)state.mode.onDeactivate()}},
   contextMenu:{create:async menu=>state.menus.set(menu.id,menu),remove:async()=>{}},broadcast:{sendMessage:async(key,data)=>{state.callbacks.get(key)?.({data})},onMessage:(key,cb)=>{state.callbacks.set(key,cb);return()=>state.callbacks.delete(key)}},
-  notification:{show:async message=>{assert.ok(typeof message==='string'&&message.length,'notification non vide');state.messages.push(message)}},action:{close:async()=>{}}};
+  notification:{show:async message=>{assert.ok(typeof message==='string'&&message.length,'notification non vide');state.messages.push(message)}},action:{close:async()=>{state.panelCloses=(state.panelCloses??0)+1}}};
  globalThis.__movementTest={sdk,state};let stop;
  try {
   await build({stdin:{contents:"export {registerMovement} from './lib/obr/owlbear/movement';export {setMapInteraction} from './lib/obr/owlbear/interaction';",resolveDir:process.cwd()},outfile:join(folder,'movement.mjs'),bundle:true,platform:'node',format:'esm',plugins:[{name:'mock',setup(b){
@@ -69,6 +69,7 @@ for (const role of ['PLAYER', 'GM']) test(`mouvement Owlbear (${role}) : son pro
   const hover=async(x,y=0)=>{state.mode.onToolMove({}, {pointerPosition:{x:x*100+50,y:y*100+50}});await settle()};
   const click=async(x,y=0)=>state.mode.onToolClick({}, {pointerPosition:{x:x*100+50,y:y*100+50}});
   await start();
+  assert.equal(state.panelCloses??0,0,'reprendre le mouvement ne ferme pas le panneau');
   assert.ok(state.local.filter(i=>i.type==='PATH').every(i=>!('fillColor' in i)&&!('strokeColor' in i)), 'les couleurs doivent être dans style, pas à la racine');
   assert.ok(state.local.filter(i=>i.type==='TEXT').every(i=>i.text.type==='PLAIN'), 'les coûts doivent utiliser le texte réellement rendu');
   assert.ok(state.local.some(i=>i.type==='PATH' && i.position?.x===-500), 'la limite de course doit être visible avant le survol');assert.ok(!state.local.some(i=>/Marche|Course|END disponible/.test(i.text?.plainText??'')), 'pas de texte de portée sur le plateau');const arrows=state.local.filter(i=>i.name==='Se tourner · 1 END');assert.equal(arrows.length,4);assert.ok(arrows.every(i=>i.type==='PATH'&&i.commands.length===8),'les flèches sont des tracés et ne dépendent pas des glyphes');await hover(2);assert.ok(state.local.some(i=>i.text?.plainText==='1 END'));
@@ -122,6 +123,7 @@ for (const role of ['PLAYER', 'GM']) test(`mouvement Owlbear (${role}) : son pro
   actor.playerId='alice';combat.turn++;state.roomChanged();await settle();
   assert.equal(state.tools,1,'réactivation au nouveau tour du joueur');
   state.combat=null;state.roomChanged();await settle();
+  assert.equal(state.local.length,0,'fin du combat : aucune case de déplacement restante');
   assert.equal(state.items[0].locked,false);assert.equal(state.items[1].locked,true);assert.ok(state.items.every(i=>!(lock in i.metadata)));
  }finally{await stop?.();globalThis.location=oldLocation;delete globalThis.__movementTest;await rm(folder,{recursive:true,force:true})}
 });
@@ -144,6 +146,8 @@ test('animation : une case par étape, reprise sans recul après interruption',a
   assert.equal(interactions,stops,'les interactions sont fermées même après interruption');
   assert.equal(item.rotation,90,'le pion doit regarder vers la droite');
   assert.ok(rotations.every(rotation=>rotation===90),'les diagonales conservent une orientation cardinale');
+  await animateMovement({...resolution,id:'enemy-facing',movement:{...resolution.movement,rotation:0}},()=>false);
+  assert.equal(item.rotation,0,'l’orientation vers l’ennemi est conservée pendant le déplacement');
   globalThis.__animationTest.scene.items.updateItems=async()=>{throw Error('Échec de sauvegarde')};
   await assert.rejects(animateMovement({...resolution,id:'failed'},()=>false),/Échec de sauvegarde/);
   assert.equal(interactions,stops,'une erreur ferme aussi l’interaction');

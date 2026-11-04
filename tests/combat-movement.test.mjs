@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { movementPath, planMovement, cardinalRotation, facingTargets } from '../lib/obr/core/movement.ts';
+import { movementPath, planMovement, cardinalRotation, movementRotation, facingTargets } from '../lib/obr/core/movement.ts';
 const token = (tokenId, x, y) => ({tokenId, cell: {x,y}, position: {x:x*100+50,y:y*100+50}});
 
 test('mouvement : marche, course, diagonales et limites', () => {
@@ -31,4 +31,14 @@ test('orientation : quatre directions, flèches hors de la portée', () => {
   const arrows=facingTargets(origin,5);
   assert.deepEqual(arrows.map(a=>a.rotation),[0,90,180,270]);
   assert.ok(arrows.every(a=>Math.max(Math.abs(a.x),Math.abs(a.y))===6));
+});
+
+test('orientation : ennemi prioritaire dans le sens du déplacement seulement',()=>{
+ const from={x:0,y:0},to={x:2,y:-2};
+ assert.equal(movementRotation(from,to,[{x:2,y:-4}]),0);
+ assert.equal(movementRotation(from,to,[{x:4,y:-2}]),90);
+ assert.equal(movementRotation(from,to,[{x:1,y:0}]),90,'ennemi derrière ignoré');
+ assert.equal(movementRotation(from,to,[{x:4,y:-2},{x:2,y:-3}]),0,'ennemi le plus proche');
+ assert.equal(movementRotation(from,{x:0,y:-2},[{x:4,y:-2}]),0,'marche vers le haut : pas de rotation latérale');
+ assert.equal(movementRotation(from,to,[]),90);
 });

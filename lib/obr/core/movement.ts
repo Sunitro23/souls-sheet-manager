@@ -31,6 +31,18 @@ export function cardinalRotation(from: Point, to: Point): 0 | 90 | 180 | 270 {
   return dy > 0 ? 180 : 0;
 }
 
+// Only face along an axis of travel; prefer the nearest enemy in front.
+export function movementRotation(from: Point, to: Point, enemies: Point[]): 0 | 90 | 180 | 270 {
+  const candidates: {x:number;y:number;rotation:0|90|180|270}[] = [];
+  if(to.x !== from.x) candidates.push({x:Math.sign(to.x-from.x),y:0,rotation:to.x>from.x?90:270});
+  if(to.y !== from.y) candidates.push({x:0,y:Math.sign(to.y-from.y),rotation:to.y>from.y?180:0});
+  const ahead = enemies.filter(enemy=>candidates.some(direction=>(enemy.x-to.x)*direction.x+(enemy.y-to.y)*direction.y>0))
+    .sort((a,b)=>Math.hypot(a.x-to.x,a.y-to.y)-Math.hypot(b.x-to.x,b.y-to.y));
+  if(!ahead.length)return cardinalRotation(from,to);
+  const enemy=ahead[0];
+  return candidates.sort((a,b)=>((enemy.x-to.x)*b.x+(enemy.y-to.y)*b.y)-((enemy.x-to.x)*a.x+(enemy.y-to.y)*a.y))[0].rotation;
+}
+
 export function facingTargets(origin: Point, radius: number) {
   return ([
     { x: 0, y: -1, rotation: 0, arrow: '↑' },

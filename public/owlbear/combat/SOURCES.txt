@@ -1,0 +1,10 @@
+Kenney — Particle Pack, Impact Sounds, RPG Audio (CC0)
+https://kenney.nl/assets/particle-pack
+https://kenney.nl/assets/impact-sounds
+https://kenney.nl/assets/rpg-audio
+
+Lentikula — Basic Spell Impacts (CC0)
+https://lentikula.itch.io/freecc0-basic-spell-impacts-sfx
+magic.wav: Lightning Spell Impact 1, trimmed to 650 ms, mono 16-bit PCM, normalized with a short fade.
+
+CC0: https://creativecommons.org/publicdomain/zero/1.0/

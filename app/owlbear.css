@@ -243,3 +243,187 @@
 .c-owlbear .c-owlbear-detail-buttons { margin-top:8px; }
 .c-owlbear-turn-label { overflow-wrap:anywhere; }
 .c-owlbear-panel:has(section[aria-label="Informations du combat"]:not([hidden]) .c-owlbear-footer) .c-owlbear-content { padding-bottom:calc(var(--owlbear-footer-height, 48px) + 8px); }
+
+/* Combat prompts share the panel palette and remain readable in narrow embeds. */
+.c-owlbear .c-owlbear-encounter { --encounter-accent:#b8ceff; display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:380px; box-sizing:border-box; margin:20px auto 24px; padding:28px 20px; border:1px solid #354158; border-radius:16px; background:linear-gradient(160deg,#273247,#1d222d 65%); text-align:center; overflow-wrap:anywhere; }
+.c-owlbear .c-owlbear-encounter.is-danger { --encounter-accent:#f0b99d; border-color:#63483f; background:linear-gradient(160deg,#382b2b,#211f27 65%); }
+.c-owlbear-encounter-icon { display:grid; place-items:center; width:60px; height:60px; flex-shrink:0; border:1px solid #a5bbf033; border-radius:50%; background:#a5bbf012; color:var(--encounter-accent); }
+.c-owlbear .is-danger .c-owlbear-encounter-icon { border-color:#f0b99d33; background:#f0b99d12; }
+.c-owlbear .c-owlbear-encounter .c-owlbear-eyebrow { color:var(--encounter-accent); font-size:11px; font-weight:650; letter-spacing:.09em; text-transform:uppercase; }
+.c-owlbear .c-owlbear-encounter h2 { margin:0; font-size:24px; line-height:1.2; letter-spacing:-.025em; text-wrap:balance; }
+.c-owlbear .c-owlbear-encounter p { max-width:30ch; margin:0; font-size:13px; line-height:1.6; color:#c2c7d2; }
+.c-owlbear .c-owlbear-encounter .c-owlbear-encounter-hint { display:flex; align-items:center; justify-content:center; gap:6px; font-size:12px; color:#b4b8c4; }
+.c-owlbear .c-owlbear-encounter [role="alert"] { color:#ffc0b5; }
+.c-owlbear-reaction-choice { display:flex; flex-direction:column; align-items:center; gap:12px; width:100%; padding-top:4px; }
+.c-owlbear-encounter-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; width:100%; margin-top:6px; }
+.c-owlbear .c-owlbear-encounter-actions button { display:flex; align-items:center; justify-content:center; gap:8px; flex:1 1 110px; max-width:240px; min-height:44px; }
+.c-owlbear .c-owlbear-hit-list { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; list-style:none; margin:0; padding:0; width:100%; }
+.c-owlbear .c-owlbear-hit-list li { max-width:100%; padding:7px 12px; border:1px solid #465777; border-radius:8px; background:#a5bbf010; color:#e0e9ff; font-size:15px; font-weight:650; }
+.c-owlbear-damage { display:flex; justify-content:center; align-items:center; gap:12px; width:100%; box-sizing:border-box; margin-top:4px; padding:16px 12px; border-block:1px solid #354158; color:var(--encounter-accent); }
+.c-owlbear-damage>svg { flex-shrink:0; }
+.c-owlbear-damage>span { min-width:0; font-size:12px; color:#c2c7d2; }
+.c-owlbear-damage strong { display:block; margin-top:4px; font-size:24px; line-height:1.3; font-variant-numeric:tabular-nums; color:#eeeef2; }
+.c-owlbear-action-button[aria-pressed="true"] { background:#2b394d; box-shadow:inset 3px 0 #9eb6ec; }
+@media(max-width:340px) { .c-owlbear .c-owlbear-encounter { padding:24px 14px; } }
+
+.c-owlbear .c-owlbear-encounter.is-result { gap:6px; margin:6px auto; padding:12px 16px; border-radius:12px; }
+.c-owlbear .is-result h2 { font-size:20px; }
+.c-owlbear-hit-summary { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px 8px; }
+.c-owlbear .is-result .c-owlbear-hit-list { width:auto; gap:4px; }
+.c-owlbear .is-result .c-owlbear-hit-list li { padding:3px 8px; font-size:13px; }
+.c-owlbear .is-result .c-owlbear-damage { gap:8px; margin:0; padding:8px 0; }
+.c-owlbear .is-result .c-owlbear-damage>svg { width:18px; height:18px; }
+.c-owlbear .is-result .c-owlbear-damage>span { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px 10px; }
+.c-owlbear .is-result .c-owlbear-damage strong { margin:0; font-size:20px; }
+.c-owlbear .is-result .c-owlbear-encounter-actions { margin:0; }
+
+/* Tactical panel — validated visual A. */
+.c-owlbear-tactical { --accent:#7cdbba; --muted:#98a6bb; background:#141b25; color:#e9edf4; overflow:hidden; }
+.c-owlbear-tactical .c-owlbear-header { padding:18px 20px 15px; gap:11px; justify-content:flex-start; }
+.c-owlbear-portrait { display:grid; place-items:center; width:46px; height:46px; flex-shrink:0; border-radius:11px; border:1px solid #568c804d; background:linear-gradient(145deg,#2f4b50,#21313c); color:#b3d5cd; overflow:hidden; }
+.c-owlbear-portrait img { width:100%; height:100%; object-fit:cover; }
+.c-owlbear-identity { min-width:0; flex:1; }
+.c-owlbear-identity>span { display:block; color:#94a3b8; font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+.c-owlbear-identity h1 { margin:3px 0 0; font:650 20px/1.2 Inter,ui-sans-serif,system-ui,sans-serif; letter-spacing:-.035em; color:#e9edf4; overflow-wrap:anywhere; }
+.c-owlbear-settings-button { display:grid; place-items:center; height:30px; width:30px; border:0; border-radius:6px; background:transparent; color:#93a4bd; cursor:pointer; }
+.c-owlbear-settings-button:hover,.c-owlbear-settings-button[aria-pressed=true] { background:#2a3a50; color:#e9edf4; }
+.c-owlbear-attention { padding:4px 8px; background:#24473c; border:1px solid #38614f; border-radius:20px; color:#a4efd1; font-size:11px; white-space:nowrap; }
+.c-owlbear-attention:before { content:""; display:inline-block; width:5px; height:5px; border-radius:50%; margin-right:5px; background:currentColor; }
+.c-owlbear-attention.is-reaction { color:#e9bf7f; border-color:#866540; background:#493a28; }
+.c-owlbear-meters { position:relative; z-index:20; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding:0 20px 18px; flex-shrink:0; }
+.c-owlbear-tactical .c-owlbear-meter { display:block; min-width:0; margin:0; padding:0; border:0; border-radius:0; background:transparent; --resource-color:#ef8896; }
+.c-owlbear-meter.mana { --resource-color:#8aafff; }.c-owlbear-meter.end { --resource-color:#7cdbba; }
+.c-owlbear-tactical .c-owlbear-meter>summary { display:block; list-style:none; padding:0; cursor:pointer; border-radius:3px; }
+.c-owlbear-meter>summary::-webkit-details-marker,.c-owlbear-tactical .c-owlbear-meter>summary:before,.c-owlbear-tactical .c-owlbear-meter>summary:after { display:none; }
+.c-owlbear-meter>summary>span { display:flex; align-items:center; justify-content:space-between; gap:4px; }
+.c-owlbear-meter .c-owlbear-resource { color:var(--resource-color); font-size:10px; gap:3px; }
+.c-owlbear-meter .c-owlbear-resource svg { width:12px; height:12px; }
+.c-owlbear-meter strong { font-size:14px; color:#e9edf4; font-weight:650; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.c-owlbear-meter small { font-size:10px; font-weight:400; color:#93a0b4; }
+.c-owlbear-meter progress { appearance:none; display:block; width:100%; height:4px; border:0; border-radius:8px; overflow:hidden; margin-top:7px; background:#2c3544; }
+.c-owlbear-meter progress::-webkit-progress-bar { background:#2c3544; }.c-owlbear-meter progress::-webkit-progress-value { background:var(--resource-color); transition:width .35s ease; border-radius:8px; }.c-owlbear-meter progress::-moz-progress-bar { background:var(--resource-color); }
+.c-owlbear-resource-popover { position:absolute; left:20px; right:20px; top:calc(100% - 8px); padding:14px; background:#1b2737; border:1px solid #40556d; border-radius:10px; box-shadow:0 12px 28px #0007; animation:owlbear-arrive .18s ease-out; }
+.c-owlbear-resource-popover form { display:flex; align-items:flex-end; gap:10px; margin:10px 0; }
+.c-owlbear-resource-popover label { display:grid; gap:5px; flex:1; min-width:0; font-size:12px; color:#a2b0c5; }
+.c-owlbear .c-layout .c-owlbear-tactical .c-owlbear-resource-popover input { width:100%; min-width:0; padding:9px; border:1px solid #465a73; border-radius:6px; background:#121d2b; color:#e9edf4; }
+.c-owlbear-resource-popover .c-owlbear-stepper button { width:auto; height:30px; padding:4px 12px; background:#2d4058; }
+.c-owlbear-tactical .c-owlbear-content { padding:0 20px 24px; scrollbar-width:thin; scrollbar-color:#40536b transparent; }
+.c-owlbear-tactical .c-owlbear-content>section[aria-label="Informations du combat"] { margin:0 -20px 17px; padding:13px 20px 15px; background:#111822; border-block:1px solid #283342; }
+.c-owlbear-tactical .c-owlbear-content>section[aria-label="Informations du combat"]:has(.c-turn-strip) { position:sticky; top:0; z-index:3; }
+.c-owlbear-tactical .owlbear-previews { gap:9px; }
+.c-owlbear-order-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.c-owlbear-order-heading>span { font-size:10px; color:#92a3ba; white-space:nowrap; }
+.c-owlbear-tactical .c-owlbear-turn-label { font-size:11px; }
+.c-owlbear-tactical .c-owlbear-turn-label strong { color:#cbd7e9; font-weight:500; }
+.c-owlbear-tactical .c-turn-strip { gap:20px; padding:9px 3px 2px; margin:0; }
+.c-owlbear-tactical section[aria-label="Initiatives"]>.c-turn-strip>li { display:flex; flex-direction:column; align-items:center; gap:7px; padding:3px; border-radius:0; background:none; opacity:1; min-width:42px; max-width:70px; }
+.c-owlbear-tactical section[aria-label="Initiatives"]>.c-turn-strip>li[aria-current=step] { box-shadow:none; background:none; }
+.c-owlbear-tactical .c-turn-strip .c-combat-row { position:relative; display:flex; justify-content:center; }
+.c-owlbear-tactical .c-turn-portrait { width:32px; height:32px; border-radius:50%; border:1px solid #45546a; background:#29384b; color:#b5c7e0; font-size:10px; }
+.c-owlbear-tactical .c-turn-strip [aria-current=step] .c-turn-portrait { border-color:#7cdbba; color:#c7f0df; background:#24453d; box-shadow:0 0 0 3px #7cdbba12; transition:box-shadow .2s; }
+.c-owlbear-tactical .c-turn-strip .c-combat-row>b { position:absolute; right:-5px; bottom:-3px; padding:0 3px; font-size:9px; background:#18212e; border:1px solid #3c4656; border-radius:5px; color:#b5c2d6; }
+.c-turn-name { max-width:70px; font-size:10px; color:#93a3ba; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.c-turn-strip [aria-current=step] .c-turn-name { color:#9cdfc4; }
+.c-owlbear-action-tabs { display:flex; gap:20px; border-bottom:1px solid #2c3645; margin:0 0 14px; }
+.c-owlbear-action-tabs button { display:flex; align-items:center; gap:6px; font:inherit; font-size:12px; padding:0 0 10px; border:0; border-bottom:2px solid transparent; background:transparent; color:#98a5b8; cursor:pointer; }
+.c-owlbear-action-tabs button[aria-pressed=true] { color:#e9edf4; border-bottom-color:#7cdbba; }
+.c-owlbear-tactical .c-owlbear-content h3 { color:#a2b2ca; font-size:11px; font-weight:500; letter-spacing:.04em; margin:14px 0 8px; }
+.c-owlbear-tactical .c-owlbear-weapon-group>h3 { border:0; padding:0; }
+.c-owlbear-tactical .owlbear-action-grid { gap:8px; }
+.c-owlbear-tactical .c-owlbear-action-button { gap:10px; min-height:60px; padding:11px; margin:0; border:1px solid #2d394b; background:#1c2634; border-radius:9px; transition:background .15s,border-color .15s,transform .15s; }
+.c-owlbear-tactical .c-owlbear-action-button:hover:not(:disabled) { background:#243346; border-color:#506783; transform:translateY(-1px); }
+.c-owlbear-tactical .c-owlbear-action-button[aria-pressed=true] { background:#203b36; border-color:#6da18e; box-shadow:inset 3px 0 #7cdbba; }
+.c-owlbear-tactical .c-owlbear-action-button>svg { width:34px; height:34px; padding:7px; border-radius:7px; background:#2c3b50; color:#bdcbe1; }
+.c-owlbear-tactical .c-owlbear-action-button>.c-owlbear-action-chevron { width:15px; height:15px; padding:0; background:none; color:#7c8ca2; }
+.c-owlbear-tactical .c-owlbear-action-info { flex-direction:column; align-items:flex-start; gap:4px; }
+.c-owlbear-tactical .c-owlbear-action-info strong { font-size:12px; font-weight:600; }
+.c-owlbear-tactical .c-owlbear-action-info small { font-size:11px; color:#a0b1ca; }
+.c-owlbear-tactical .c-owlbear-weapon-stats { flex-wrap:wrap; gap:8px; }
+.c-owlbear-tactical .c-owlbear-price { flex-shrink:0; font-size:11px; gap:8px; }
+.c-owlbear-tactical .c-owlbear-action-confirm { padding:11px; border:1px solid #476e5e; border-top:0; border-radius:0 0 8px 8px; background:#192c28; animation:owlbear-arrive .18s ease-out; }
+.c-owlbear-action-confirm>div { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.c-owlbear-tactical .c-owlbear-action-confirm p { color:#b6d3c6; font-size:11px; }
+.c-owlbear .c-layout .c-owlbear-tactical .c-primary { min-height:36px; padding:9px 12px; border-radius:7px; background:#7cdbba; color:#10271f; font-size:12px; font-weight:600; }
+.c-owlbear .c-layout .c-owlbear-tactical .c-primary:hover:not(:disabled) { background:#a5e7d0; }
+.c-owlbear .c-layout .c-owlbear-tactical .c-button { min-height:34px; padding:8px 11px; border:1px solid #36475f; border-radius:7px; background:#233044; color:#d3dfee; font-size:12px; }
+.c-owlbear-tactical .c-owlbear-footer { padding:12px 20px; background:#111923; border-top:1px solid #2a3547; gap:9px; align-items:center; flex-wrap:wrap; }
+.c-owlbear-tactical .c-owlbear-footer>.c-primary { width:auto; flex:1; }
+.c-owlbear-tactical .c-owlbear-footer>.c-button { flex:0 1 auto; background:transparent; border-color:#3d4a5d; font-size:10px; color:#9eacc0; }
+.c-owlbear-round { font-size:10px; color:#8296b2; white-space:nowrap; }
+.c-owlbear-round b { color:#c3d1e5; font-size:13px; margin-left:4px; }
+.c-owlbear-tactical .c-owlbear-encounter { gap:12px; padding:23px 12px; margin:5px auto; border:0; border-radius:0; background:none; animation:owlbear-arrive .25s ease-out; }
+.c-owlbear-tactical .c-owlbear-encounter h2 { font-size:23px; margin:0; }
+.c-owlbear-tactical .c-owlbear-encounter p { max-width:32ch; }
+.c-owlbear-tactical .c-owlbear-encounter-icon { height:52px; width:52px; border-color:#41546e; background:#26364a; color:#a9bfdc; }
+.c-owlbear-tactical .is-danger .c-owlbear-encounter-icon { border-color:#866540; background:#493a28; color:#e9bf7f; animation:owlbear-threat .6s ease-out 2; }
+.c-owlbear-tactical .is-danger .c-owlbear-eyebrow { color:#deb67c; }
+.c-owlbear-tactical .c-owlbear-hit-list li { border-color:#477762; background:#233f36; color:#a7e3c8; }
+.c-owlbear-tactical .c-owlbear-damage { border:0; background:#1a2637; border-radius:8px; padding:14px; margin:4px 0; }
+.c-owlbear-tactical .c-owlbear-damage strong { font-size:26px; }
+.c-owlbear-journal { border-top:1px solid #2b394c; margin-top:18px; }
+.c-owlbear-tactical .c-owlbear-journal>summary { display:flex; align-items:center; gap:8px; padding:14px 0; color:#a9bbd4; font-size:12px; }
+.c-owlbear-journal>summary>span { margin-left:auto; border-radius:5px; padding:1px 6px; background:#26364c; font-size:10px; }
+.c-owlbear-journal ol { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0; max-height:310px; overflow:auto; }
+.c-owlbear-journal li { padding:11px 0; border-top:1px solid #253348; }
+.c-owlbear-journal li>div { display:flex; align-items:center; gap:7px; color:#8499b6; font-size:10px; margin-bottom:4px; }
+.c-owlbear-journal li>div>span:first-child { flex:1; }
+.c-owlbear-journal li>strong { display:block; font-size:12px; font-weight:500; color:#d1def0; }
+.c-owlbear-journal li>small { display:block; color:#a7b5ca; font-size:11px; margin-top:3px; }
+.c-owlbear-back { display:flex; align-items:center; gap:6px; background:none; border:0; color:#b7c9e1; padding:10px 0 18px; font:inherit; font-size:12px; cursor:pointer; }
+.c-owlbear-tactical .c-owlbear-empty { padding:20px 0; font-size:12px; color:#94a6c1; }
+.c-owlbear-tactical :is(button,a,summary,input,select):focus-visible { outline:2px solid #7cdbba; outline-offset:3px; }
+@keyframes owlbear-arrive { from { opacity:.3; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+@keyframes owlbear-threat { 50% { box-shadow:0 0 0 7px #e9bf7f12; } }
+@media(max-width:380px) { .c-owlbear-tactical .c-owlbear-header { padding:14px; gap:8px; } .c-owlbear-portrait { width:36px; height:36px; } .c-owlbear-identity h1 { font-size:17px; } .c-owlbear-identity>span { font-size:9px; } .c-owlbear-meters { padding-left:14px; padding-right:14px; gap:9px; } .c-owlbear-meter strong { font-size:13px; } .c-owlbear-tactical .c-owlbear-content { padding-left:14px; padding-right:14px; } .c-owlbear-tactical .c-owlbear-content>section[aria-label="Informations du combat"] { margin-left:-14px; margin-right:-14px; padding-left:14px; padding-right:14px; } .c-owlbear-tactical .c-owlbear-footer { padding:10px 14px; } .c-owlbear-round { display:none; } .c-owlbear-attention { font-size:10px; padding:3px 6px; } }
+@media(prefers-reduced-motion:reduce) { .c-owlbear-tactical * { animation:none!important; transition:none!important; } }
+
+.c-owlbear-tactical .c-owlbear-weapon-group { display:flex; flex-direction:column; gap:8px; }
+.c-owlbear-tactical .c-owlbear-utility { margin-top:15px; padding-top:10px; border-top:1px solid #293445; }
+.c-owlbear-tactical .c-owlbear-utility .c-owlbear-action-button { min-height:42px; border:0; background:transparent; padding:7px 0; }
+.c-owlbear-tactical .c-owlbear-utility .c-owlbear-action-button>svg { width:22px; height:22px; padding:2px; background:none; }
+.c-owlbear-tactical .c-owlbear-utility .c-owlbear-action-chevron { display:none; }
+
+/* Owlbear clamps the popover height on short viewports. Keep actions in view. */
+@media (max-height:560px) {
+  .c-owlbear-tactical .c-owlbear-header { padding:8px 14px; gap:9px; flex-shrink:0; }
+  .c-owlbear-tactical .c-owlbear-portrait { width:32px; height:32px; border-radius:8px; }
+  .c-owlbear-tactical .c-owlbear-identity>span { display:none; }
+  .c-owlbear-tactical .c-owlbear-identity h1 { margin:0; font-size:17px; }
+  .c-owlbear-tactical .c-owlbear-meters { padding:0 14px 9px; gap:12px; }
+  .c-owlbear-tactical .c-owlbear-meter>summary { min-height:0; line-height:18px; }
+  .c-owlbear-tactical .c-owlbear-meter progress { margin:4px 0 0; height:3px; }
+  .c-owlbear-tactical .c-owlbear-resource-popover { left:14px; right:14px; }
+  .c-owlbear-tactical .c-owlbear-content { padding-left:14px; padding-right:14px; }
+  .c-owlbear-tactical .c-owlbear-content>section[aria-label="Informations du combat"] { margin:0 -14px 8px; padding:6px 14px; }
+  .c-owlbear-tactical .owlbear-previews { gap:3px; }
+  .c-owlbear-tactical .c-owlbear-order-heading { line-height:16px; }
+  .c-owlbear-tactical .c-owlbear-turn-label { margin:0; }
+  .c-owlbear-tactical .c-turn-strip { gap:9px; padding:4px 1px; }
+  .c-owlbear-tactical section[aria-label="Initiatives"]>.c-turn-strip>li { flex-direction:row; flex-shrink:0; min-width:0; max-width:140px; padding:3px 7px 3px 3px; gap:7px; border:1px solid #2b394b; border-radius:7px; }
+  .c-owlbear-tactical section[aria-label="Initiatives"]>.c-turn-strip>li[aria-current=step] { border-color:#57917d; background:#20382f; }
+  .c-owlbear-tactical .c-turn-portrait { width:24px; height:24px; }
+  .c-owlbear-tactical .c-turn-name { max-width:90px; }
+  .c-owlbear-tactical .c-owlbear-action-tabs { margin-bottom:6px; gap:22px; }
+  .c-owlbear-tactical .c-owlbear-action-tabs button { min-height:32px; padding:4px 0 6px; }
+  .c-owlbear-tactical .c-owlbear-weapon-group { margin:0; gap:6px; }
+  .c-owlbear-tactical .c-owlbear-content h3 { margin:4px 0; line-height:16px; }
+  .c-owlbear-tactical .c-owlbear-action-button { min-height:48px; padding:8px 10px; gap:9px; }
+  .c-owlbear-tactical .c-owlbear-action-button>svg { width:28px; height:28px; padding:5px; }
+  .c-owlbear-tactical .c-owlbear-action-button>.c-owlbear-action-chevron { width:15px; height:15px; padding:0; }
+  .c-owlbear-tactical .c-owlbear-action-info { gap:2px; }
+  .c-owlbear-tactical .c-owlbear-footer { padding:7px 14px; gap:7px; }
+  .c-owlbear-tactical .c-owlbear-utility { margin-top:9px; padding-top:5px; }
+  .c-owlbear-tactical .c-owlbear-journal { margin-top:8px; }
+  .c-owlbear-tactical .c-owlbear-journal>summary { padding:9px 0; }
+  .c-owlbear-tactical .c-owlbear-encounter { gap:8px; padding:12px 0; }
+  .c-owlbear-tactical .c-owlbear-encounter-icon { width:34px; height:34px; }
+  .c-owlbear-tactical .c-owlbear-encounter h2 { font-size:20px; }
+}
+
+.c-owlbear-sound { position: relative; }
+.c-owlbear-sound summary { display: flex; padding: .5rem; cursor: pointer; list-style: none; }
+.c-owlbear-sound summary::-webkit-details-marker { display: none; }
+.c-owlbear-sound > div { position: absolute; right: 0; top: 100%; z-index: 20; display: grid; gap: .6rem; width: 200px; padding: .8rem; background: #201e25; border: 1px solid #645748; border-radius: .5rem; box-shadow: 0 6px 24px #0008; }
+.c-owlbear-sound label { display: grid; gap: .35rem; font-size: .8rem; }
+.c-owlbear-sound input { width: 100%; accent-color: #e9b576; }
+.c-owlbear-sound button { padding: .35rem; border: 1px solid #645748; border-radius: .3rem; }

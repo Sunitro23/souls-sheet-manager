@@ -41,9 +41,13 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
   assert.equal((await cmd('eve','action',{participantId:'alice',choice:{kind:'dodge'}})).status,403);
   const requestId='prepare-alice',revision=state.revision;
   assert.equal((await cmd('alice','action',{requestId,participantId:'alice',choice:{kind:'dodge'}})).status,200);
+  assert.equal(state.history.at(-1).name,'Préparer une esquive');assert.equal(state.history.at(-1).end,1);
+  const journalViewer=await call('bob',{op:'combat',campaignId,combatId:'combat',command:'get'});
+  assert.equal(journalViewer.combatState.history.find(entry=>entry.id===requestId).end,undefined,'les coûts privés restent cachés');
   const after=character('alice').end;
   assert.equal((await cmd('alice','action',{requestId,revision,participantId:'alice',choice:{kind:'dodge'}})).status,200);
-  assert.equal(character('alice').end,after);assert.equal(state.dodges.alice,1);
+  assert.equal(character('alice').end,after);assert.equal(state.dodges.alice,1);assert.equal(state.history.filter(entry=>entry.id===requestId).length,1,'une relance ne duplique pas le journal');
+
   assert.equal((await cmd('alice','turn',{action:{type:'next'}})).status,200);
   assert.equal(character('bob').end,derive(character('bob')).end);
   await cmd('bob','action',{participantId:'bob',choice:{kind:'dodge'}});
@@ -77,15 +81,16 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
   assert.equal((await cmd('gm','turn',{action:{type:'next'}})).status,400);
   assert.equal((await cmd('gm','close')).status,400);
   assert.equal((await cmd('eve','answer',{participantId:'alice',attackId:'attack',destination:null})).status,403);
-  assert.equal((await cmd('alice','answer',{participantId:'alice',attackId:'attack',destination:{x:1,y:0}})).status,400);
-  assert.equal(state.dodges.alice,1);
+  assert.equal((await cmd('alice','answer',{participantId:'alice',attackId:'attack',destination:{x:3,y:0}})).status,400);
+  assert.equal(state.dodges.alice,1);assert.equal(state.history.filter(entry=>entry.id===requestId).length,1,'une relance ne duplique pas le journal');
+
   const answerRev=state.revision;
-  assert.equal((await cmd('alice','answer',{participantId:'alice',attackId:'attack',destination:{x:2,y:0}})).status,200);
+  assert.equal((await cmd('alice','answer',{participantId:'alice',attackId:'attack',destination:{x:2,y:1}})).status,200);
   assert.equal(state.resolution,null);assert.equal('answers' in state.pending,false);
-  assert.equal((await cmd('bob','answer',{revision:answerRev,participantId:'bob',attackId:'attack',destination:{x:2,y:0}})).status,409);
-  assert.equal((await cmd('bob','answer',{participantId:'bob',attackId:'attack',destination:{x:2,y:0}})).status,200);
+  assert.equal((await cmd('bob','answer',{revision:answerRev,participantId:'bob',attackId:'attack',destination:{x:2,y:1}})).status,409);
+  assert.equal((await cmd('bob','answer',{participantId:'bob',attackId:'attack',destination:{x:2,y:1}})).status,200);
   assert.equal(state.pending,null);assert.equal(state.dodges.bob,0);assert.equal(state.dodges.alice,0);
-  assert.deepEqual(state.resolution.moves,[{tokenId:'alice',position:{x:250,y:50},positions:[{x:50,y:50},{x:150,y:50},{x:250,y:50}]}]);
+  assert.deepEqual(state.resolution.moves,[{tokenId:'alice',position:{x:250,y:150},positions:[{x:50,y:50},{x:150,y:150},{x:250,y:150}]}]);
   assert.equal((await cmd('alice','ack',{attackId:'attack'})).status,403);
   assert.equal((await cmd('gm','ack',{attackId:'attack'})).status,200);
   const noDodge=await cmd('gm','action',{requestId:'no-dodge',participantId:'gm',choice:{kind:'spell',spellId:'Flamme'},expectedCost:{end:0,mana:0,name:'Flamme'},board,dpi:100,rotation:0,target:{x:2,y:2}});
@@ -94,8 +99,18 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
   assert.deepEqual(state.unpreparedHit,{id:'no-dodge',defenders:['alice','bob']});
   await cmd('gm','ack',{attackId:'no-dodge'});
   assert.deepEqual(state.lastAttack.hitParticipants,['alice','bob']);
+  assert.ok(state.lastAttack.actorId);
+  assert.ok('damage' in state.lastAttack);
   assert.deepEqual(state.unpreparedHit,{id:'no-dodge',defenders:['alice','bob']},'notification conservée après ack');
+  assert.equal((await cmd('bob','action',{participantId:'bob',choice:{kind:'dodge'}})).status,403);
+  assert.equal(state.lastAttack.id,'no-dodge','une action refusée conserve le résultat');
+  assert.equal((await cmd('gm','action',{participantId:'gm',choice:{kind:'dodge'}})).status,200);
+  assert.equal(state.lastAttack,undefined,'le résultat expire dès une nouvelle action, même sans attaque');
+  assert.equal((await cmd('gm','action',{requestId:'next-hit',participantId:'gm',choice:{kind:'spell',spellId:'Flamme'},expectedCost:{end:0,mana:0,name:'Flamme'},board,dpi:100,rotation:0,target:{x:2,y:2}})).status,200);
+  await cmd('gm','ack',{attackId:'next-hit'});
+  assert.equal(state.lastAttack.id,'next-hit');
   await cmd('gm','turn',{action:{type:'next'}});
+  assert.equal(state.lastAttack,undefined,'le résultat expire aussi au changement de tour');
   assert.equal(character('alice').end,derive(character('alice')).end);
   // Unused preparations expire on their owner's next turn, passing is free.
   await cmd('alice','action',{participantId:'alice',choice:{kind:'dodge'}});
@@ -105,7 +120,8 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
   assert.equal((await cmd('gm','answer',{participantId:'alice',attackId:'second',destination:null})).status,403);
   assert.ok(state.pending.answered.includes('bob'),'sans esquive, aucune réponse manuelle attendue');
   await cmd('alice','answer',{participantId:'alice',attackId:'second',destination:null});
-  assert.equal(state.dodges.alice,1);
+  assert.equal(state.dodges.alice,1);assert.equal(state.history.filter(entry=>entry.id===requestId).length,1,'une relance ne duplique pas le journal');
+
   assert.equal(state.pending,null);
   assert.deepEqual(state.unpreparedHit,{id:'second',defenders:['bob']});
   assert.equal((await cmd('bob','answer',{participantId:'bob',attackId:'second',destination:{x:2,y:0}})).status,400);
@@ -130,7 +146,7 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
   const moved=await cmd('alice','action',{...movement,requestId:'walk'});
   assert.equal(moved.status,200,moved.error);
   assert.equal(character('alice').end,initialEnd-1);
-  assert.deepEqual(state.resolution.movement,{tokenId:'alice',positions:[{x:50,y:50},{x:50,y:150}]});
+  assert.deepEqual(state.resolution.movement,{tokenId:'alice',positions:[{x:50,y:50},{x:50,y:150}],rotation:180});
   assert.equal((await cmd('alice','action',{...movement,requestId:'walk'})).status,200);
   assert.equal(character('alice').end,initialEnd-1);
   assert.equal((await cmd('alice','action',movement)).status,400);

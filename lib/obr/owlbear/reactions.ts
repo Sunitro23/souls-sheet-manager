@@ -1,7 +1,12 @@
+import { COMBAT_POLL_MS } from '../core/combat-sync';
+import { combatAttention } from '../core/attention';
+import type { CombatView } from '../core/actions';
 import { owlbearErrorMessage } from './error';
 import { planMovement } from '../core/movement';
 import { validDodge } from '../core/actions';
 import { animateMovement } from './movement-animation';
+import { publishAttackFeedback } from './combat-feedback';
+import { COMBAT_FEEDBACK_CHANNEL, dodgeFeedback } from '../core/combat-feedback';
 import { ZONE_DURATION, zoneExpiry, clearPreviousZones } from './zone-expiry';
 import OBR from '@owlbear-rodeo/sdk';
 import { currentCombat, combatCall, mutateCombat, boardSnapshot } from './actions';
@@ -18,7 +23,7 @@ async function itemId(attackId: string, index: number) {
   return `${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-8${hex.slice(17,20)}-${hex.slice(20,32)}`;
 }
 export async function registerCombatReactions() {
-  let disposed = false, polling = false, answering = false, choice: {participantId:string; attackId:string} | null = null;
+  let disposed = false, polling = false, refreshQueued = false, answering = false, choice: {participantId:string; attackId:string} | null = null;
   const preview = new Preview(`${TOOL}/preview`);
   async function drawChoices() {
     const selected = choice;
@@ -32,7 +37,7 @@ export async function registerCombatReactions() {
       const token = board.find(t => t.tokenId === participant.tokenId);
       if (!token) return [];
       const cells = [];
-      for (const x of [-2,0,2]) for (const y of [-2,0,2]) {
+      for (const x of [-2,-1,0,1,2]) for (const y of [-2,-1,0,1,2]) {
         const target = {x:token.cell.x+x,y:token.cell.y+y};
         if (!validDodge(token.cell,target)) continue;
         try { planMovement(board,token.tokenId,target,2,2); cells.push(target); } catch { /* Blocked path. */ }
@@ -62,7 +67,7 @@ export async function registerCombatReactions() {
         const destination = cellFromCenter(event.pointerPosition, await OBR.scene.grid.getDpi());
         await mutateCombat(state, 'answer', { participantId: selected.participantId, attackId: selected.attackId, destination });
         await cancel();
-        await OBR.broadcast.sendMessage('de.sunitro.cendres/reaction-status', {message:'Esquive enregistrée. En attente des autres réponses.'}, {destination:'LOCAL'});
+        await OBR.broadcast.sendMessage('de.sunitro.cendres/reaction-status', {message:'Votre esquive est prête.'}, {destination:'LOCAL'});
       } catch (e) { report(e); }
       finally { answering = false; }
       return true;
@@ -71,18 +76,38 @@ export async function registerCombatReactions() {
     onDeactivate: () => { void cancel().catch(report); },
   });
   await OBR.tool.create({id:TOOL,icons:[{icon,label:'Esquive préparée'}],defaultMode:MODE,onClick:()=>!!choice});
-  let notified = '', hitNotified = '';
+  let notified = '', hitNotified = '', badgeKey = '';
+  async function updateBadge(state: CombatView | null, playerId = '', gm = false) {
+    if (disposed && state) return;
+    const badge = combatAttention(state, playerId, gm);
+    const key = badge ? `${badge.text}/${badge.title}` : 'none';
+    if (key === badgeKey) return;
+    try {
+      await Promise.all([OBR.action.setBadgeText(badge?.text), OBR.action.setBadgeBackgroundColor(badge?.color ?? '#7cdbba'),
+        OBR.action.setTitle(badge?.title ?? 'Souls Fiche Gestion')]);
+      badgeKey = key;
+    } catch { /* The badge must never interrupt combat resolution. */ }
+  }
   const revealed = new Map<string, number>();
+  const animated = new Set<string>();
+  async function feedbackOnce(id: string, play: () => Promise<void>) {
+    if (animated.has(id) || disposed) return;
+    animated.add(id);
+    if (animated.size > 200) animated.delete(animated.values().next().value!);
+    try { await play(); } catch { /* Cosmetic feedback must never block resolution. */ }
+  }
   async function refresh() {
-    if (polling || disposed) return;
+    if (disposed) return;
+    if (polling) { refreshQueued = true; return; }
     polling = true;
     try {
       const combat = await currentCombat();
-      if (!combat) { if(choice) await cancel(); await showAttackPreview(null); return; }
+      if (!combat) { await updateBadge(null); if(choice) await cancel(); await showAttackPreview(null); return; }
       const state = await combatCall(combat,'get');
       await showAttackPreview(state);
-      if (!state) return;
+      if (!state) { await updateBadge(null); return; }
       const [playerId,role] = await Promise.all([OBR.player.getId(),OBR.player.getRole()]);
+      await updateBadge(state, playerId, role === 'GM');
       const canControl = (id: string) => role === 'GM' || state.combat.participants.find(p=>p.id===id)?.playerId===playerId;
       const owns = (id: string) => state.combat.participants.find(p => p.id === id)?.playerId === playerId;
       if (state.unpreparedHit && state.unpreparedHit.id !== hitNotified) {
@@ -101,7 +126,7 @@ export async function registerCombatReactions() {
       }
       const resolution = state.resolution;
       if (!resolution || !canControl(resolution.actorId)) return;
-      if (resolution.facing || resolution.movement || resolution.moves.length) {
+      {
         // One online controller animates; a GM can resume if the actor disconnects.
         const party = await OBR.party.getPlayers();
         const actor = state.combat.participants.find(p => p.id === resolution.actorId);
@@ -132,10 +157,15 @@ export async function registerCombatReactions() {
         if (existing.length !== ids.length) throw Error('Un pion d’esquive manque sur la carte. Restaurez-le pour terminer la résolution.');
         for (const move of resolution.moves) {
           const positions = move.positions ?? [existing.find(item=>item.id===move.tokenId)!.position, move.position];
-          await animateMovement({...resolution, id:`${resolution.id}/${move.tokenId}`, movement:{tokenId:move.tokenId,positions}}, () => disposed);
+          await feedbackOnce(`${resolution.id}/dodge/${move.tokenId}`, async () => {
+            const event = dodgeFeedback(resolution, move, state.combat.id, Date.now());
+            await OBR.broadcast.sendMessage(COMBAT_FEEDBACK_CHANNEL, event, { destination: 'ALL' });
+          });
+          await animateMovement({...resolution, id:`${resolution.id}/${move.tokenId}`, movement:{tokenId:move.tokenId,positions}}, () => disposed, 'dodge');
         }
       }
-      const items = buildPattern({x:0,y:0}, resolution.dpi, {name:resolution.name,pattern:resolution.cells.map(p=>[p.x,p.y])});
+      await feedbackOnce(resolution.id, () => publishAttackFeedback(state, () => disposed));
+      const items = buildPattern({x:0,y:0}, resolution.dpi, {name:resolution.name,pattern:resolution.cells.map(p=>[p.x,p.y])}, 0, true);
       for (const [index,item] of items.entries()) {
         const id = await itemId(resolution.id,index);
         delete item.metadata[PREVIEW_KEY];
@@ -157,7 +187,7 @@ export async function registerCombatReactions() {
       revealed.delete(resolution.id);
       lastError = '';
     } catch (e) { if(!disposed) report(e); }
-    finally { polling = false; }
+    finally { polling = false; if (refreshQueued && !disposed) { refreshQueued = false; void refresh(); } }
   }
   const stops = [OBR.broadcast.onMessage(DODGE_CHANNEL,event=>{void (async()=>{
     const data=event.data as {participantId?:string;attackId?:string};
@@ -174,7 +204,7 @@ export async function registerCombatReactions() {
     await drawChoices();
     await OBR.broadcast.sendMessage('de.sunitro.cendres/reaction-status', {message:'Choisissez une case surlignée sur la carte · Échap pour revenir.'}, {destination:'LOCAL'});
   })().catch(report);}), OBR.broadcast.onMessage('de.sunitro.cendres/combat-refresh',()=>void refresh()), OBR.room.onMetadataChange(()=>void refresh()), OBR.scene.items.onChange(()=>{void drawChoices().catch(report);}), OBR.scene.grid.onChange(()=>{void cancel().catch(report);})];
-  const timer=setInterval(()=>void refresh(),1500);
+  const timer=setInterval(()=>void refresh(),COMBAT_POLL_MS);
   void refresh();
-  return async()=>{disposed=true;clearInterval(timer);stops.forEach(stop=>stop());await cancel();await OBR.tool.remove(TOOL);await OBR.tool.removeMode(MODE);};
+  return async()=>{disposed=true;clearInterval(timer);stops.forEach(stop=>stop());await updateBadge(null);await cancel();await OBR.tool.remove(TOOL);await OBR.tool.removeMode(MODE);};
 }

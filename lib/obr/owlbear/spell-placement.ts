@@ -70,7 +70,7 @@ export async function registerSpellPlacement() {
         return;
       }
       const casterId = await OBR.player.getId(), castId = crypto.randomUUID();
-      const items = buildPattern(origin, caster.dpi, spell, placement.rotation + (spell.origin === 'self' ? caster.rotation : 0));
+      const items = buildPattern(origin, caster.dpi, spell, placement.rotation + (spell.origin === 'self' ? caster.rotation : 0), true);
       const expiresAt = Date.now() + ZONE_DURATION;
       for (const item of items) {
         delete item.metadata[PREVIEW_KEY];
@@ -131,6 +131,11 @@ export async function registerSpellPlacement() {
       if(message?.cancel===true){await cancel();return;}
       if(!message||typeof message.characterId!=='string'||typeof message.spellId!=='string'||typeof message.tokenId!=='string')return;
       if(committing)throw Error('Placement en cours.');
+      if(message.confirm === true) {
+        if(!current || current.characterId !== message.characterId || current.tokenId !== message.tokenId || current.spell.id !== message.spellId) throw Error('Sélectionnez à nouveau le sort.');
+        await commit({x:(current.target.x+0.5)*current.dpi,y:(current.target.y+0.5)*current.dpi});
+        return;
+      }
       await cancel(false);
       await setMapInteraction('spell', true);
       try {
@@ -157,7 +162,6 @@ export async function registerSpellPlacement() {
         await OBR.tool.activateTool(TOOL);
         await draw();
         await OBR.notification.show('Cliquez pour placer le sort · R pour tourner · Échap pour annuler.');
-        await OBR.action.close();
       } catch (error) { await cancel(); throw error; }
     })),
     OBR.scene.items.onChange(()=>run(draw)),

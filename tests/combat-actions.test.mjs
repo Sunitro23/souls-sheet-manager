@@ -6,9 +6,9 @@ const participants=['a','b','c'].map(id=>({id,characterId:id,name:id,dex:10,play
 const combat={version:1,phase:'ready',id:'combat',revision:1,campaignId:'campaign',createdBy:'a',participants,turn:0,initiative:{rolls:participants.map((p,i)=>({participantId:p.id,d20:20-i,source:'manual'})),usedDice:[],tieOrder:['a','b','c'],collector:null}};
 const pending=()=>({id:'attack',actorId:'a',name:'Secret',cells:[{x:2,y:0}],dpi:100,defenders:['b','c'],answers:{},board:[{tokenId:'a',cell:{x:8,y:8},position:{x:850,y:850}},{tokenId:'b',cell:{x:0,y:0},position:{x:50,y:50}},{tokenId:'c',cell:{x:4,y:0},position:{x:450,y:50}}]});
 const state=()=>({combat,revision:1,dodges:{b:1,c:1},pending:pending(),resolution:null,receipts:['secret']});
-test('esquive : exactement deux cases dans huit directions',()=>{
- for(const x of [-2,0,2])for(const y of [-2,0,2])assert.equal(validDodge({x:0,y:0},{x,y}),!!(x||y));
- for(const p of [{x:1,y:0},{x:2,y:1},{x:3,y:0}])assert.equal(validDodge({x:0,y:0},p),false);
+test('esquive : toutes les cases de la grille à deux cases maximum',()=>{
+ for(const x of [-2,-1,0,1,2])for(const y of [-2,-1,0,1,2])assert.equal(validDodge({x:0,y:0},{x,y}),!!(x||y));
+ for(const p of [{x:0,y:0},{x:0.5,y:1},{x:3,y:0},{x:NaN,y:0}])assert.equal(validDodge({x:0,y:0},p),false);
 });
 test('la vue partagée ne révèle ni technique, ni zone, ni réponses secrètes',()=>{
  const s=state();s.pending.answers.b={x:2,y:0};
@@ -47,4 +47,24 @@ test('touchés calculés après esquives, y compris une esquive dans la zone',()
  s.pending.answers={b:{x:0,y:2},c:{x:2,y:0}};
  resolveAttack(s);assert.deepEqual(s.resolution.hitParticipants,['c']);
  assert.equal(publicCombat(s).lastAttack,undefined,'annonce après confirmation de la révélation');
+});
+
+test('esquive : une case proche ou une diagonale intermédiaire est résolue',()=>{
+ for(const target of [{x:1,y:0},{x:2,y:1}]) {
+  const s=state();s.pending.answers={b:target,c:null};resolveAttack(s);
+  assert.deepEqual(s.resolution.moves[0].position,{x:target.x*100+50,y:target.y*100+50});
+ }
+});
+
+test('journal : les actions en préparation et les coûts restent privés jusqu’à leur révélation',()=>{
+ const state={combat:{participants:[{id:'actor',playerId:'alice'},{id:'other',playerId:'bob'}]},pending:null,resolution:null,history:[
+  {id:'pending',actorId:'actor',turn:0,kind:'action',name:'Sort secret',end:1,mana:4,resolved:false},
+  {id:'done',actorId:'actor',turn:0,kind:'action',name:'Estoc',end:2,mana:0,resolved:true,hitParticipants:['other']},
+ ]};
+ const own=publicCombat(state,'alice').history,other=publicCombat(state,'bob').history,gm=publicCombat(state,'gm',true).history;
+ assert.equal(own.length,2);assert.equal(gm.length,2);assert.equal(other.length,1);
+ assert.equal(other[0].id,'done');assert.equal(other[0].end,undefined);assert.equal(other[0].mana,undefined);
+ assert.deepEqual(other[0].hitParticipants,['other']);assert.equal(own[0].mana,4);
+ state.history[0].resolved=true;
+ assert.equal(publicCombat(state,'bob').history.length,2);
 });

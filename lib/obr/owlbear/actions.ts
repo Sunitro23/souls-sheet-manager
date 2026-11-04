@@ -4,11 +4,18 @@ import { workspaceCall, characterForOwlbear } from '../../workspace-client';
 import { readCombat, COMBAT_KEY, type CombatPreparation } from '../core/combat';
 import { activeParticipant, type ActionChoice, type CombatView, type BoardToken } from '../core/actions';
 import type { Point } from '../core/types';
-import { tokenOrigin } from './token';
+import { tokenOrigin, centerCombatTokens } from './token';
 
-export async function combatCall(combat: CombatPreparation, command: string, data: Record<string, unknown> = {}) {
-  const result = await workspaceCall({ op: 'combat', campaignId: combat.campaignId, combatId: combat.id, command, ...data });
-  return result.combatState as CombatView | null;
+const pendingReads = new Map<string, Promise<CombatView | null>>();
+export function combatCall(combat: CombatPreparation, command: string, data: Record<string, unknown> = {}): Promise<CombatView | null> {
+  const key = `${combat.campaignId}/${combat.id}`;
+  if (command === 'get' && pendingReads.has(key)) return pendingReads.get(key)!;
+  if (command !== 'get') pendingReads.delete(key);
+  const request = workspaceCall({ op: 'combat', campaignId: combat.campaignId, combatId: combat.id, command, ...data })
+    .then(result => result.combatState as CombatView | null)
+    .finally(() => { if (command !== 'get' || pendingReads.get(key) === request) pendingReads.delete(key); });
+  if (command === 'get') pendingReads.set(key, request);
+  return request;
 }
 export async function currentCombat() {
   const combat = readCombat(await OBR.room.getMetadata());
@@ -37,6 +44,8 @@ export async function mutateCombat(state: CombatView, command: string, data: Rec
   }
 }
 export async function startCombat(combat: CombatPreparation) {
+  if(await OBR.player.getRole() !== 'GM') throw Error('Le MJ doit démarrer le combat.');
+  if(!await combatCall(combat, 'get')) await centerCombatTokens(combat.participants.map(p=>{if(!p.tokenId)throw Error('Un pion du combat manque sur la carte.');return p.tokenId;}));
   return combatCall(combat, 'init', { combat, requestId: crypto.randomUUID() });
 }
 export async function advanceTurn(state: CombatView, action: unknown) {

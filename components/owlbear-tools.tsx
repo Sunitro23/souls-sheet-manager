@@ -36,7 +36,7 @@ export default function OwlbearTools({ character, characters, canAssign, section
   const data = loaded?.data.characterId === character?.id && loaded?.revision === character?.revision ? loaded?.data : null;
   const [inspectedId, setInspectedId] = useState<string | null>(null);
   const inspected = character?.inventory.find(item=>item.id===inspectedId&&!item.archived);
-  const objects = character?.inventory.filter(item=>!item.archived&&item.status==="approved"&&["consumable","other"].includes(item.type)) ?? [];
+  const objects = character?.inventory.filter(item=>!item.archived&&["consumable","other"].includes(item.type)) ?? [];
   const [choice, setChoice] = useState("");
   const [tokens, setTokens] = useState<{id:string;name:string}[]>([]), [tokenChoice, setTokenChoice] = useState("");
   const participant = runtime.combat?.participants.find(p=>p.characterId===character?.id);

@@ -1,11 +1,11 @@
 "use client";
 import { useRememberedValue } from "./preferences";
 import type { AdminCommon, Perform } from "./types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { entry, type Entry } from "../../lib/rules";
 import { categoryFor } from "../../lib/campaign-settings";
 import ItemForm from "../item-form";
-import ItemDetails from "../item-details";
+import ItemDetails, { itemTypes } from "../item-details";
 export default function Library({
   workspace,
   storageKey = "cendres-admin",
@@ -14,26 +14,68 @@ export default function Library({
   onDirty,
   busy,
   initialQuery = "",
+  target,
+  onNavigate,
 }: AdminCommon & { magic: boolean; perform: Perform; initialQuery?: string }) {
   const field = magic ? "spells" : "inventory";
-  const [characterId, setCharacterId] = useState(
-      workspace.characters[0]?.id ?? "",
-    ),
-    [draft, setDraft] = useState<Entry | null>(null),
-    [query, setQuery] = useRememberedValue(
-      `${storageKey}:library:query`,
-      initialQuery,
-      !!initialQuery,
-    ),
-    [archived, setArchived] = useState(false),
-    [preview, setPreview] = useState(false),
-    [kind, setKind] = useState("");
-  const character = workspace.characters.find((c) => c.id === characterId);
+  const prefix = `${storageKey}:library:${field}`;
+  const direct = !!(target?.selected || target?.owner || target?.status);
+  const [selection, setSelection] = useRememberedValue(
+    `${prefix}:selection`,
+    target?.selected ?? "",
+    direct || !!target?.create,
+  );
+  const [characterId, setCharacterId] = useRememberedValue(
+    `${prefix}:recipient`,
+    target?.owner ?? workspace.characters[0]?.id ?? "",
+    !!target?.owner,
+  );
+  const character =
+    workspace.characters.find((c) => c.id === characterId) ??
+    workspace.characters[0];
+  const [draft, setDraft] = useState<Entry | null>(() =>
+    target?.create && character
+      ? entry("", magic ? "spell" : "weapon")
+      : structuredClone(
+          character?.[field].find((item) => item.id === selection) ?? null,
+        ),
+  );
+  const [query, setQuery] = useRememberedValue(
+    `${prefix}:query`,
+    initialQuery,
+    direct || !!initialQuery,
+  );
+  const [archiveState, setArchiveState] = useRememberedValue(
+    `${prefix}:archives`,
+    target?.status === "archived" || draft?.archived ? "yes" : "no",
+    direct,
+  );
+  const archived = archiveState === "yes";
+  const [preview, setPreview] = useState(false);
+  const [kind, setKind] = useRememberedValue<string>(
+    `${prefix}:kind`,
+    "",
+    direct,
+  );
+  const [owner, setOwner] = useRememberedValue(
+    `${prefix}:owner`,
+    target?.owner ?? "",
+    direct,
+  );
+  const original = character?.[field].find((item) => item.id === draft?.id);
+  const changed = !!draft && JSON.stringify(draft) !== JSON.stringify(original);
+  useEffect(() => {
+    onDirty(changed);
+  }, [changed, onDirty]);
+  useEffect(() => {
+    setSelection(draft && original ? draft.id : "");
+  }, [draft, original, setSelection]);
   const rows = workspace.characters
     .flatMap((c) => c[field].map((item: Entry) => ({ item, character: c })))
     .filter(
       (r) =>
         !!r.item.archived === archived &&
+        (!owner || r.character.id === owner) &&
         r.item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
         (!kind ||
           (r.item.categoryId ?? categoryFor(workspace.settings, r.item)?.id) ===
@@ -66,8 +108,8 @@ export default function Library({
       <div className="adm-toolbar">
         <select
           aria-label="Personnage destinataire"
-          value={characterId}
-          disabled={!!draft}
+          value={character?.id ?? ""}
+          disabled={!!original || busy}
           onChange={(e) => setCharacterId(e.target.value)}
         >
           {workspace.characters.map((c) => (
@@ -78,10 +120,17 @@ export default function Library({
         </select>
         <button
           className="c-primary"
-          disabled={!character || !!draft}
+          disabled={!character || busy}
           onClick={() => {
+            if (
+              changed &&
+              !confirm(
+                "Abandonner cette édition pour créer un nouveau contenu ?",
+              )
+            )
+              return;
+            setPreview(false);
             setDraft(entry("", magic ? "spell" : "weapon"));
-            onDirty(true);
           }}
         >
           {magic ? "Créer un sort" : "Créer un objet"}
@@ -89,7 +138,7 @@ export default function Library({
         <button
           className="c-button"
           aria-pressed={archived}
-          onClick={() => setArchived(!archived)}
+          onClick={() => setArchiveState(archived ? "no" : "yes")}
         >
           {archived ? "Contenus actifs" : "Archives"}
         </button>
@@ -100,15 +149,38 @@ export default function Library({
       {draft && character ? (
         <>
           <div className="adm-toolbar">
+            <button
+              className="c-button"
+              onClick={() =>
+                onNavigate?.({ page: "characters", selected: character.id })
+              }
+            >
+              Ouvrir le personnage propriétaire
+            </button>
+            <button
+              className="c-button"
+              onClick={() =>
+                onNavigate?.({
+                  page: "categories",
+                  kind: magic
+                    ? "magic"
+                    : draft.type === "weapon"
+                      ? "weapon"
+                      : "item",
+                  selected: categoryFor(workspace.settings, draft)?.id,
+                })
+              }
+            >
+              Gérer {magic ? "l’école magique" : "la catégorie"}
+            </button>
             <button className="c-button" onClick={() => setPreview(!preview)}>
               Prévisualiser côté joueur
             </button>
             <button
               className="c-button"
               onClick={() => {
-                if (confirm("Abandonner cette édition ?")) {
+                if (!changed || confirm("Abandonner cette édition ?")) {
                   setDraft(null);
-                  onDirty(false);
                 }
               }}
             >
@@ -124,40 +196,55 @@ export default function Library({
           ) : (
             <ItemForm
               item={draft}
-              isGM
+              sectionNavigation
+              character={character}
               busy={busy}
-              existing={false}
+              existing={
+                character?.[field].some((i) => i.id === draft.id) ?? false
+              }
               onChange={(i) => {
                 setDraft(i);
-                onDirty(true);
               }}
               onSave={() => save(draft)}
-              onDelete={() => {}}
             />
           )}
-          <button
-            className="c-button"
-            disabled={busy}
-            onClick={() => {
-              if (
-                confirm(
-                  `${draft.archived ? "Restaurer" : "Archiver"} ce contenu ?`,
+          {character?.[field].some((i) => i.id === draft.id) && (
+            <button
+              className="c-button"
+              disabled={busy}
+              onClick={() => {
+                if (
+                  confirm(
+                    `${draft.archived ? "Restaurer" : "Archiver"} ce contenu ?`,
+                  )
                 )
-              )
-                save({
-                  ...draft,
-                  archived: !draft.archived,
-                  equipped: false,
-                  memorized: false,
-                });
-            }}
-          >
-            {draft.archived ? "Restaurer" : "Archiver"}
-          </button>
+                  save({
+                    ...draft,
+                    archived: !draft.archived,
+                    equipped: false,
+                    memorized: false,
+                  });
+              }}
+            >
+              {draft.archived ? "Restaurer" : "Archiver"}
+            </button>
+          )}
         </>
       ) : (
         <>
           <div className="adm-filters">
+            <select
+              aria-label="Filtrer par personnage propriétaire"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+            >
+              <option value="">Tous les propriétaires</option>
+              {workspace.characters.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
             <input
               aria-label="Rechercher un contenu"
               placeholder="Rechercher un contenu"
@@ -188,9 +275,10 @@ export default function Library({
               <thead>
                 <tr>
                   <th>Nom</th>
+                  <th>Type</th>
                   <th>Catégorie</th>
                   <th>Personnage</th>
-                  <th>État</th>
+                  <th>Statistiques</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -198,25 +286,33 @@ export default function Library({
                 {rows.map(({ item, character: c }) => (
                   <tr key={`${c.id}:${item.id}`}>
                     <td>{item.name}</td>
+                    <td>{itemTypes[item.type]}</td>
                     <td>
                       {categoryFor(workspace.settings, item)?.name ??
                         item.category ??
                         item.school}
                     </td>
-                    <td>{c.name}</td>
                     <td>
-                      {item.status === "approved"
-                        ? "Publié"
-                        : item.status === "rejected"
-                          ? "Refusé"
-                          : "À valider"}
+                      <button
+                        onClick={() =>
+                          onNavigate?.({ page: "characters", selected: c.id })
+                        }
+                      >
+                        {c.name}
+                      </button>
+                    </td>
+                    <td>
+                      {item.damage || "—"}
+                      {magic
+                        ? ` · Rang ${item.rank} · ${item.mana} FP · ${item.end} END`
+                        : ""}
                     </td>
                     <td>
                       <button
                         onClick={() => {
                           setCharacterId(c.id);
                           setDraft(structuredClone(item));
-                          onDirty(true);
+                          setPreview(false);
                         }}
                       >
                         Modifier
@@ -228,12 +324,10 @@ export default function Library({
                             ...structuredClone(item),
                             id: crypto.randomUUID(),
                             name: item.name.slice(0, 90) + " (copie)",
-                            status: "pending",
                             equipped: false,
                             memorized: false,
                             archived: false,
                           });
-                          onDirty(true);
                         }}
                       >
                         Dupliquer

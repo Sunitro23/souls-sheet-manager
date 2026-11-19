@@ -1,13 +1,11 @@
 'use client';
+import {Sparkles} from 'lucide-react';
+import type {Character,Entry} from '../lib/rules';
+import {spellFamily,spellSummary} from '../lib/spell-library';
 import {useCampaignSettings} from './campaign-theme';
-import {categoryFor} from '../lib/campaign-settings';
-import SpellIcon from './spell-icon';
-import {useId} from 'react';
-import {X} from 'lucide-react';
-import {spellDamage,spellSchool} from '../lib/bonuses';
-import type {Entry} from '../lib/rules';
-export default function GrimoireLoadout({character,derived,onInspect,onEquip}:{character:any;derived:any;onInspect?:(item:Entry)=>void;onEquip?:(item:Entry)=>void}){
- const settings=useCampaignSettings();
- const id=useId(),spells:Entry[]=character.spells.filter((s:Entry)=>s.memorized);
- return <section className="c-grimoire" aria-label="Grimoire des sorts équipés"><div className="c-loadout-heading"><h3>Sorts équipés</h3><span>Mémoire {derived.used} / {derived.memory}</span></div><div className="c-open-book"><svg className="c-book-art" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id={id}><stop stopColor="#4a4434"/><stop offset=".47" stopColor="#24261f"/><stop offset=".5" stopColor="#141813"/><stop offset=".53" stopColor="#24261f"/><stop offset="1" stopColor="#4a4434"/></linearGradient></defs><path d="M8 32Q155 0 300 35Q445 0 592 32V383Q440 354 300 390Q160 354 8 383Z" fill="#141612" stroke="#716346" strokeWidth="3"/><path d="M18 20Q154 -3 300 30Q445 -3 582 20V366Q442 345 300 378Q159 345 18 366Z" fill={`url(#${id})`} stroke="#a48d5c" strokeWidth="1.5"/><path d="M300 30V378" stroke="#ad9863" opacity=".5"/><path d="M35 44Q158 24 276 49M325 49Q448 24 566 44" stroke="#ad9863" fill="none" opacity=".25"/></svg><div className="c-book-pages">{spells.length?spells.map(s=><div className="c-book-spell" key={s.id}><button type="button" onClick={()=>onInspect?.(s)} aria-label={`Consulter ${s.name}`}><SpellIcon spell={s}/><strong>{s.name}</strong><small>{categoryFor(settings,s)?.name??spellSchool(s)} · {spellDamage(s,character)}</small><small>{s.mana} FP · {s.end} END</small></button>{onEquip&&<button type="button" className="c-book-remove" onClick={()=>onEquip(s)} aria-label={`Retirer ${s.name} du grimoire`} title="Retirer"><X size={14}/></button>}</div>):<><p className="c-book-empty">Votre grimoire attend ses premières incantations.</p><p className="c-book-empty">Équipez un sort depuis la bibliothèque ci-dessous.</p></>}</div></div></section>;
+import CollectionRow from './collection-row';
+
+export default function GrimoireLoadout({character,onInspect,selectedId,detailsId,detailsOpen}:{character:Character;onInspect:(item:Entry)=>void;selectedId?:string;detailsId?:string;detailsOpen?:boolean}){
+ const settings=useCampaignSettings(),spells=character.spells.filter(s=>s.memorized&&!s.archived);
+ return <section className="c-inventory-loadout" aria-label="Sorts mémorisés"><div className="c-inventory-heading"><h3>Mémoire</h3><span>{spells.length} sort{spells.length!==1?'s':''}</span></div><div className="c-equipped-list">{spells.map(spell=><CollectionRow key={spell.id} item={spell} onSelect={onInspect} selectedId={selectedId} detailsId={detailsId} detailsOpen={detailsOpen} category={spellFamily(spell,settings).label} summary={spellSummary(spell,character)} status="Mémorisé" className="c-equipped-row is-occupied"/>)}</div>{!spells.length&&<div className="c-inventory-empty"><Sparkles size={26}/><p>Aucun sort mémorisé.</p><span>Choisissez un sort dans la bibliothèque.</span></div>}</section>;
 }

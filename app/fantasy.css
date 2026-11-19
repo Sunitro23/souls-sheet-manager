@@ -52,15 +52,7 @@ h2,h3,.c-loadout-heading,.c-bag-heading{font-family:Cinzel,Georgia,serif}
 .c-character-dashboard .c-inventory-panel{background:transparent;border:0;box-shadow:none}
 .c-inventory-panel>.c-title{padding-bottom:12px;border-bottom:1px solid var(--border)}
 .c-inventory-panel .c-empty{border:0;background:transparent;padding:12px 0;margin:0;text-align:left}
-.c-open-book{padding:22px 18px 42px;min-height:180px;margin-bottom:14px}
-.c-book-art{opacity:.7}
-.c-book-pages{min-height:140px;gap:12px 24px;align-content:start}
-.c-book-spell{padding:0 18px 8px 0}
-.c-book-spell>button:first-child{min-height:95px;gap:4px}
 .c-spell-art{width:26px;height:26px;object-fit:contain}
-.c-book-spell strong{font-family:Cinzel,Georgia,serif;font-size:12px}
-.c-book-spell small{font-size:11px}
-.c-book-remove{min-width:28px;min-height:44px}
 .c-item-group{margin-top:14px}
 .c-equipment-card{border-radius:0}
 .c-tabs{border-radius:2px;background:#151411f5}
@@ -72,10 +64,9 @@ h2,h3,.c-loadout-heading,.c-bag-heading{font-family:Cinzel,Georgia,serif}
 .c-roster-portraits .c-roster-card:hover{background:transparent}
 .c-roster-portraits .c-roster-card:hover h2{color:var(--accent)}
 @media(min-width:1100px){.c-character-main{padding:20px 24px 32px}.c-character-dashboard:not(.tree-open){gap:14px}.c-character-dashboard .c-pad{padding:14px}.c-character-dashboard .c-notes{min-height:120px}}
-@media(max-width:639px){.c-character-main{padding:14px 12px 110px}.c-character-name h1{font-size:21px!important}.c-character-title{gap:8px!important}.c-character-dashboard .c-pad{padding:12px}.c-resource-grid{gap:2px}.c-resource-meter{padding:0 0 0 6px}.c-resource-actions{margin:0}.c-loadout-map{gap:0 12px;grid-template-columns:minmax(80px,.7fr) minmax(0,1.8fr)}.c-gear-slot{min-height:66px;column-gap:8px}.c-loadout-portrait>span{display:block}.c-book-remove{min-width:32px}.c-open-book{padding:22px 17px 42px}.c-book-spell>button:first-child{min-height:105px}}
+@media(max-width:639px){.c-character-main{padding:14px 12px 110px}.c-character-name h1{font-size:21px!important}.c-character-title{gap:8px!important}.c-character-dashboard .c-pad{padding:12px}.c-resource-grid{gap:2px}.c-resource-meter{padding:0 0 0 6px}.c-resource-actions{margin:0}.c-loadout-map{gap:0 12px;grid-template-columns:minmax(80px,.7fr) minmax(0,1.8fr)}.c-gear-slot{min-height:66px;column-gap:8px}.c-loadout-portrait>span{display:block}}
 
 .c-character-dashboard .c-empty{padding:18px 12px;margin-top:12px}
-.c-book-spell .c-spell-art{width:38px;height:38px;color:#cfba8a;flex-shrink:0}
 .c-character-main .c-workspace-controls{margin-bottom:10px}
 @media(max-width:639px){.c-character-title{flex-wrap:nowrap;margin-bottom:8px}.c-character-name{flex:1 1 0;min-width:0}.c-character-title>.c-actions{flex-shrink:0;margin-left:0}.c-character-title .c-profile-photo{width:44px;height:52px}.c-character-name h1{font-size:19px!important}.c-character-name .c-level{font-size:10px;padding:2px 5px;margin-left:5px}}
 

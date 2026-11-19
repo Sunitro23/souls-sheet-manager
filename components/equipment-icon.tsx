@@ -4,7 +4,9 @@ import type {Entry} from '../lib/rules';
 export default function EquipmentIcon({item,type}:{item?:Entry;type:string}){
  const category=(item?.category||'').toLowerCase();
  let shape;
- if(type==='armor')shape=<><path d="m21 10-12 9 8 13 5-3-3 25h26l-3-25 5 3 8-13-12-9-5 6H26Z"/><path d="m26 16 6 8 6-8M32 24v30M22 43h20"/></>;
+ if(type==='consumable')shape=<><path d="M25 7h14v10l-2 4v5q15 6 15 18a20 14 0 0 1-40 0q0-12 15-18v-5l-2-4ZM24 7V3h16v4M17 39h30"/><path d="m27 45 5-6 5 6-5 7Z"/></>;
+ else if(type==='other')shape=<><path d="m18 7 14 4 14-4-5 16q13 14 13 25 0 9-22 9T10 48q0-11 13-25ZM21 23h22M22 28h20"/><path d="m32 29-5 17 9-4 4 10"/></>;
+ else if(type==='armor')shape=<><path d="m21 10-12 9 8 13 5-3-3 25h26l-3-25 5 3 8-13-12-9-5 6H26Z"/><path d="m26 16 6 8 6-8M32 24v30M22 43h20"/></>;
  else if(type==='talisman')shape=<><ellipse cx="32" cy="38" rx="16" ry="19"/><ellipse cx="32" cy="38" rx="11" ry="14"/><path d="m23 16 9-9 9 9-9 11Z"/></>;
  else if(type==='shield'||/bouclier/.test(category))shape=<><path d="m32 7 22 8-3 23Q47 49 32 58 17 49 13 38L10 15Z"/><path d="M32 13v36M17 20l15-5 15 5"/></>;
  else if(type==='catalyst'||/bâton|stave|sceau/.test(category))shape=<><path d="m21 55 20-38M34 9l8-5 8 8-5 9-9-2Z"/><path d="m38 10 6 5-5 4M18 52l7 4"/></>;

@@ -4,6 +4,8 @@ import { spellSchools } from "./bonuses.ts";
 import { families } from "./progression.ts";
 import { racialCatalog } from "./races.ts";
 import { classCatalog } from "./classes.ts";
+import { weaponIcons, isUploadedWeaponIcon } from "./weapon-icons.ts";
+import { spellIcons } from "./spell-icons.ts";
 export const magicStyles = ["Runique", "Mystique", "Sacré", "Occulte", "Épuré"];
 export const weaponStyles = [
   "Classique",
@@ -59,6 +61,8 @@ export type Category = {
   name: string;
   description: string;
   icon: string;
+  weaponIcon?: string;
+  spellIcon?: string;
   color: string;
   order: number;
   parentId: string;
@@ -223,6 +227,14 @@ export function validateSettings(
       (c.kind === "skill" && !families.some((f) => f === c.baseKey))
     )
       throw Error("Correspondance mécanique inconnue.");
+    if (c.weaponIcon !== undefined &&
+        (typeof c.weaponIcon !== "string" ||
+          (c.weaponIcon !== "" && !weaponIcons.some((icon) => icon.id === c.weaponIcon) && !isUploadedWeaponIcon(c.weaponIcon))))
+      throw Error("Icône d’arme invalide. Choisissez une icône intégrée ou importez une image PNG, WebP ou JPG depuis le catalogue.");
+    if (c.spellIcon !== undefined &&
+        (typeof c.spellIcon !== "string" ||
+          (c.spellIcon !== "" && !spellIcons.some((icon) => icon.id === c.spellIcon) && !isUploadedWeaponIcon(c.spellIcon))))
+      throw Error("Icône de magie invalide. Choisissez une icône intégrée ou importez une image PNG, WebP ou JPG depuis le catalogue.");
     if (c.family && !families.some((f) => f === c.family))
       throw Error("Famille inconnue.");
     if (c.style && !magicStyles.includes(c.style))
@@ -268,6 +280,10 @@ export function themeVariables(a: Appearance) {
     "--text-secondary": "#bdbdb5",
     "--accent-ink": "#111111",
   };
+}
+
+export function characterCategoryLabel(settings: CampaignSettings | null | undefined, kind: 'race' | 'class', value: string | undefined) {
+  return settings?.categories.find(c => c.kind === kind && c.baseKey === value)?.name ?? value ?? '';
 }
 
 export function categoryFor(

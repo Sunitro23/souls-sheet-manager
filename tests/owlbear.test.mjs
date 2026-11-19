@@ -5,9 +5,9 @@ const copy = (c) => structuredClone(c);
 test("owlbear exports only usable spells with their saved zone and range", async () => {
   const { owlbearTechniques } = await import("../lib/owlbear.ts");
   const character = fresh();
-  const spell = entry("Explosion", "spell", {status:"approved",known:true,memorized:true,origin:"target",range:4,pattern:[[0,0],[1,0]]});
+  const spell = entry("Explosion", "spell", {status:"pending",known:true,memorized:true,origin:"target",range:4,pattern:[[0,0],[1,0]]});
   character.spells = [spell, ...[
-    {status:"pending"},{known:false},{memorized:false},{archived:true},{pattern:[]},
+    {known:false},{memorized:false},{archived:true},{pattern:[]},
   ].map((patch,index)=>({...spell,id:`excluded-${index}`,...patch}))];
   const before=copy(character);
   assert.deepEqual(owlbearTechniques(character).spells,[{id:spell.id,name:"Explosion",origin:"target",range:4,end:0,mana:0,pattern:[[0,0],[1,0]]}]);
@@ -32,7 +32,7 @@ test("owlbear uses campaign unlocks and ignores locked techniques without patter
   c.unlocks.push(tree.nodes.at(-1));
   assert.equal(owlbearTechniques(c, tree).weapons[0].techniques.length, 3);
 });
-test("owlbear exports only equipped approved weapons and acquired techniques", async () => {
+test("owlbear exports equipped weapons regardless of old approval and acquired techniques", async () => {
   const { owlbearTechniques } = await import("../lib/owlbear.ts");
   const c = fresh();
   c.id = "123";
@@ -48,7 +48,7 @@ test("owlbear exports only equipped approved weapons and acquired techniques", a
   const result = owlbearTechniques(c);
   assert.equal(result.characterId, "123");
   assert.equal(result.name, c.name);
-  assert.equal(result.weapons.length, 1);
+  assert.equal(result.weapons.length, 3);
   assert.equal(result.weapons[0].id, weapon.id);
   assert.equal(result.weapons[0].name, weapon.name);
   assert.deepEqual(result.weapons[0].techniques, [
@@ -71,4 +71,11 @@ test("owlbear supports custom weapons and empty inventories", async () => {
   ]);
   c.inventory = [];
   assert.deepEqual(owlbearTechniques(c).weapons, []);
+});
+
+test("owlbear exposes consumables regardless of their old moderation status",async()=>{
+ const {owlbearTechniques}=await import('../lib/owlbear.ts');const c=fresh();
+ c.inventory=['pending','rejected','approved'].map(status=>entry(status,'consumable',{status}));
+ c.inventory.push(entry('Archivé','consumable',{archived:true}));
+ assert.deepEqual(owlbearTechniques(c).items.map(i=>i.name),['pending','rejected','approved']);
 });

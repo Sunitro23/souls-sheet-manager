@@ -1,5 +1,6 @@
 'use client';
 import {useCampaignSettings} from './campaign-theme';
+import {characterCategoryLabel} from '../lib/campaign-settings';
 import {useState} from 'react';
 import {Minus,Plus,RotateCcw} from 'lucide-react';
 import {racialCatalog} from '../lib/races';
@@ -32,7 +33,7 @@ export default function CharacterCreation({races,suggestions,members,user,isGM,b
  <p className="c-muted">36 points à dépenser. Chaque caractéristique commence à 8, de 2 à 28. Descendre sous 8 rend 1 point par cran ; au-delà de 20, chaque cran coûte 3 points.</p><button type="button" className="c-text-button" disabled={busy} onClick={()=>setStats(initialStats())}><RotateCcw size={15}/>Réinitialiser la répartition</button></section>
 </>}
  <section className="c-form-section"><h3>05 · Affinité magique</h3><label className="c-field"><span>Caractéristique utilisée pour le focus et la mémoire</span><select name="magic" value={magic} onChange={e=>setMagic(e.target.value)}><option value="SAG">Sagesse</option><option value="INT">Intelligence</option><option value="CHA">Charisme</option></select></label></section>
- <section className="c-creation-summary"><h3>Votre personnage</h3><h2>{name||'Nom à définir'}</h2><p>{selectedClass?.name||(custom?'Sans classe':'Classe à choisir')} · {race||'Race non renseignée'} · Affinité {statLabels[magic]}</p><dl className="c-fact-grid">{statNames.map(s=><div key={s}><dt>{s}</dt><dd>{stats[s]}</dd></div>)}</dl><p className="c-muted">{custom?'Personnage réservé au MJ. Les compétences peuvent être accordées librement.':'Les aptitudes de classe et de race seront à débloquer dans les compétences.'}</p></section>
+ <section className="c-creation-summary"><h3>Votre personnage</h3><h2>{name||'Nom à définir'}</h2><p>{characterCategoryLabel(settings,'class',selectedClass?.name||className)||(custom?'Sans classe':'Classe à choisir')} · {characterCategoryLabel(settings,'race',race)||'Race non renseignée'} · Affinité {statLabels[magic]}</p><dl className="c-fact-grid">{statNames.map(s=><div key={s}><dt>{s}</dt><dd>{stats[s]}</dd></div>)}</dl><p className="c-muted">{custom?'Personnage réservé au MJ. Les compétences peuvent être accordées librement.':'Les aptitudes de classe et de race seront à débloquer dans les compétences.'}</p></section>
  <div className="c-form-actions"><span role="status" aria-live="polite">{custom?'Création libre · MJ uniquement':<><strong>{left}</strong> / {CREATION_POINTS} points restants</>}</span><button className="c-primary" disabled={busy||photoBusy||(!custom&&left!==0)}>{busy?'Création…':(custom||left===0)?'Créer le personnage':`${left} points à répartir`}</button></div>
  </form>
 }

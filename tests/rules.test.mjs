@@ -2,6 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { fresh, derive, validate, entry, mod } from "../lib/rules.ts";
 const copy = (c) => structuredClone(c);
+test("souls accept non-negative safe integers and older characters without a balance", () => {
+  assert.equal(fresh().souls, 0);
+  const legacy = fresh();
+  delete legacy.souls;
+  assert.doesNotThrow(() => validate(legacy));
+  for (const souls of [0, 12500, Number.MAX_SAFE_INTEGER]) {
+    assert.equal(validate({...fresh(), souls}).souls, souls);
+  }
+  for (const souls of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1, NaN, Infinity, "100", null]) {
+    assert.throws(() => validate({...fresh(), souls}), /Âmes/);
+  }
+});
 test("modifiers and derived values follow the supplied rules", () => {
   const c = fresh(),
     d = derive(c);
@@ -37,28 +49,23 @@ test("overload reduces endurance; weight above capacity + 2 rejected", () => {
   c.inventory.at(-1).weight = 4;
   assert.throws(() => validate(c, undefined, true), /trop lourd/);
 });
-test("unapproved content cannot be equipped or memorized", () => {
-  const c = fresh();
-  c.inventory.push(entry("Arme", "weapon", { equipped: true }));
-  assert.throws(() => validate(c, undefined, true), /validé/);
+test("new and previously moderated items can be equipped immediately", () => {
+  for (const status of [undefined, "pending", "rejected", "approved"]) {
+    const old = fresh(), c = copy(old);
+    c.inventory.push(entry("Anneau", "talisman", {equipped: true, status, bonuses: {HP: 2}}));
+    const saved = validate(c, old);
+    assert.equal(saved.inventory.at(-1).equipped, true);
+    assert.equal(saved.inventory.at(-1).status, undefined);
+    assert.equal(derive(saved).hp, derive(old).hp + 2);
+  }
 });
-test("player cannot self-approve new content", () => {
-  const old = fresh(),
-    c = copy(old);
-  c.inventory.push(entry("Arme", "weapon", { status: "approved" }));
-  validate(c, old);
-  assert.equal(c.inventory.at(-1).status, "pending");
-});
-test("mechanical edits revoke approval; description edits preserve it", () => {
-  const old = fresh(),
-    c = copy(old);
+test("mechanical and description edits preserve equipped items", () => {
+  const old = fresh(), c = copy(old);
   c.inventory[0].description = "Une histoire";
-  validate(c, old);
-  assert.equal(c.inventory[0].status, "approved");
   c.inventory[0].damage = "2d8";
   validate(c, old);
-  assert.equal(c.inventory[0].status, "pending");
-  assert.equal(c.inventory[0].equipped, false);
+  assert.equal(c.inventory[0].equipped, true);
+  assert.equal(c.inventory[0].damage, "2d8");
 });
 test("memory and innate spell restrictions are enforced", () => {
   const c = fresh();
@@ -139,7 +146,7 @@ test("creation accepts chosen stats and fills each derived resource", async () =
   assert.equal(c.hp, 24);
   assert.equal(c.end, 3);
   assert.equal(c.mana, 11);
-  assert.equal(c.reviewStatus, "pending");
+  assert.equal(c.reviewStatus, undefined);
   assert.equal(c.inventory.length, 0);
   const minimal = createCharacter({
     name: "Faible",
@@ -150,40 +157,36 @@ test("creation accepts chosen stats and fills each derived resource", async () =
   assert.equal(minimal.hp, 1);
   assert.equal(minimal.mana, 4);
 });
-test("character review cannot be forged and stat edits reset it", () => {
-  const old = fresh();
-  old.reviewStatus = "approved";
-  const c = copy(old);
-  c.hp--;
-  validate(c, old);
-  assert.equal(c.reviewStatus, "approved");
-  c.stats.FOR = 18;
-  validate(c, old);
-  assert.equal(c.reviewStatus, "pending");
-  const pending = copy(c);
-  c.reviewStatus = "approved";
-  validate(c, pending);
-  assert.equal(c.reviewStatus, "pending");
+test("old moderation metadata is removed without altering characters", async () => {
+  const {normalizeStored} = await import('../lib/rules.ts');
+  const old = fresh(); old.reviewStatus = 'rejected'; old.reviewHistory = [{comment:'Ancien retour'}];
+  old.personalSkills = [{id:'talent',name:'Talent',description:'Effet',status:'pending'}];
+  old.inventory[0].status='rejected'; old.spells[0].status='pending';
+  const c=normalizeStored(copy(old));
+  assert.equal(c.reviewStatus,undefined);assert.equal(c.reviewHistory,undefined);
+  assert.equal(c.personalSkills[0].status,undefined);assert.equal(c.inventory[0].status,undefined);assert.equal(c.spells[0].status,undefined);
+  assert.equal(c.inventory[0].equipped,old.inventory[0].equipped);assert.equal(c.spells[0].memorized,old.spells[0].memorized);
+  assert.equal(c.hp,old.hp);assert.equal(c.notes,old.notes);assert.deepEqual(normalizeStored(copy(c)),c);
 });
-test("target origins persist, trigger revalidation and reject invalid values", () => {
+test("target origins persist without unequipping and reject invalid values", () => {
   const old = fresh(),
     c = copy(old);
   old.inventory[0].category = "Bâtons";
   c.inventory[0].category = "Bâtons";
   c.inventory[0].techniques[0].origin = "target";
   validate(c, old);
-  assert.equal(c.inventory[0].status, "pending");
+  assert.equal(c.inventory[0].status, undefined);
   assert.equal(c.inventory[0].techniques[0].origin, "target");
   c.inventory[0].techniques[0].origin = "enemy";
   assert.throws(() => validate(c, old), /Origine/);
 });
-test("legacy weapons are normalized without revoking approval", async () => {
+test("legacy weapons are normalized without unequipping", async () => {
   const { normalizeStored } = await import("../lib/rules.ts");
   const old = fresh();
   const c = normalizeStored(copy(old));
   assert.equal(c.inventory[0].category, "Épées");
   validate(c, old);
-  assert.equal(c.inventory[0].status, "approved");
+  assert.equal(c.inventory[0].status, undefined);
   assert.equal(c.inventory[0].equipped, true);
 });
 
@@ -287,7 +290,7 @@ test("catalog-backed weapons cannot override preset mechanics or damage", async 
   const ts = referencedTechniques(c.inventory[0]);
   assert.ok(ts.every((t) => t.damage === c.inventory[0].damage));
   assert.equal(ts[0].end, 1);
-  assert.equal(c.inventory[0].status, "approved");
+  assert.equal(c.inventory[0].status, undefined);
 });
 test("large patterns remain inside dynamic bounds in every orientation", async () => {
   const { patternBounds, combatCatalog } = await import("../lib/combat.ts");
@@ -308,7 +311,7 @@ test("large patterns remain inside dynamic bounds in every orientation", async (
   const b = patternBounds([[0, -8]]);
   assert.equal(b.minY, -8);
 });
-test("personal skills require DM approval and use an independent capped pool", async () => {
+test("personal skills use an independent capped pool without approval", async () => {
   const { learnTechnique, learnPersonalSkill, personalProgress } = await import(
     "../lib/combat.ts"
   );
@@ -320,8 +323,7 @@ test("personal skills require DM approval and use an independent capped pool", a
     description: "Effet",
     status: "pending",
   }));
-  assert.throws(() => learnPersonalSkill(c, "0"), /validée/);
-  for (const skill of c.personalSkills) skill.status = "approved";
+  assert.throws(() => learnPersonalSkill(c, "absent"), /introuvable/);
   c = learnTechnique(c, "epee", "swipe");
   c = learnTechnique(c, "epee", "cyclone");
   c = learnTechnique(c, "epee", "jump");
@@ -332,7 +334,7 @@ test("personal skills require DM approval and use an independent capped pool", a
   assert.equal(personalProgress(c).earned, 7);
   assert.throws(() => learnPersonalSkill(c, "0"), /déjà/);
 });
-test("player-created personal skills cannot self-approve or bypass learning", () => {
+test("player-created personal skills remain available but cannot bypass learning", () => {
   const old = fresh(),
     c = copy(old);
   c.personalSkills = [
@@ -340,14 +342,14 @@ test("player-created personal skills cannot self-approve or bypass learning", ()
   ];
   c.personalTraining = ["talent"];
   validate(c, old);
-  assert.equal(c.personalSkills[0].status, "pending");
+  assert.equal(c.personalSkills[0].status, undefined);
   assert.deepEqual(c.personalTraining, []);
   const approved = copy(c);
   approved.personalSkills[0].status = "approved";
   const edited = copy(approved);
   edited.personalSkills[0].description = "Autre effet";
   validate(edited, approved);
-  assert.equal(edited.personalSkills[0].status, "pending");
+  assert.equal(edited.personalSkills[0].status, undefined);
 });
 
 test("PV and Mana modifiers adjust maxima and reject invalid values", () => {
@@ -409,7 +411,7 @@ test('équipement : deux armes, une armure et deux talismans maximum',()=>{
  }
 });
 
-test("separate descriptive effects preserve existing data and approval", () => {
+test("separate descriptive effects preserve existing data", () => {
   const old = fresh(), c = copy(old);
   const description = c.inventory[0].description;
   c.inventory[0].effects = "Une lueur ancienne.";

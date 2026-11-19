@@ -1,11 +1,10 @@
 import type { CampaignSettings } from "../../lib/campaign-settings";
 import type { Character } from "../../lib/rules";
 import type { Tree } from "../../lib/progression";
-import type { ReviewDecision } from "../../lib/reviews";
+import type { Destination } from "./navigation";
 export type AdminCharacter = Character & {
   race?: string;
   playerId: string;
-  reviewHistory?: ReviewDecision[];
 };
 export type HistoryEntry = {
   id: string;
@@ -20,6 +19,7 @@ export type Workspace = {
     img: string;
     revision: number;
     isGM: boolean;
+    gmId?: string | null;
   };
   settings: CampaignSettings;
   tree: Tree;
@@ -28,6 +28,9 @@ export type Workspace = {
   history: HistoryEntry[];
 };
 export type AdminCommon = {
+  active?: boolean;
+  target?: Destination;
+  onNavigate?: (target: Destination) => void;
   storageKey?: string;
   workspace: Workspace;
   busy: boolean;
@@ -36,4 +39,4 @@ export type AdminCommon = {
 export type Perform = (
   data: Record<string, unknown>,
   after?: () => void,
-) => Promise<void>;
+) => Promise<boolean>;

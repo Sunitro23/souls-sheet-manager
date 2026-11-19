@@ -90,7 +90,7 @@ export async function combatSession(db: DB, input: Record<string, unknown>, cont
     const available = owlbearTechniques(character, tree);
     const technique = choice?.kind === 'weapon' ? available.weapons.find(w => w.id === choice.weaponId)?.techniques[choice.index] :
       choice?.kind === 'spell' ? available.spells.find(s => s.id === choice.spellId) : undefined;
-    const item = choice?.kind === 'item' ? character.inventory.find(i => i.id === choice.itemId && !i.archived && i.status === 'approved' && ['consumable', 'other'].includes(i.type)) : undefined;
+    const item = choice?.kind === 'item' ? character.inventory.find(i => i.id === choice.itemId && !i.archived && ['consumable', 'other'].includes(i.type)) : undefined;
     if (!technique && !item && choice?.kind !== 'dodge' && choice?.kind !== 'movement' && choice?.kind !== 'turn') throw fail('Action indisponible.');
     let movement: ReturnType<typeof planMovement> | undefined;
     if (choice.kind === 'movement') {

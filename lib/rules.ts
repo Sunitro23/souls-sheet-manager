@@ -95,7 +95,11 @@ export function normalizeStored(c: Character) {
     item.category = weaponCategory(item.category);
     item.weight = itemWeight(item);
   }
-  c.reviewStatus ??= "pending";
+  // Old saves may still carry moderation metadata; it no longer affects play.
+  delete (c as Character & {reviewStatus?: unknown}).reviewStatus;
+  delete (c as Character & {reviewHistory?: unknown}).reviewHistory;
+  for (const item of [...c.inventory, ...c.spells, ...(c.personalSkills ?? [])])
+    delete (item as {status?: unknown}).status;
   return c;
 }
 export const ranks = [
@@ -130,7 +134,6 @@ export type Entry = {
   description: string;
   weight: number;
   equipped: boolean;
-  status: "pending" | "approved" | "rejected";
   armor: number;
   shield: number;
   damage: string;
@@ -159,11 +162,11 @@ export type Character = {
   weaponTraining?: string[];
   personalSkills?: PersonalSkill[];
   personalTraining?: string[];
-  reviewStatus?: "pending" | "approved" | "rejected";
   id: string;
   name: string;
   subtitle: string;
   level: number;
+  souls?: number;
   stats: Record<string, number>;
   magic: string;
   hp: number;
@@ -185,7 +188,7 @@ export type Character = {
 };
 export const mod = (v: number) => Math.floor((v - 10) / 2);
 export function derive(c: Character) {
-  const equipped = c.inventory.filter((i) => i.equipped && i.status === 'approved');
+  const equipped = c.inventory.filter((i) => i.equipped);
   const bonuses=equipmentBonuses(c);
   const stats=Object.fromEntries(statNames.map(key=>[key,Math.min(c.mode==='custom'?Number.MAX_SAFE_INTEGER:28,Math.max(c.mode==='custom'?1:2,c.stats[key]+bonuses[key]))]));
   const armor = armors[equipped.find((i) => i.type === "armor")?.armor || 0];
@@ -236,6 +239,7 @@ export function validate(c: Character, old?: Character, gm = false) {
     for(const key of ['hp','mana','end'] as const)integer(c.resourceBases?.[key],1,Number.MAX_SAFE_INTEGER,key+' de base');
   }else if(c.resourceBases!==undefined)throw Error('Bases manuelles réservées au mode custom.');
   integer(c.level, 1, 1000, "Niveau");
+  integer(c.souls === undefined ? 0 : c.souls, 0, Number.MAX_SAFE_INTEGER, "Âmes");
   c.unlocks = [...(old?.unlocks ?? [])];
   // Learning is purchased through its dedicated endpoint, never granted through a sheet save.
   c.weaponTraining = [...(old?.weaponTraining ?? [])];
@@ -266,17 +270,6 @@ export function validate(c: Character, old?: Character, gm = false) {
       throw Error(
         "Nom et description de compétence requis (100 et 3 000 caractères maximum).",
       );
-    const previous = old?.personalSkills?.find((s) => s.id === skill.id);
-    if (!gm) {
-      skill.status = previous?.status ?? "pending";
-      if (
-        previous &&
-        (previous.name !== skill.name ||
-          previous.description !== skill.description)
-      )
-        skill.status = "pending";
-    } else if (!["pending", "approved", "rejected"].includes(skill.status))
-      throw Error("Validation de compétence invalide.");
   }
   c.personalTraining = [...(old?.personalTraining ?? [])];
   if (personalProgress(c).available < 0)
@@ -368,55 +361,7 @@ export function validate(c: Character, old?: Character, gm = false) {
       const prev = [...(old?.inventory || []), ...(old?.spells || [])].find(
         (i) => i.id === item.id,
       );
-      const mechanical = (i: Entry) => {
-        const common = [i.type, itemWeight(i), i.ashOfWar ? {...i.ashOfWar, origin: i.ashOfWar.origin ?? "self"} : null, ...bonusKeys.map(k=>i.bonuses?.[k]??0)];
-        const techniques = referencedTechniques(i).map((t) => ({
-          ...t,
-          origin: t.origin ?? "self",
-        }));
-        const special = i.special
-          ? { ...i.special, origin: i.special.origin ?? "self" }
-          : null;
-        if (i.type === "weapon")
-          return JSON.stringify([
-            ...common,
-            weaponCategory(i.category),
-            i.damage,
-            techniques,
-            special,
-          ]);
-        if (i.type === "armor") return JSON.stringify([...common, i.armor]);
-        if (i.type === "shield")
-          return JSON.stringify([...common, i.shield, techniques, special]);
-        if (i.type === "spell")
-          return JSON.stringify([
-            ...common,
-            i.rank,
-            i.damage,
-            i.end,
-            i.mana,
-            i.school??'Sorts',
-            i.pattern,
-            i.friendlyFire,
-            i.target,
-            i.origin ?? "self",
-          ]);
-        return JSON.stringify(common);
-      };
-      if (!gm) {
-        item.archived = prev?.archived ?? false;
-        item.status = prev?.status || "pending";
-        if (prev && (mechanical(prev) !== mechanical(item)||prev.categoryId!==item.categoryId))
-          item.status = "pending";
-      } else if (!["approved", "pending", "rejected"].includes(item.status))
-        throw Error("Validation invalide.");
-      if (item.status !== "approved") {
-        if (prev?.equipped && item.status === "pending") item.equipped = false;
-        if (prev?.memorized && item.status === "pending")
-          item.memorized = false;
-        if (item.equipped || item.memorized)
-          throw Error("Ce contenu doit être validé par le GM.");
-      }
+      if (!gm) item.archived = prev?.archived ?? false;
       if (item.memorized && !item.known)
         throw Error("Un sort mémorisé doit être connu.");
       const patterns = [
@@ -472,25 +417,12 @@ export function validate(c: Character, old?: Character, gm = false) {
     integer(c[key], 0, c.mode==='custom'?Number.MAX_SAFE_INTEGER:100000, key);
     c[key] = Math.min(c[key], Math.max(0, d[key]));
   }
-  // Preserve full health only when a newly equipped, approved armor raises the maximum.
+  // Preserve full health only when a newly equipped armor raises the maximum.
   if (old && c.hp === old.hp && old.hp === derive(old).hp && d.hp > old.hp &&
-      c.inventory.some(i => i.type === 'armor' && i.equipped && i.status === 'approved' &&
-        !old.inventory.some(previous => previous.id === i.id && previous.equipped && previous.status === 'approved')))
+      c.inventory.some(i => i.type === 'armor' && i.equipped &&
+        !old.inventory.some(previous => previous.id === i.id && previous.equipped)))
     c.hp = d.hp;
-  if (!gm) {
-    c.reviewStatus = old?.reviewStatus ?? "pending";
-    if (
-      old &&
-      (old.level !== c.level ||
-        old.magic !== c.magic ||
-        statNames.some((s) => old.stats[s] !== c.stats[s]))
-    )
-      c.reviewStatus = "pending";
-  } else if (
-    !["pending", "approved", "rejected"].includes(c.reviewStatus ?? "pending")
-  )
-    throw Error("Validation du personnage invalide.");
-  return c;
+  return normalizeStored(c);
 }
 export function createCharacter(input: {
   mode?: "custom";
@@ -507,7 +439,7 @@ export function createCharacter(input: {
     spells: [],
     notes: "",
     subtitle: "",
-    reviewStatus: "pending",
+
     hp: 0,
     end: 0,
     mana: 0,
@@ -531,7 +463,7 @@ export function entry(
     description: "",
     weight: 0,
     equipped: false,
-    status: "pending",
+
     armor: 0,
     shield: 1,
     damage: "",
@@ -560,6 +492,7 @@ export function fresh(): Character {
     name: "Kaelen",
     subtitle: "",
     level: 6,
+    souls: 0,
     stats: { FOR: 16, DEX: 14, CON: 14, INT: 12, SAG: 16, CHA: 10 },
     magic: "SAG",
     hp: 26,
@@ -576,7 +509,7 @@ export function fresh(): Character {
         damage: "1d8",
         category: "Épée longue",
         equipped: true,
-        status: "approved",
+
         description: "Une lame usée, marquée du sceau des anciens veilleurs.",
         techniques: [
           {
@@ -599,21 +532,21 @@ export function fresh(): Character {
         armor: 2,
         weight: 2,
         equipped: true,
-        status: "approved",
+
         description:
           "Des plaques de métal patinées, assemblées sur un cuir sombre.",
       }),
       entry("Talisman de braise", "talisman", {
         weight: 1,
-        status: "approved",
+
         description: "Un souvenir encore tiède.",
       }),
       entry("Fiole de soin", "consumable", {
         description: "Une préparation ambrée.",
-        status: "approved",
+
       }),
       entry("Fragment de titanite", "other", {
-        status: "pending",
+
         description: "Un éclat de métal aux reflets anciens.",
       }),
     ],
@@ -621,7 +554,7 @@ export function fresh(): Character {
       entry("Étincelle", "spell", {
         rank: 0,
         memorized: true,
-        status: "approved",
+
         mana: 1,
         damage: "1d4",
         description: "Une étincelle danse au creux de la main.",
@@ -629,7 +562,7 @@ export function fresh(): Character {
       entry("Lance de lumière", "spell", {
         rank: 2,
         memorized: true,
-        status: "approved",
+
         mana: 3,
         end: 1,
         damage: "2d6",
@@ -639,7 +572,7 @@ export function fresh(): Character {
       entry("Soin mineur", "spell", {
         rank: 1,
         memorized: true,
-        status: "approved",
+
         mana: 2,
         description: "Une chaleur douce referme les blessures.",
       }),

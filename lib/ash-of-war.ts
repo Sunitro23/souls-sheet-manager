@@ -19,8 +19,8 @@ export function useAshOfWar<T extends Pick<Character, 'inventory' | 'mana'>>(cha
   const item = character.inventory.find(i => i.id === itemId);
   if (!item || !['weapon', 'shield'].includes(item.type) || !item.ashOfWar)
     throw Error('Aucune Ash of War sur cet équipement.');
-  if (!item.equipped || item.status !== 'approved')
-    throw Error('L’équipement doit être équipé et validé par le MJ.');
+  if (!item.equipped)
+    throw Error('L’équipement doit être équipé.');
   const cost = item.ashOfWar.mana;
   if (!Number.isInteger(cost) || cost < 1 || cost > 100)
     throw Error('Le coût FP de l’Ash of War doit être défini (1–100).');

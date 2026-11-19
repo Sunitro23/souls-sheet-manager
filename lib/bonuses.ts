@@ -4,7 +4,7 @@ export const spellSchools=['Miracles','Sorts','Pyromancies','Malédictions','Mé
 export const progressionBonusKeys=['HP','END','FP',...spellSchools.map(s=>`Dégâts ${s}`)];
 export function equipmentBonuses(c:any):Record<BonusKey,number>{
  const result=Object.fromEntries(bonusKeys.map(k=>[k,0])) as Record<BonusKey,number>;
- for(const item of c.inventory??[])if(item.equipped&&item.status==='approved')for(const key of bonusKeys)result[key]+=item.bonuses?.[key]??0;
+ for(const item of c.inventory??[])if(item.equipped)for(const key of bonusKeys)result[key]+=item.bonuses?.[key]??0;
  return result;
 }
 export function learnedBonus(c:any,key:string){return (c.unlocks??[]).filter((n:any)=>n.kind==='bonus'&&n.stat===key).reduce((sum:number,n:any)=>sum+n.amount,0);}

@@ -14,12 +14,12 @@ export function owlbearTechniques(character: Character, tree?: Tree) {
     movement: { move, sprint, end: character.end },
     characterId: character.id,
     name: character.name,
-    items: character.inventory.filter(item=>!item.archived&&item.status==="approved"&&["consumable","other"].includes(item.type)).map(({id,name,type})=>({id,name,type})),
-    spells: character.spells.filter(spell => spell.status === "approved" && spell.known && spell.memorized && !spell.archived && spell.pattern.length)
+    items: character.inventory.filter(item=>!item.archived&&["consumable","other"].includes(item.type)).map(({id,name,type})=>({id,name,type})),
+    spells: character.spells.filter(spell => spell.known && spell.memorized && !spell.archived && spell.pattern.length)
       .map(spell => ({ id: spell.id, name: spell.name, pattern: spell.pattern as [number, number][], origin: spell.origin ?? "self", range: spell.range, end: spell.end, mana: spell.mana })),
     weapons: character.inventory
       .filter(
-        (item) => item.type === "weapon" && item.equipped && item.status === "approved",
+        (item) => item.type === "weapon" && item.equipped,
       )
       .map((item) => {
         if (tree) {

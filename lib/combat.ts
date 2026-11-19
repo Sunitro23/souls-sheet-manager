@@ -161,7 +161,6 @@ export type PersonalSkill = {
   id: string;
   name: string;
   description: string;
-  status: "pending" | "approved" | "rejected";
 };
 export type PersonalCharacter = {
   level: number;
@@ -184,8 +183,8 @@ export function learnPersonalSkill<T extends PersonalCharacter>(
   id: string,
 ): T {
   const skill = c.personalSkills?.find((s) => s.id === id);
-  if (!skill || skill.status !== "approved")
-    throw Error("La compétence doit être validée par le DM.");
+  if (!skill)
+    throw Error("Compétence personnelle introuvable.");
   if (c.personalTraining?.includes(id))
     throw Error("Cette compétence est déjà acquise.");
   if (personalProgress(c).available < 1)

@@ -10,12 +10,40 @@ import {
 } from "../../lib/progression";
 import SkillTree from "../skill-tree";
 import ItemDetails from "../item-details";
-export default function PlayerPreview({ workspace }: { workspace: Workspace }) {
-  const [id, setId] = useState(workspace.characters[0]?.id ?? ""),
-    [tab, setTab] = useState("Fiche"),
-    [family, setFamily] = useState<string>("Lames");
+import { skillState } from "../../lib/skill-state";
+export default function PlayerPreview({
+  workspace,
+  characterId,
+  onCharacterChange,
+}: {
+  workspace: Workspace;
+  characterId: string;
+  onCharacterChange: (id: string) => void;
+}) {
+  const id = characterId,
+    setId = onCharacterChange;
+  const [tab, setTab] = useState("Fiche"),
+    [family, setFamily] = useState<string>("Lames"),
+    [selectedId, setSelectedId] = useState("");
   const character = workspace.characters.find((c) => c.id === id),
     stats = character ? derive(character) : null;
+  const selected = character
+    ? nodesForFamily(workspace.tree, family, character).find(
+        (node) => node.id === selectedId,
+      )
+    : undefined;
+  const known = character
+    ? knownNodeIds(character, workspace.tree)
+    : new Set<string>();
+  const state =
+    selected && character
+      ? skillState(
+          selected,
+          character,
+          known,
+          remaining(character, workspace.tree),
+        )
+      : null;
   return (
     <section className="adm-main">
       <h1>Voir comme un joueur</h1>
@@ -99,8 +127,39 @@ export default function PlayerPreview({ workspace }: { workspace: Workspace }) {
                 known={knownNodeIds(character, workspace.tree)}
                 available={remaining(character, workspace.tree)}
                 character={character}
-                onSelect={() => {}}
+                onSelect={(node) => setSelectedId(node.id)}
               />
+              {selected && state && (
+                <article className="c-card c-pad">
+                  <h2>{selected.name}</h2>
+                  <p>
+                    {state.label} · Niveau {selected.level} · {selected.cost}{" "}
+                    points
+                  </p>
+                  <p>{selected.description}</p>
+                  <h3>Prérequis</h3>
+                  {selected.requires.length ? (
+                    <ul>
+                      {selected.requires.map((id) => (
+                        <li key={id}>
+                          {workspace.tree.nodes.find((node) => node.id === id)
+                            ?.name ?? id}{" "}
+                          · {known.has(id) ? "Acquise" : "À acquérir"}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>Aucun prérequis.</p>
+                  )}
+                  {state.reasons.length > 0 && (
+                    <ul>
+                      {state.reasons.map((reason) => (
+                        <li key={reason}>{reason}</li>
+                      ))}
+                    </ul>
+                  )}
+                </article>
+              )}
             </>
           )}
         </>

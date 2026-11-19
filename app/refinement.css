@@ -1,13 +1,12 @@
 /* Charcoal surfaces, restrained antique gold, and generous reading space. */
-.c-layout{--bg:#101010;--surface:#191919;--surface-active:#242321;--border:#36332c;--text-primary:#e8e4db;--text-secondary:#b6afa2;--accent:#c4aa74;--text:var(--text-primary);--muted:var(--text-secondary);--panel:var(--surface);--line:var(--border)}
 .c-layout .c-card{background:var(--surface);border-color:#36332c80;border-radius:5px}
 .c-layout h1,.c-layout h2,.c-layout h3{font-family:Georgia,'Times New Roman',serif;font-weight:500}
 .c-layout h1{letter-spacing:.025em}.c-layout p{line-height:1.7}
 .c-layout .c-primary{background:#bba16c;color:#14120f;border:1px solid #bba16c;box-shadow:none}
 .c-layout .c-primary:hover:not(:disabled){background:#d0b782}.c-layout .c-button{background:#242321;border-color:#494337;color:#e8e4db;box-shadow:none}
 .c-layout input:not([type=checkbox]):not([type=radio]),.c-layout select,.c-layout textarea{background:#111;border-color:#494337;color:#e8e4db}
-.c-layout input[type=checkbox],.c-layout input[type=radio]{accent-color:#c4aa74}
-.c-modal-wide,.c-modal-page{--surface:#191919;--muted:#b6afa2;--text:#e8e4db;background:#191919;border-radius:6px;color:var(--text)}
+.c-layout input[type=checkbox],.c-layout input[type=radio]{accent-color:var(--accent)}
+.c-modal-wide,.c-modal-page{background:var(--panel);border-radius:6px;color:var(--text)}
 .c-modal-wide{width:860px;max-width:calc(100% - 32px);max-height:92dvh}
 .c-modal-page{inset:0;transform:none;margin:0;width:100%;max-width:none;height:100dvh;max-height:100dvh;border:0;border-radius:0;padding:24px max(24px,calc((100vw - 1080px)/2)) 0}
 .c-modal-page .c-sheet-handle{display:none}.c-modal-page>.c-title{top:-24px;padding:20px 0;background:#191919}

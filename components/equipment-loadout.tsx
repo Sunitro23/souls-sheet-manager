@@ -1,16 +1,22 @@
 'use client';
-import EquipmentIcon from './equipment-icon';
-import CharacterSilhouette from './character-silhouette';
-import {Package} from 'lucide-react';
-import {armors,itemWeight,type Entry} from '../lib/rules';
-const slots=[{type:'weapon',index:0,label:'Arme 1',position:'weapon-one'},{type:'weapon',index:1,label:'Arme 2',position:'weapon-two'},{type:'armor',index:0,label:'Armure',position:'armor'},{type:'talisman',index:0,label:'Talisman 1',position:'talisman-one'},{type:'talisman',index:1,label:'Talisman 2',position:'talisman-two'}];
-export default function EquipmentLoadout({character,onInspect,selectedId}:{character:any;onInspect:(item:Entry)=>void;selectedId?:string}){
- const equipped:Entry[]=character.inventory.filter((i:Entry)=>i.equipped);
+import {Plus} from 'lucide-react';
+import type {Character,Entry} from '../lib/rules';
+import {itemSummary} from '../lib/inventory';
+import ItemArtwork from './item-artwork';
+import CollectionRow from './collection-row';
+
+const slots=[{type:'weapon',index:0,label:'Arme 1'},{type:'weapon',index:1,label:'Arme 2'},{type:'armor',index:0,label:'Armure'},{type:'talisman',index:0,label:'Talisman 1'},{type:'talisman',index:1,label:'Talisman 2'}];
+export type EquipmentSlot={type:string;label:string};
+export default function EquipmentLoadout({character,onInspect,onChoose,selectedId,detailsId,detailsOpen=true}:{character:Character;onInspect:(item:Entry)=>void;onChoose?:(slot:EquipmentSlot)=>void;selectedId?:string;detailsId?:string;detailsOpen?:boolean}) {
+ const equipped=character.inventory.filter(i=>i.equipped&&!i.archived);
  const shown=new Set<string>();
  const cards=slots.map(slot=>{const item=equipped.filter(i=>slot.type==='weapon'?['weapon','catalyst'].includes(i.type):i.type===slot.type)[slot.index];if(item)shown.add(item.id);return {...slot,item};});
  const extra=equipped.filter(i=>!shown.has(i.id));
- return <section className="c-loadout" aria-label="Objets équipés"><div className="c-loadout-heading"><h3>Équipés</h3><span>{cards.filter(s=>s.item).length} / 5</span></div><div className="c-loadout-map">
- <div className="c-loadout-portrait">{character.portrait?<img src={character.portrait} alt={`Portrait de ${character.name}`}/>:<CharacterSilhouette/>}<span>{character.name}</span></div>
- {cards.map(({item,label,position})=>{const content=<><span className="c-slot-label">{label}</span><EquipmentIcon item={item} type={item?.type||slots.find(s=>s.position===position)!.type}/><strong>{item?.name||'Emplacement libre'}</strong>{item&&<small>{item.type==='weapon'?item.damage||'Dégâts non renseignés':item.type==='catalyst'?item.category||'Catalyseur':item.type==='armor'?armors[item.armor]?.name:'Talisman'}</small>}</>;return item?<button key={position} type="button" className={`c-gear-slot ${position} occupied`} onClick={()=>onInspect(item)} aria-pressed={selectedId===item.id} aria-label={`${label} : ${item.name}, consulter les détails`}>{content}</button>:<div key={position} className={`c-gear-slot ${position} empty`}>{content}</div>;})}
- </div>{extra.length>0&&<div className="c-extra-equipped">{extra.map(i=><button className="c-button" key={i.id} onClick={()=>onInspect(i)}><Package size={15}/>{i.name}<small>Poids {itemWeight(i)}</small></button>)}</div>}</section>;
+ return <section className="c-inventory-loadout" aria-label="Objets équipés">
+  <div className="c-inventory-heading"><h3>Équipements</h3><span>{cards.filter(s=>s.item).length} / 5</span></div>
+  <div className="c-equipped-list">{cards.map(({item,type,index,label})=>item?<CollectionRow key={label} item={item} onSelect={onInspect} selectedId={selectedId} detailsId={detailsId} detailsOpen={detailsOpen} category={label} summary={itemSummary(item)} label={`${label} : ${item.name}, consulter les détails`} className="c-equipped-row is-occupied"/>:<button key={label} type="button" className="c-inventory-row c-equipped-row is-empty" aria-pressed={false} aria-label={`${label} : choisir un équipement`} disabled={!onChoose} onClick={()=>onChoose?.({type,label})}>
+   <ItemArtwork type={type} slotIcon={type==='weapon'?(index===0?'right_hand':'left_hand'):undefined}/><span className="c-inventory-row-copy"><small>{label}</small><strong>Emplacement libre</strong><span>Choisir dans le sac</span></span><Plus size={15}/>
+  </button>)}</div>
+  {extra.length>0&&<div className="c-additional-equipment"><h4>Également portés</h4>{extra.map(item=><CollectionRow key={item.id} item={item} onSelect={onInspect} selectedId={selectedId} detailsId={detailsId} detailsOpen={detailsOpen} summary={itemSummary(item)}/>)}</div>}
+ </section>;
 }

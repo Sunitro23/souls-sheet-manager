@@ -5,6 +5,7 @@ import "./v2.css";
 import "./fantasy.css";
 import "./refinement.css";
 import "./administration.css";
+import "./legacy-sheet.css";
 import "./owlbear.css";
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' as const };
 export const metadata: Metadata = {

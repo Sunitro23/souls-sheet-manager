@@ -21,7 +21,7 @@ test('utilisation dépense exactement les FP et préserve END et inventaire',()=
  assert.deepEqual(c,before);assert.deepEqual(next.inventory,c.inventory);
  assert.throws(()=>useAshOfWar({...c,mana:2},c.inventory[0].id),/FP insuffisants/);
  c.inventory[0].equipped=false;assert.throws(()=>useAshOfWar(c,c.inventory[0].id),/équipé/);
- c.inventory[0].equipped=true;c.inventory[0].status='pending';assert.throws(()=>useAshOfWar(c,c.inventory[0].id),/validé/);
+ c.inventory[0].equipped=true;c.inventory[0].status='pending';assert.equal(useAshOfWar(c,c.inventory[0].id).mana,c.mana-3);
  assert.throws(()=>useAshOfWar(c,'missing'),/Aucune/);
 });
 test('coût positif, zone valide et équipement compatible requis',()=>{
@@ -30,15 +30,15 @@ test('coût positif, zone valide et équipement compatible requis',()=>{
  const invalid=fresh();invalid.inventory[1].ashOfWar=ash();assert.throws(()=>validate(invalid,undefined,true),/arme ou un bouclier/);
  const shield=fresh();shield.inventory.push(entry('Bouclier','shield',{ashOfWar:ash()}));assert.doesNotThrow(()=>validate(shield,undefined,true));
 });
-test('ajout, retrait et modification d’une AoW exigent une nouvelle validation MJ',()=>{
+test('ajout, retrait et modification d’une AoW préservent l’équipement',()=>{
  const old=character();
  for(const change of [i=>i.ashOfWar.mana=4,i=>i.ashOfWar.description='Autre effet',i=>i.ashOfWar.damageType='Magie',i=>i.ashOfWar=null]){
   const c=structuredClone(old);change(c.inventory[0]);validate(c,old);
-  assert.equal(c.inventory[0].status,'pending');assert.equal(c.inventory[0].equipped,false);
+  assert.equal(c.inventory[0].status,undefined);assert.equal(c.inventory[0].equipped,true);
  }
  const legacy=fresh();delete legacy.inventory[0].ashOfWar;
- const unchanged=structuredClone(legacy);unchanged.inventory[0].ashOfWar=null;validate(unchanged,legacy);assert.equal(unchanged.inventory[0].status,'approved');
- const added=structuredClone(legacy);added.inventory[0].ashOfWar=ash();validate(added,legacy);assert.equal(added.inventory[0].status,'pending');
+ const unchanged=structuredClone(legacy);unchanged.inventory[0].ashOfWar=null;validate(unchanged,legacy);assert.equal(unchanged.inventory[0].status,undefined);
+ const added=structuredClone(legacy);added.inventory[0].ashOfWar=ash();validate(added,legacy);assert.equal(added.inventory[0].status,undefined);
 });
 
 test('rendu AoW distinct, coût FP, effet et éditeur de zone',async()=>{

@@ -28,7 +28,7 @@ test('rafraîchir la fiche Owlbear verrouille les statistiques jusqu’à la ré
    b.onResolve({filter:/^\.\.\/components\//},args=>({path:args.path,namespace:'component'}));
    b.onResolve({filter:/workspace-client$/},()=>({path:'workspace',namespace:'mock'}));
    b.onResolve({filter:/\/obr\/connection$/},()=>({path:'connection',namespace:'mock'}));
-   b.onLoad({filter:/.*/,namespace:'component'},({path})=>({contents:`export default ${JSON.stringify(path.split('/').at(-1))};`}));
+   b.onLoad({filter:/.*/,namespace:'component'},({path})=>({contents:`export default ${JSON.stringify(path.split('/').at(-1))};${path.endsWith('/detail-side-panel')?'export const useDetailOverlay=()=>false;':''}`}));
    b.onLoad({filter:/.*/,namespace:'mock'},({path})=>({contents:path==='react'?`export * from '${resolve('node_modules/react/index.js')}';export const {useState,useRef,useEffect,useMemo,useSyncExternalStore}=globalThis.__sheetRefresh;`:path==='workspace'?'export const workspaceCall=(...args)=>globalThis.__sheetRefresh.api(...args),characterForOwlbear=(...args)=>globalThis.__sheetRefresh.info(...args);':'export const connectOwlbear=async()=>null;'}));
   }}]});
   const {default:Page}=await import(pathToFileURL(join(folder,'ui.mjs')).href);

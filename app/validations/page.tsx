@@ -1,4 +1,4 @@
-import Page from "../page";
-export default function WorkspacePage() {
-  return <Page initialTab="Validations" />;
+import { redirect } from "next/navigation";
+export default function LegacyValidationsPage() {
+  redirect("/dm");
 }

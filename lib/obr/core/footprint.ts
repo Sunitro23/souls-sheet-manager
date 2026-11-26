@@ -1,3 +1,4 @@
+import { attackRotation } from './projection.ts';
 import type { Point } from './types.ts';
 
 export type Footprint = { width?: number; height?: number };
@@ -14,7 +15,7 @@ export function overlaps(a: Placed, b: Placed) {
 
 export function frontCells(cell: Point, size: Footprint, rotation: number): Point[] {
   const { width = 1, height = 1 } = size;
-  const side = ((Math.round(rotation / 90) % 4) + 4) % 4;
+  const side = ((Math.round(attackRotation(rotation) / 90) % 4) + 4) % 4;
   const vertical = side % 2 === 1;
   return Array.from({ length: vertical ? height : width }, (_, i) => ({
     x: cell.x + (vertical ? (side === 1 ? width - 1 : 0) : i),

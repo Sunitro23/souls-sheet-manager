@@ -79,7 +79,7 @@ export async function performCombatAction(characterId: string, tokenId: string, 
   if (choice.kind === 'movement' && !placement) throw Error('Choisissez une destination.');
   const movement = choice.kind === 'movement' ? planMovement(snapshot!.board, tokenId, placement!.target, data.movement.move, data.movement.sprint) : undefined;
   if (movement?.end === 0) return false;
-  const rotation = placement?.rotation ?? (action ? (await tokenOrigin(tokenId)).rotation : 0);
+  const rotation = placement?.rotation ?? (action ? (await tokenOrigin(tokenId)).attackRotation : 0);
   const result = await mutateCombat(state, 'action', { participantId: participant.id, choice, characterRevision: data.revision, expectedCost: {end:movement?.end??action?.end??1,mana:action?.mana??0,name}, ...snapshot, ...placement, rotation });
   const {showAttackPreview} = await import('./preview');
   await showAttackPreview(result);

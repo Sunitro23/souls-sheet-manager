@@ -28,15 +28,15 @@ export function planMovement(board: BoardToken[], tokenId: string, target: Point
 
 export function cardinalRotation(from: Point, to: Point): 0 | 90 | 180 | 270 {
   const dx = to.x - from.x, dy = to.y - from.y;
-  if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) return dx > 0 ? 90 : 270;
-  return dy > 0 ? 180 : 0;
+  if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) return dx > 0 ? 270 : 90;
+  return dy > 0 ? 0 : 180;
 }
 
 // Only face along an axis of travel; prefer the nearest enemy in front.
 export function movementRotation(from: Point, to: Point, enemies: Point[]): 0 | 90 | 180 | 270 {
   const candidates: {x:number;y:number;rotation:0|90|180|270}[] = [];
-  if(to.x !== from.x) candidates.push({x:Math.sign(to.x-from.x),y:0,rotation:to.x>from.x?90:270});
-  if(to.y !== from.y) candidates.push({x:0,y:Math.sign(to.y-from.y),rotation:to.y>from.y?180:0});
+  if(to.x !== from.x) candidates.push({x:Math.sign(to.x-from.x),y:0,rotation:to.x>from.x?270:90});
+  if(to.y !== from.y) candidates.push({x:0,y:Math.sign(to.y-from.y),rotation:to.y>from.y?0:180});
   const ahead = enemies.filter(enemy=>candidates.some(direction=>(enemy.x-to.x)*direction.x+(enemy.y-to.y)*direction.y>0))
     .sort((a,b)=>Math.hypot(a.x-to.x,a.y-to.y)-Math.hypot(b.x-to.x,b.y-to.y));
   if(!ahead.length)return cardinalRotation(from,to);
@@ -46,9 +46,9 @@ export function movementRotation(from: Point, to: Point, enemies: Point[]): 0 | 
 
 export function facingTargets(origin: Point, radius: number) {
   return ([
-    { x: 0, y: -1, rotation: 0, arrow: '↑' },
-    { x: 1, y: 0, rotation: 90, arrow: '→' },
-    { x: 0, y: 1, rotation: 180, arrow: '↓' },
-    { x: -1, y: 0, rotation: 270, arrow: '←' },
+    { x: 0, y: -1, rotation: 180, arrow: '↑' },
+    { x: 1, y: 0, rotation: 270, arrow: '→' },
+    { x: 0, y: 1, rotation: 0, arrow: '↓' },
+    { x: -1, y: 0, rotation: 90, arrow: '←' },
   ] as const).map(direction => ({ ...direction, x: origin.x + direction.x * (radius + 1), y: origin.y + direction.y * (radius + 1) }));
 }

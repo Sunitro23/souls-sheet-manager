@@ -60,12 +60,12 @@ export default function OwlbearTools({ character, characters, canAssign, section
     const {default: OBR} = await import('@owlbear-rodeo/sdk');
     await OBR.broadcast.sendMessage(MOVEMENT_CHANNEL, {interaction:'weapon',active:false}, {destination:'LOCAL'});
   };
-  const updateWeaponTargets = async (technique: Technique, origin: {origin: {x:number;y:number};rotation:number}) => {
+  const updateWeaponTargets = async (technique: Technique, origin: {origin: {x:number;y:number};attackRotation:number}) => {
     const combat = latest.current.combat;
     if (!combat) return;
     const { boardSnapshot } = await import('../lib/obr/owlbear/actions');
     const { board } = await boardSnapshot();
-    const cells = projectPattern(origin.origin, technique.pattern, origin.rotation);
+    const cells = projectPattern(origin.origin, technique.pattern, origin.attackRotation);
     const actor = combat.participants.find(p => p.characterId === latest.current.character?.id);
     const names = combat.participants.filter(p => p.id !== actor?.id && p.camp !== actor?.camp && board.some(token => token.tokenId === p.tokenId && cells.some(cell => overlaps(token, {cell})))).map(p => p.name);
     if (active.current === technique) setWeaponTargets(names);
@@ -106,7 +106,7 @@ export default function OwlbearTools({ character, characters, canAssign, section
             if (!live || request !== version || active.current !== technique) return [];
             await updateWeaponTargets(technique, origin);
             if (!live || request !== version || active.current !== technique) return [];
-            return buildPattern(origin.origin, origin.dpi, technique, origin.rotation);
+            return buildPattern(origin.origin, origin.dpi, technique, origin.attackRotation);
           });
         }
       }
@@ -260,7 +260,7 @@ export default function OwlbearTools({ character, characters, canAssign, section
               await OBR.broadcast.sendMessage(CAST_CHANNEL, {cancel:true}, {destination:'LOCAL'});
               await OBR.broadcast.sendMessage(MOVEMENT_CHANNEL, {interaction:'weapon',active:true}, {destination:'LOCAL'});
               const pattern={...technique,pattern:technique.pattern as [number,number][]};active.current=pattern;
-              await preview.current?.show(async()=>{const origin=await tokenOrigin(token.id);if(active.current!==pattern)return [];await updateWeaponTargets(pattern,origin);return active.current===pattern?buildPattern(origin.origin,origin.dpi,pattern,origin.rotation):[];});
+              await preview.current?.show(async()=>{const origin=await tokenOrigin(token.id);if(active.current!==pattern)return [];await updateWeaponTargets(pattern,origin);return active.current===pattern?buildPattern(origin.origin,origin.dpi,pattern,origin.attackRotation):[];});
               if(active.current===pattern)setArmed({choice:{kind:"weapon",weaponId:weapon.id,index},context:actionContext});
             }catch(e){active.current=null;setActionError(true);await releaseWeapon();setStatus((e as Error).message)}finally{setBusy(false)}
           }}><Sword size={18} aria-hidden="true"/></ActionButton>

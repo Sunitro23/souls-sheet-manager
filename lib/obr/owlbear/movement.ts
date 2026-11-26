@@ -4,7 +4,7 @@ import OBR, { buildText, buildPath, Command, isPath, type Item, type PathCommand
 import { characterForOwlbear } from '../../workspace-client';
 import { activeParticipant } from '../core/actions';
 import { MOVEMENT_CHANNEL, planMovement, facingTargets } from '../core/movement';
-import { cellFromCenter } from '../core/projection';
+import { attackRotation, cellFromCenter } from '../core/projection';
 import type { Point } from '../core/types';
 import { boardSnapshot, combatCall, currentCombat, performCombatAction } from './actions';
 import { Preview, buildPattern } from './preview';
@@ -80,7 +80,7 @@ export async function registerMovement() {
         range.push(...zone);
       }
       for (const target of facingTargets(origin, sprint)) {
-        const angle = target.rotation * Math.PI / 180;
+        const angle = attackRotation(target.rotation) * Math.PI / 180;
         const vertices = [[0.5,0.12],[0.86,0.48],[0.64,0.48],[0.64,0.88],[0.36,0.88],[0.36,0.48],[0.14,0.48]];
         const commands: PathCommand[] = vertices.map(([x,y],index) => [index ? Command.LINE : Command.MOVE,
           (0.5+(x-0.5)*Math.cos(angle)-(y-0.5)*Math.sin(angle))*dpi,

@@ -114,7 +114,7 @@ for (const role of ['PLAYER', 'GM']) test(`mouvement Owlbear (${role}) : son pro
   assert.equal(state.payments.length,2);
   const positionBeforeTurn={...state.items[0].position};
   await click(21);await settle();
-  assert.deepEqual(state.payments.at(-1),{choice:{kind:'turn',rotation:90},end:1},'la flèche droite déclenche une rotation à 1 END');
+  assert.deepEqual(state.payments.at(-1),{choice:{kind:'turn',rotation:270},end:1},'la flèche droite déclenche une rotation à 1 END');
   assert.deepEqual(state.items[0].position,positionBeforeTurn);
   actor.playerId='bob';state.view.revision++;state.roomChanged();await settle();
   assert.equal(state.tools,0,'le GM ne prend pas le mouvement d’un autre joueur');
@@ -144,8 +144,8 @@ test('animation : une case par étape, reprise sans recul après interruption',a
   assert.ok(frames[1].y<50,'le pion saute au-dessus du trajet');
   assert.equal(positions.length,3,'une seule écriture persistante par case');
   assert.equal(interactions,stops,'les interactions sont fermées même après interruption');
-  assert.equal(item.rotation,90,'le pion doit regarder vers la droite');
-  assert.ok(rotations.every(rotation=>rotation===90),'les diagonales conservent une orientation cardinale');
+  assert.equal(item.rotation,270,'le pion doit regarder vers la droite');
+  assert.ok(rotations.every(rotation=>rotation===270),'les diagonales conservent une orientation cardinale');
   await animateMovement({...resolution,id:'enemy-facing',movement:{...resolution.movement,rotation:0}},()=>false);
   assert.equal(item.rotation,0,'l’orientation vers l’ennemi est conservée pendant le déplacement');
   globalThis.__animationTest.scene.items.updateItems=async()=>{throw Error('Échec de sauvegarde')};

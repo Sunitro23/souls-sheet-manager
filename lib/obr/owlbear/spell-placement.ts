@@ -51,11 +51,11 @@ export async function registerSpellPlacement() {
             marker.style.fillColor = '#61c9a8';
             marker.style.fillOpacity = 0.38;
           }
-          return source ? [...markers, ...buildPattern(source, caster.dpi, placement.spell, placement.rotation + (placement.spell.origin === 'self' ? caster.rotation : 0))] : markers;
+          return source ? [...markers, ...buildPattern(source, caster.dpi, placement.spell, placement.rotation + (placement.spell.origin === 'self' ? caster.attackRotation : 0))] : markers;
         }
         if (!source) return [];
         const origin = spellPosition(placement.spell, source, placement.target);
-        return buildPattern(origin, caster.dpi, placement.spell, placement.rotation + (placement.spell.origin === 'self' ? caster.rotation : 0));
+        return buildPattern(origin, caster.dpi, placement.spell, placement.rotation + (placement.spell.origin === 'self' ? caster.attackRotation : 0));
       } catch { return []; }
     });
   }
@@ -96,13 +96,13 @@ export async function registerSpellPlacement() {
       if (await currentCombat()) {
         if (disposed || current !== placement || request !== revision) return;
         const used = await performCombatAction(placement.characterId, placement.tokenId, weapon ?? {kind:'spell',spellId:spell.id},
-          {target,attackOrigin:source,rotation:placement.rotation + (spell.origin === 'self' ? caster.rotation : 0)});
+          {target,attackOrigin:source,rotation:placement.rotation + (spell.origin === 'self' ? caster.attackRotation : 0)});
         if(used) await cancel();
         return;
       }
       if (weapon) { await cancel(); return; }
       const casterId = await OBR.player.getId(), castId = crypto.randomUUID();
-      const items = buildPattern(origin, caster.dpi, spell, placement.rotation + (spell.origin === 'self' ? caster.rotation : 0), true);
+      const items = buildPattern(origin, caster.dpi, spell, placement.rotation + (spell.origin === 'self' ? caster.attackRotation : 0), true);
       const expiresAt = Date.now() + ZONE_DURATION;
       for (const item of items) {
         delete item.metadata[PREVIEW_KEY];

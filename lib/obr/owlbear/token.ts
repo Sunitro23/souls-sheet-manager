@@ -1,4 +1,5 @@
 import OBR, { isImage, type Image } from "@owlbear-rodeo/sdk";
+import { attackRotation } from '../core/projection';
 import { validSize } from "../core/footprint";
 import { sharedLink } from "../core/links";
 
@@ -28,7 +29,7 @@ function geometry(item: Image, center: { x: number; y: number }, dpi: number) {
   const height = Math.max(1, Math.round(item.image.height * Math.abs(item.scale.y) / item.grid.dpi));
   if (!validSize({ width, height })) throw Error('Dimensions du pion invalides.');
   const origin = { x: Math.round(center.x / dpi - width / 2), y: Math.round(center.y / dpi - height / 2) };
-  return { origin, width, height, dpi, rotation: item.rotation };
+  return { origin, width, height, dpi, rotation: item.rotation, attackRotation: attackRotation(item.rotation) };
 }
 
 export async function tokenOrigin(tokenId: string) {

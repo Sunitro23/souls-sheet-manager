@@ -70,7 +70,7 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
     assert.equal(state.resolution.id,spellId);
     await cmd('gm','ack',{attackId:spellId});
   }
-  const bossBoard = board.map(t => t.tokenId === 'gm' ? {...t,cell:{x:1,y:2},width:2,height:2} : t);
+  const bossBoard = board.map(t => t.tokenId === 'gm' ? {...t,cell:{x:1,y:2},width:2,height:2,facing:180} : t);
   const invalidOrigin = await cmd('gm','action',{participantId:'gm',choice:{kind:'weapon',weaponId:'weapon',index:0},board:bossBoard,dpi:100,rotation:0,attackOrigin:{x:2,y:3}});
   assert.equal(invalidOrigin.status,400);
   const attack=await cmd('gm','action',{requestId:'attack',participantId:'gm',choice:{kind:'weapon',weaponId:'weapon',index:0},board:bossBoard,attackOrigin:{x:2,y:2},dpi:100,rotation:0});
@@ -149,7 +149,7 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
   const moved=await cmd('alice','action',{...movement,requestId:'walk'});
   assert.equal(moved.status,200,moved.error);
   assert.equal(character('alice').end,initialEnd-1);
-  assert.deepEqual(state.resolution.movement,{tokenId:'alice',positions:[{x:50,y:50},{x:50,y:150}],rotation:180});
+  assert.deepEqual(state.resolution.movement,{tokenId:'alice',positions:[{x:50,y:50},{x:50,y:150}],rotation:0});
   assert.equal((await cmd('alice','action',{...movement,requestId:'walk'})).status,200);
   assert.equal(character('alice').end,initialEnd-1);
   assert.equal((await cmd('alice','action',movement)).status,400);

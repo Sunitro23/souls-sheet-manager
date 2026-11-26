@@ -25,22 +25,22 @@ test('mouvement : les pions bloquent le trajet et l’arrivée, sans détour', (
 
 test('orientation : quatre directions, flèches hors de la portée', () => {
   const origin={x:0,y:0};
-  for(const [x,y,rotation] of [[0,-1,0],[1,0,90],[0,1,180],[-1,0,270],[1,1,90],[-1,-1,270],[1,-2,0]]) {
+  for(const [x,y,rotation] of [[0,-1,180],[1,0,270],[0,1,0],[-1,0,90],[1,1,270],[-1,-1,90],[1,-2,180]]) {
     assert.equal(cardinalRotation(origin,{x,y}),rotation);
   }
   const arrows=facingTargets(origin,5);
-  assert.deepEqual(arrows.map(a=>a.rotation),[0,90,180,270]);
+  assert.deepEqual(arrows.map(a=>a.rotation),[180,270,0,90]);
   assert.ok(arrows.every(a=>Math.max(Math.abs(a.x),Math.abs(a.y))===6));
 });
 
 test('orientation : ennemi prioritaire dans le sens du déplacement seulement',()=>{
  const from={x:0,y:0},to={x:2,y:-2};
- assert.equal(movementRotation(from,to,[{x:2,y:-4}]),0);
- assert.equal(movementRotation(from,to,[{x:4,y:-2}]),90);
- assert.equal(movementRotation(from,to,[{x:1,y:0}]),90,'ennemi derrière ignoré');
- assert.equal(movementRotation(from,to,[{x:4,y:-2},{x:2,y:-3}]),0,'ennemi le plus proche');
- assert.equal(movementRotation(from,{x:0,y:-2},[{x:4,y:-2}]),0,'marche vers le haut : pas de rotation latérale');
- assert.equal(movementRotation(from,to,[]),90);
+ assert.equal(movementRotation(from,to,[{x:2,y:-4}]),180);
+ assert.equal(movementRotation(from,to,[{x:4,y:-2}]),270);
+ assert.equal(movementRotation(from,to,[{x:1,y:0}]),270,'ennemi derrière ignoré');
+ assert.equal(movementRotation(from,to,[{x:4,y:-2},{x:2,y:-3}]),180,'ennemi le plus proche');
+ assert.equal(movementRotation(from,{x:0,y:-2},[{x:4,y:-2}]),180,'marche vers le haut : pas de rotation latérale');
+ assert.equal(movementRotation(from,to,[]),270);
 });
 
 test('le flanc du pion bloque une case intermédiaire dans les deux sens', () => {

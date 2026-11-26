@@ -1,5 +1,10 @@
 import type { Point, Technique } from "./types";
 
+// Les motifs sont dessinés vers le haut, les images de personnages regardent vers le bas.
+export function attackRotation(tokenRotation: number) {
+  return (tokenRotation + 180) % 360;
+}
+
 export function projectPattern(origin: Point, pattern: Technique["pattern"], rotation = 0): Point[] {
   if (!Number.isFinite(rotation)) throw new Error("Rotation du token invalide.");
   // Y descend dans la scène : les rotations positives sont horaires.

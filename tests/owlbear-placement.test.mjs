@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 
 const linkKey='de.sunitro.cendres/link',zoneKey='de.sunitro.cendres/spell-zone';
-const token=(id,characterId='hero')=>({id,type:'IMAGE',layer:'CHARACTER',name:id,rotation:0,position:{x:50,y:50},metadata:{[linkKey]:{characterId,characterName:'Hero',playerId:'alice'}}});
+const token=(id,characterId='hero')=>({id,type:'IMAGE',layer:'CHARACTER',name:id,image:{width:100,height:100},grid:{dpi:100},scale:{x:1,y:1},rotation:0,position:{x:50,y:50},metadata:{[linkKey]:{characterId,characterName:'Hero',playerId:'alice'}}});
 const settle=async()=>{for(let count=0;count<12;count++)await new Promise(resolve=>setImmediate(resolve))};
 
 test('Owlbear placement: automatic token, private preview, validation, cancellation and deletion',async()=>{
@@ -37,9 +37,10 @@ test('Owlbear placement: automatic token, private preview, validation, cancellat
     await build({stdin:{contents:"export {showAttackPreview,Preview} from './lib/obr/owlbear/preview'; export {onMapInteraction} from './lib/obr/owlbear/interaction'; export {clearSpellZones} from './lib/obr/owlbear/clear-zones'; export {registerSpellPlacement} from './lib/obr/owlbear/spell-placement'; export {characterToken,centerCombatTokens} from './lib/obr/owlbear/token'; export {startCombat} from './lib/obr/owlbear/actions';",resolveDir:process.cwd()},outfile:join(folder,'placement.mjs'),bundle:true,platform:'node',format:'esm',plugins:[{name:'owlbear-test',setup(builder){
       builder.onResolve({filter:/^@owlbear-rodeo\/sdk$/},()=>({path:'sdk',namespace:'mock'}));
       builder.onResolve({filter:/workspace-client$/},()=>({path:'client',namespace:'mock'}));
-      builder.onLoad({filter:/.*/,namespace:'mock'},({path})=>({contents:path==='client'?"export async function workspaceCall(data){return globalThis.__owlbearTest.call(data)} export async function characterForOwlbear(){return {revision:0,spells:globalThis.__owlbearTest.state.spells}}":`
+      builder.onLoad({filter:/.*/,namespace:'mock'},({path})=>({contents:path==='client'?"export async function workspaceCall(data){return globalThis.__owlbearTest.call(data)} export async function characterForOwlbear(){return {revision:0,weapons:globalThis.__owlbearTest.state.weapons,spells:globalThis.__owlbearTest.state.spells}}":`
         export default globalThis.__owlbearTest.sdk;
         export const isImage=item=>item.type==='IMAGE';
+        export const isPath=item=>item.type==='PATH';
         export const Command={MOVE:0,LINE:1,CLOSE:2};
         export function buildPath(){const item={id:crypto.randomUUID(),metadata:{}};const builder=new Proxy({}, {get:(_target,key)=>key==='build'?()=>item:value=>{item[key]=value;return builder}});return builder;}
       `}));
@@ -140,6 +141,29 @@ test('Owlbear placement: automatic token, private preview, validation, cancellat
     assert.deepEqual(committed.expectedCost,{end:1,mana:2,name:'Fire'});
     assert.equal(state.items.length,1);
     assert.equal(state.local.length,0);
+    state.items[0].scale={x:2.1,y:1.9};
+    state.weapons=[{id:'blade',techniques:[{name:'Frappe',pattern:[[0,-1]]}]}];
+    const chooseWeapon = async () => {
+      state.callbacks.get('de.sunitro.cendres/cast')({data:{characterId:'hero',tokenId:'only',weaponId:'blade',index:0}});
+      await settle();
+    };
+    await chooseWeapon();
+    assert.ok(state.placementTool);
+    await combatMode.onToolClick({}, {pointerPosition:{x:150,y:150}});
+    assert.equal(calls.filter(c=>c.command==='action').length,1,'bord arrière refusé');
+    combatMode.onToolMove({}, {pointerPosition:{x:150,y:50}});await settle();
+    assert.deepEqual(state.local.at(-1).position,{x:100,y:-100});
+    await combatMode.onToolClick({}, {pointerPosition:{x:150,y:50}});
+    const strike = calls.filter(c=>c.command==='action').at(-1);
+    assert.deepEqual(strike.attackOrigin,{x:1,y:0});
+    assert.equal(strike.board[0].width,2);
+    assert.equal(strike.choice.kind,'weapon');
+    await begin();
+    const count = calls.filter(c=>c.command==='action').length;
+    await combatMode.onToolClick({}, {pointerPosition:{x:150,y:50}});
+    assert.equal(calls.filter(c=>c.command==='action').length,count,'choisir le départ ne lance pas un sort ciblé');
+    await combatMode.onToolClick({}, {pointerPosition:{x:450,y:50}});
+    assert.deepEqual(calls.filter(c=>c.command==='action').at(-1).target,{x:4,y:0});
     await showAttackPreview({attackPreview:{id:'attack',name:'Fire',dpi:100,cells:[{x:1,y:0}]}});
     assert.equal(state.local.length,1);
     await new Preview().clear();

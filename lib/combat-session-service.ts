@@ -1,3 +1,4 @@
+import { frontCells, overlaps, validSize } from './obr/core/footprint';
 import { weaponSummary } from './weapon-summary';
 import { planMovement, movementRotation } from './obr/core/movement';
 import { and, eq, isNull, sql } from 'drizzle-orm';
@@ -118,9 +119,12 @@ export async function combatSession(db: DB, input: Record<string, unknown>, cont
     if (choice.kind === 'dodge') state.dodges[participant.id] = (state.dodges[participant.id] ?? 0) + 1;
     if (technique) {
       const board = input.board as BoardToken[];
-      if (!Array.isArray(board) || !board.length || board.length > 1000 || board.some(t => !t || typeof t.tokenId !== 'string' || !validPoint(t.cell) || !Number.isInteger(t.cell.x) || !Number.isInteger(t.cell.y) || !validPoint(t.position)) || new Set(board.map(t => t.tokenId)).size !== board.length ||
+      if (!Array.isArray(board) || !board.length || board.length > 1000 || board.some(t => !t || !validSize(t) || typeof t.tokenId !== 'string' || !validPoint(t.cell) || !Number.isInteger(t.cell.x) || !Number.isInteger(t.cell.y) || !validPoint(t.position)) || new Set(board.map(t => t.tokenId)).size !== board.length ||
           state.combat.participants.some(p => !board.some(t => t.tokenId === p.tokenId))) throw fail('Les pions du combat doivent être présents sur la carte.');
-      const origin = board.find(t => t.tokenId === participant.tokenId)!.cell;
+      const caster = board.find(t => t.tokenId === participant.tokenId)!;
+      const edge = frontCells(caster.cell, caster, caster.facing ?? 0);
+      const origin = input.attackOrigin ?? (edge.length === 1 ? edge[0] : undefined);
+      if (!validPoint(origin) || !edge.some(cell => sameCell(cell, origin))) throw fail('Choisissez une case sur le bord avant du pion.');
       if (typeof input.rotation !== 'number' || !Number.isFinite(input.rotation) || typeof input.dpi !== 'number' || !Number.isFinite(input.dpi) || input.dpi <= 0 || input.dpi > 10000) throw fail('Grille invalide.');
       let position = origin;
       if (choice.kind === 'spell') {
@@ -132,7 +136,7 @@ export async function combatSession(db: DB, input: Record<string, unknown>, cont
       const weapon = choice.kind === 'weapon' ? character.inventory.find(item => item.id === choice.weaponId) : undefined;
       const damage = weapon ? weaponSummary(weapon, character, tree).techniques.find(item => item.name === technique.name)?.damage || weapon.damage : choice.kind === 'spell' ? character.spells.find(spell => spell.id === choice.spellId)?.damage : undefined;
       state.pending = { effectKind: choice.kind === 'spell' ? 'spell' : 'weapon', damage, id: requestId, actorId: participant.id, name: technique.name, cells, dpi: input.dpi, board,
-        defenders: state.combat.participants.filter(p => p.id !== participant.id && p.camp !== participant.camp && offensive && board.some(t => t.tokenId === p.tokenId && cells.some(cell => sameCell(cell, t.cell)))).map(p => p.id), answers: {} };
+        defenders: state.combat.participants.filter(p => p.id !== participant.id && p.camp !== participant.camp && offensive && board.some(t => t.tokenId === p.tokenId && cells.some(cell => overlaps(t, {cell})))).map(p => p.id), answers: {} };
       const unprepared = state.pending.defenders.filter(id => !(state.dodges[id] > 0));
       for (const id of unprepared) state.pending.answers[id] = null;
       if (unprepared.length) state.unpreparedHit = { id: requestId, defenders: unprepared };

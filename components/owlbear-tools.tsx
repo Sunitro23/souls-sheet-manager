@@ -11,6 +11,7 @@ import { useOwlbearCombat } from "./use-owlbear-combat";
 import OwlbearReactions from "./owlbear-reactions";
 import { activeParticipant, type ActionChoice } from "../lib/obr/core/actions";
 import { MOVEMENT_CHANNEL } from "../lib/obr/core/movement";
+import { overlaps } from '../lib/obr/core/footprint';
 import { projectPattern } from "../lib/obr/core/projection";
 import { CAST_CHANNEL } from "../lib/obr/core/spells";
 
@@ -66,7 +67,7 @@ export default function OwlbearTools({ character, characters, canAssign, section
     const { board } = await boardSnapshot();
     const cells = projectPattern(origin.origin, technique.pattern, origin.rotation);
     const actor = combat.participants.find(p => p.characterId === latest.current.character?.id);
-    const names = combat.participants.filter(p => p.id !== actor?.id && p.camp !== actor?.camp && board.some(token => token.tokenId === p.tokenId && cells.some(cell => cell.x === token.cell.x && cell.y === token.cell.y))).map(p => p.name);
+    const names = combat.participants.filter(p => p.id !== actor?.id && p.camp !== actor?.camp && board.some(token => token.tokenId === p.tokenId && cells.some(cell => overlaps(token, {cell})))).map(p => p.name);
     if (active.current === technique) setWeaponTargets(names);
   };
   useEffect(() => {
@@ -246,12 +247,18 @@ export default function OwlbearTools({ character, characters, canAssign, section
             setBusy(true);setStatus("");setActionError(false);setArmed(null);setWeaponTargets([]);active.current=null;
             try {
               const {default: OBR} = await import('@owlbear-rodeo/sdk');
-              await OBR.broadcast.sendMessage(CAST_CHANNEL, {cancel:true}, {destination:'LOCAL'});
-              await OBR.broadcast.sendMessage(MOVEMENT_CHANNEL, {interaction:'weapon',active:true}, {destination:'LOCAL'});
               if (!preview.current) throw Error("Prévisualisation indisponible. Réessayez.");
               await preview.current.clear();
               const [{characterToken,tokenOrigin},{buildPattern}]=await Promise.all([import("../lib/obr/owlbear/token"),import("../lib/obr/owlbear/preview")]);
               const token=await characterToken(character.id,tokenId);
+              const caster = await tokenOrigin(token.id);
+              if (caster.width > 1 || caster.height > 1) {
+                await OBR.broadcast.sendMessage(CAST_CHANNEL, {characterId:character.id, tokenId:token.id, weaponId:weapon.id, index}, {destination:'LOCAL'});
+                await OBR.action.close();
+                return;
+              }
+              await OBR.broadcast.sendMessage(CAST_CHANNEL, {cancel:true}, {destination:'LOCAL'});
+              await OBR.broadcast.sendMessage(MOVEMENT_CHANNEL, {interaction:'weapon',active:true}, {destination:'LOCAL'});
               const pattern={...technique,pattern:technique.pattern as [number,number][]};active.current=pattern;
               await preview.current?.show(async()=>{const origin=await tokenOrigin(token.id);if(active.current!==pattern)return [];await updateWeaponTargets(pattern,origin);return active.current===pattern?buildPattern(origin.origin,origin.dpi,pattern,origin.rotation):[];});
               if(active.current===pattern)setArmed({choice:{kind:"weapon",weaponId:weapon.id,index},context:actionContext});

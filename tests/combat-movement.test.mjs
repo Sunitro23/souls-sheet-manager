@@ -42,3 +42,10 @@ test('orientation : ennemi prioritaire dans le sens du déplacement seulement',(
  assert.equal(movementRotation(from,{x:0,y:-2},[{x:4,y:-2}]),0,'marche vers le haut : pas de rotation latérale');
  assert.equal(movementRotation(from,to,[]),90);
 });
+
+test('le flanc du pion bloque une case intermédiaire dans les deux sens', () => {
+  const board = [{...token('boss',0,0),width:2,height:2},token('hero',3,1)];
+  assert.throws(()=>planMovement(board,'boss',{x:4,y:0},2,5),/bloque/);
+  assert.throws(()=>planMovement(board,'hero',{x:1,y:1},2,5),/bloque/);
+  assert.equal(planMovement(board,'boss',{x:0,y:1},2,5).end,1);
+});

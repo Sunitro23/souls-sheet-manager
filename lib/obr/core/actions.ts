@@ -1,9 +1,10 @@
+import { overlaps, type Footprint } from './footprint.ts';
 import { movementPath } from './movement.ts';
 import { initiativeOrder, type CombatPreparation } from './combat.ts';
 import type { Point } from './types.ts';
 
 export type ActionChoice = { kind: 'dodge' } | { kind: 'movement' } | { kind: 'turn'; rotation: 0 | 90 | 180 | 270 } | { kind: 'weapon'; weaponId: string; index: number } | { kind: 'spell'; spellId: string } | { kind: 'item'; itemId: string };
-export type BoardToken = { tokenId: string; cell: Point; position: Point };
+export type BoardToken = Footprint & { facing?: number; tokenId: string; cell: Point; position: Point };
 export type Attack = {
   effectKind?: 'weapon' | 'spell';
   id: string; actorId: string; name: string; damage?: string; cells: Point[]; dpi: number;
@@ -63,7 +64,7 @@ export function resolveAttack(state: CombatRuntime) {
     // A reserved destination wins by initiative. An occupied destination fails.
     if (!token) continue;
     const path = movementPath(token.cell, destination, 2);
-    if (path.some(cell => board.some(other => other.tokenId !== token.tokenId && sameCell(other.cell, cell)))) continue;
+    if (path.some(cell => board.some(other => other.tokenId !== token.tokenId && overlaps({ ...token, cell }, other)))) continue;
     const positions = [token.position, ...path.map(cell => ({x:token.position.x+(cell.x-token.cell.x)*attack.dpi,y:token.position.y+(cell.y-token.cell.y)*attack.dpi}))];
     const position = { x: token.position.x + (destination.x - token.cell.x) * attack.dpi,
       y: token.position.y + (destination.y - token.cell.y) * attack.dpi };
@@ -73,7 +74,7 @@ export function resolveAttack(state: CombatRuntime) {
   const hitParticipants = attack.defenders.filter(id => {
     const participant = state.combat.participants.find(p=>p.id===id);
     const token = board.find(t=>t.tokenId===participant?.tokenId);
-    return token && attack.cells.some(cell=>sameCell(cell,token.cell));
+    return token && attack.cells.some(cell=>overlaps(token, {cell}));
   });
   state.resolution = { ...(attack.effectKind ? { effectKind: attack.effectKind } : {}), damage: attack.damage, hitParticipants, id: attack.id, actorId: attack.actorId, name: attack.name, cells: attack.cells, dpi: attack.dpi, moves };
   state.pending = null;

@@ -70,7 +70,10 @@ test('combat réel : droits, paiement atomique, secret, réactions et récupéra
     assert.equal(state.resolution.id,spellId);
     await cmd('gm','ack',{attackId:spellId});
   }
-  const attack=await cmd('gm','action',{requestId:'attack',participantId:'gm',choice:{kind:'weapon',weaponId:'weapon',index:0},board,dpi:100,rotation:0});
+  const bossBoard = board.map(t => t.tokenId === 'gm' ? {...t,cell:{x:1,y:2},width:2,height:2} : t);
+  const invalidOrigin = await cmd('gm','action',{participantId:'gm',choice:{kind:'weapon',weaponId:'weapon',index:0},board:bossBoard,dpi:100,rotation:0,attackOrigin:{x:2,y:3}});
+  assert.equal(invalidOrigin.status,400);
+  const attack=await cmd('gm','action',{requestId:'attack',participantId:'gm',choice:{kind:'weapon',weaponId:'weapon',index:0},board:bossBoard,attackOrigin:{x:2,y:2},dpi:100,rotation:0});
   assert.equal(attack.status,200,attack.error);
   assert.equal(character('gm').end,derive(character('gm')).end-1);assert.equal(character('gm').mana,18);
   assert.deepEqual(state.pending.defenders,['alice','bob']);

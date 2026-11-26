@@ -68,3 +68,12 @@ test('journal : les actions en préparation et les coûts restent privés jusqu�
  state.history[0].resolved=true;
  assert.equal(publicCombat(state,'bob').history.length,2);
 });
+
+test('une esquive partielle laisse le grand pion touché une seule fois', () => {
+  const s = state();
+  Object.assign(s.pending.board[1], {width:2, height:2});
+  s.pending.cells = [{x:2,y:1},{x:3,y:1}];
+  s.pending.answers = {b:{x:2,y:0}, c:null};
+  resolveAttack(s);
+  assert.deepEqual(s.resolution.hitParticipants, ['b']);
+});

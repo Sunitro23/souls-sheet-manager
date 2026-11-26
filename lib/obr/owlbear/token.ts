@@ -1,5 +1,5 @@
 import OBR, { isImage, type Image } from "@owlbear-rodeo/sdk";
-import { cellFromCenter } from "../core/projection";
+import { validSize } from "../core/footprint";
 import { sharedLink } from "../core/links";
 
 export async function characterTokens(characterId: string): Promise<Image[]> {
@@ -23,6 +23,14 @@ export async function selectedToken(): Promise<Image | undefined> {
   return item && isImage(item) && item.layer === "CHARACTER" ? item : undefined;
 }
 
+function geometry(item: Image, center: { x: number; y: number }, dpi: number) {
+  const width = Math.max(1, Math.round(item.image.width * Math.abs(item.scale.x) / item.grid.dpi));
+  const height = Math.max(1, Math.round(item.image.height * Math.abs(item.scale.y) / item.grid.dpi));
+  if (!validSize({ width, height })) throw Error('Dimensions du pion invalides.');
+  const origin = { x: Math.round(center.x / dpi - width / 2), y: Math.round(center.y / dpi - height / 2) };
+  return { origin, width, height, dpi, rotation: item.rotation };
+}
+
 export async function tokenOrigin(tokenId: string) {
   if (!await OBR.scene.isReady()) throw new Error("Ouvrez une scène Owlbear Rodeo.");
   const [dpi, type, items] = await Promise.all([
@@ -35,8 +43,7 @@ export async function tokenOrigin(tokenId: string) {
   // Le SDK calcule les limites réelles, en tenant compte de l’ancrage et des transformations.
   // Ne pas interpréter item.position comme le coin supérieur gauche de l’image.
   const bounds = await OBR.scene.items.getItemBounds([tokenId]);
-  const center = await OBR.scene.grid.snapPosition(bounds.center, 1, false, true);
-  return { origin: cellFromCenter(center, dpi), dpi, rotation: items[0].rotation };
+  return geometry(items[0], bounds.center, dpi);
 }
 
 export async function centerCombatTokens(tokenIds: string[]) {
@@ -46,9 +53,8 @@ export async function centerCombatTokens(tokenIds: string[]) {
   if (tokenIds.some(id=>!items.some(item=>item.id===id&&isImage(item)&&item.layer==='CHARACTER'))) throw Error('Un pion du combat manque sur la carte.');
   const offsets = new Map(await Promise.all(tokenIds.map(async id=>{
     const {center} = await OBR.scene.items.getItemBounds([id]);
-    const snapped = await OBR.scene.grid.snapPosition(center,1,false,true);
-    const cell = cellFromCenter(snapped,dpi);
-    return [id,{x:(cell.x+0.5)*dpi-center.x,y:(cell.y+0.5)*dpi-center.y}] as const;
+    const {origin: cell, width, height} = geometry(items.find(item => item.id === id) as Image, center, dpi);
+    return [id,{x:(cell.x+width/2)*dpi-center.x,y:(cell.y+height/2)*dpi-center.y}] as const;
   })));
   await OBR.scene.items.updateItems(tokenIds, drafts=>{
     for(const item of drafts){const offset=offsets.get(item.id)!;item.position={x:item.position.x+offset.x,y:item.position.y+offset.y};}

@@ -55,11 +55,14 @@ export async function advanceTurn(state: CombatView, action: unknown) {
 }
 export async function boardSnapshot(): Promise<{ board: BoardToken[]; dpi: number }> {
   const items = await OBR.scene.items.getItems(item => item.type === 'IMAGE' && item.layer === 'CHARACTER');
-  const board = await Promise.all(items.map(async item => ({ tokenId: item.id, cell: (await tokenOrigin(item.id)).origin, position: item.position })));
+  const board = await Promise.all(items.map(async item => {
+    const {origin: cell, width, height, rotation: facing} = await tokenOrigin(item.id);
+    return {tokenId: item.id, cell, position: item.position, width, height, facing};
+  }));
   return { board, dpi: await OBR.scene.grid.getDpi() };
 }
 export async function performCombatAction(characterId: string, tokenId: string, choice: ActionChoice,
-  placement?: { target: Point; rotation: number }) {
+  placement?: { target: Point; rotation: number; attackOrigin?: Point }) {
   const combat = await currentCombat();
   if (!combat) return false;
   const state = await combatCall(combat, 'get');

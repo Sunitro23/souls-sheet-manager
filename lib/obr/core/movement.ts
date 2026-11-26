@@ -1,4 +1,5 @@
-import { sameCell, validPoint, type BoardToken } from './actions.ts';
+import { overlaps, validSize } from './footprint.ts';
+import { validPoint, type BoardToken } from './actions.ts';
 import type { Point } from './types.ts';
 
 export const MOVEMENT_CHANNEL = 'de.sunitro.cendres/movement';
@@ -16,12 +17,12 @@ export function movementPath(from: Point, to: Point, limit: number): Point[] {
 
 export function planMovement(board: BoardToken[], tokenId: string, target: Point, move: number, sprint: number) {
   if (!Array.isArray(board) || !board.length || board.length > 1000 ||
-      board.some(t => !t || typeof t.tokenId !== 'string' || !validPoint(t.cell) || !Number.isInteger(t.cell.x) || !Number.isInteger(t.cell.y) || !validPoint(t.position)) ||
+      board.some(t => !t || !validSize(t) || typeof t.tokenId !== 'string' || !validPoint(t.cell) || !Number.isInteger(t.cell.x) || !Number.isInteger(t.cell.y) || !validPoint(t.position)) ||
       new Set(board.map(t => t.tokenId)).size !== board.length) throw Error('Pions invalides.');
   const token = board.find(t => t.tokenId === tokenId);
   if (!token) throw Error('Le pion manque sur la carte.');
   const path = movementPath(token.cell, target, sprint);
-  if (path.some(cell => board.some(other => other.tokenId !== tokenId && sameCell(other.cell, cell)))) throw Error('Un pion bloque le trajet.');
+  if (path.some(cell => board.some(other => other.tokenId !== tokenId && overlaps({ ...token, cell }, other)))) throw Error('Un pion bloque le trajet.');
   return { path, end: path.length === 0 ? 0 : path.length <= move ? 1 : 2, token };
 }
 

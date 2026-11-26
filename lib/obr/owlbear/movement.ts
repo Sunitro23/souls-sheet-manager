@@ -100,11 +100,13 @@ export async function registerMovement() {
     await preview.show(async () => {
       const {board,dpi} = selected.snapshot!;
       let label = 'Correction MJ', cells: Point[] = [selected.target], valid = true;
+      let turning = false;
       if (selected.movement) {
         const {move,sprint,end} = selected.movement;
         const origin = board.find(token => token.tokenId === selected.tokenId)?.cell;
         const facing = origin && facingTargets(origin, sprint).find(target => target.x === selected.target.x && target.y === selected.target.y);
         try {
+          turning = !!facing;
           const plan = facing ? {path:[],end:1} : planMovement(board, selected.tokenId, selected.target, move, sprint);
           cells = plan.path;
           label = facing ? 'Se tourner · 1 END' : plan.end ? `${plan.end} END` : 'Choisissez une destination';
@@ -121,6 +123,15 @@ export async function registerMovement() {
       for (const [index,item] of items.entries()) {
         item.visible = index < cells.length;
         if (isPath(item)) Object.assign(item.style,{strokeColor:valid?'#ef9a68':'#ef4444',fillColor:valid?'#ef9a68':'#ef4444'});
+      }
+      const token = board.find(item => item.tokenId === selected.tokenId);
+      const width = token?.width ?? 1, height = token?.height ?? 1;
+      if ((width > 1 || height > 1) && !turning) {
+        const w = width * dpi, h = height * dpi;
+        items.push(buildPath().name('Cases occupées à destination')
+          .commands([[Command.MOVE,0,0],[Command.LINE,w,0],[Command.LINE,w,h],[Command.LINE,0,h],[Command.CLOSE]])
+          .position({x:selected.target.x*dpi,y:selected.target.y*dpi}).layer('POINTER')
+          .strokeColor(valid ? '#61c9a8' : '#ef4444').strokeWidth(3).fillOpacity(0).locked(true).disableHit(true).build());
       }
       items.push(buildText().textType('PLAIN').plainText(label).fontSize(Math.max(16,dpi/4)).fillColor(valid?'#ffffff':'#ef4444')
         .strokeColor('#151515').strokeWidth(2).position({x:(selected.target.x+1)*dpi,y:selected.target.y*dpi})

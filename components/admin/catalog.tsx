@@ -1,4 +1,5 @@
 "use client";
+import { useIsMobile } from "../../hooks/use-mobile";
 import { useRememberedValue } from "./preferences";
 import type { AdminCommon } from "./types";
 import { useEffect, useState } from "react";
@@ -45,6 +46,7 @@ export default function Catalog({
   initialCreate?: boolean;
   initialQuery?: string;
 }) {
+  const narrow = useIsMobile(850);
   const direct = !!(target?.selected || target?.kind || target?.status);
   const [selection, setSelection] = useRememberedValue(
     `${storageKey}:catalog:selection`,
@@ -168,6 +170,25 @@ export default function Catalog({
         : selected?.kind === "skill"
           ? [...families]
           : [];
+  function categoryActions(c: Category) {
+    return <>
+      <button onClick={() => setSelected({ ...c })}>
+        Configurer
+      </button>
+      <button
+        onClick={() => {
+          setSelected({
+            ...c,
+            id: crypto.randomUUID(),
+            name: c.name + " (copie)",
+            archived: false,
+          });
+        }}
+      >
+        Dupliquer
+      </button>
+    </>;
+  }
   return (
     <>
       {!selected && (
@@ -208,7 +229,7 @@ export default function Catalog({
                 );
               }}
             >
-              Ajouter une catégorie
+              {activeKind === "race" ? "Ajouter une race" : activeKind === "class" ? "Ajouter une classe" : "Ajouter une catégorie"}
             </button>
             <button
               className="c-button"
@@ -654,8 +675,13 @@ export default function Catalog({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div className="adm-table">
-            <table>
+          <div className={narrow ? "adm-compact-list" : "adm-table"}>
+            {narrow ? categories.map(c=>(
+              <details key={c.id}><summary><strong>{c.name}</strong><small>{c.available ? "Disponible" : "Masquée"} · Associations · {count(c)}</small></summary>
+                <p>{labels[c.kind]} · Ordre {c.order}</p>
+                <div className="adm-toolbar">{categoryActions(c)}</div>
+              </details>
+            )) : <table>
               <thead>
                 <tr>
                   <th>Catégorie</th>
@@ -692,26 +718,12 @@ export default function Catalog({
                     <td>{count(c)}</td>
                     <td>{c.available ? "Disponible" : "Masquée"}</td>
                     <td>
-                      <button onClick={() => setSelected({ ...c })}>
-                        Configurer
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelected({
-                            ...c,
-                            id: crypto.randomUUID(),
-                            name: c.name + " (copie)",
-                            archived: false,
-                          });
-                        }}
-                      >
-                        Dupliquer
-                      </button>
+                      {categoryActions(c)}
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table>}
             {!categories.length && <p>Aucune catégorie.</p>}
           </div>
         </>

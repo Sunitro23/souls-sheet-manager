@@ -1,4 +1,5 @@
 "use client";
+import { useIsMobile } from "../../hooks/use-mobile";
 import type { Workspace, AdminCharacter } from "./types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { workspaceCall as api } from "../../lib/workspace-client";
@@ -39,7 +40,7 @@ const groupIcons = {
   configuration: Settings,
   administration: Database,
 };
-const blocks = ["Indicateurs", "Accès rapides", "Modifications récentes"];
+const blocks = ["Accès rapides", "Indicateurs", "Modifications récentes"];
 type Preferences = {
   page: Destination["page"];
   collapsed: boolean;
@@ -69,6 +70,7 @@ export default function Administration({
   initialPage?: string;
   onHome: (fromHistory?: boolean) => void;
 }) {
+  const narrow = useIsMobile(850);
   const [playerPreview, setPlayerPreview] = useState(false);
   const [previewId, setPreviewId] = useState(workspace.characters[0]?.id ?? "");
   const [target, setTarget] = useState<Destination>({ page: "overview" });
@@ -294,6 +296,7 @@ export default function Administration({
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setPlayerPreview(false);
+        if (window.matchMedia("(max-width:850px)").matches) setMenu(true);
         requestAnimationFrame(() => searchInput.current?.focus());
       }
       if (event.key === "Escape") {
@@ -340,7 +343,7 @@ export default function Administration({
     return () => window.removeEventListener("popstate", pop);
   });
   useEffect(() => {
-    if (!loaded || target.page !== "characters" || target.status !== "archived")
+    if (!loaded || !(target.page === "archives" || target.page === "characters" && target.status === "archived"))
       return;
     let live = true;
     api({ op: "trashCharacters", campaignId: workspace.campaign.id })
@@ -426,6 +429,93 @@ export default function Administration({
     [order[index], order[index + delta]] = [order[index + delta], order[index]];
     setPrefs({ ...prefs, blocks: order });
   }
+  const globalTools = (<>
+    <div className="adm-topbar">
+      <nav aria-label="Fil d’Ariane">
+        <button onClick={() => go("overview")}>Administration</button> /{" "}
+        {group} / {title}
+      </nav>
+      <select
+        aria-label="Densité d’affichage"
+        value={prefs.density}
+        onChange={(e) => setPrefs({ ...prefs, density: e.target.value })}
+      >
+        <option value="comfortable">Confortable</option>
+        <option value="compact">Compacte</option>
+      </select>
+    </div>
+    <label className="c-field">
+      Recherche globale · Ctrl + K
+      <input
+        ref={searchInput}
+        type="search"
+        placeholder="Compétences, catégories, personnages, objets…"
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setSearchLimit(40);
+        }}
+      />
+    </label>
+    {search && (
+      <div className="adm-search" aria-live="polite">
+        {[
+          ...new Set(
+            results.slice(0, searchLimit).map((result) => result.type),
+          ),
+        ].map((type) => (
+          <section key={type}>
+            <h2>{type}</h2>
+            {results
+              .slice(0, searchLimit)
+              .filter((result) => result.type === type)
+              .map((result) => (
+                <button key={result.id} onClick={() => go(result.target)}>
+                  <span>
+                    {result.label}
+                    {result.archived && <strong> · Archivé</strong>}
+                  </span>
+                  <small>
+                    {result.context} · {workspace.campaign.name}
+                  </small>
+                </button>
+              ))}
+          </section>
+        ))}
+        {results.length > searchLimit && (
+          <button onClick={() => setSearchLimit((value) => value + 40)}>
+            Afficher davantage ({results.length - searchLimit})
+          </button>
+        )}
+        {!results.length && <p>Aucun résultat.</p>}
+      </div>
+    )}
+  </>);
+  const globalActions = (<>
+    <button className="c-button" onClick={() => openPreview()}>
+      Voir comme un joueur
+    </button>
+    <details className="adm-create-menu">
+      <summary className="c-primary">
+        <Plus size={16} /> Créer
+      </summary>
+      <div>
+        {quickActions.map((action) => (
+          <button
+            key={action.label}
+            onClick={(event) => {
+              if (go(action.target))
+                event.currentTarget
+                  .closest("details")
+                  ?.removeAttribute("open");
+            }}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </details>
+  </>);
   if (!loaded) return <p>Chargement de l’administration…</p>;
   return (
     <>
@@ -494,6 +584,7 @@ export default function Administration({
             <span>Réduire</span>
           </button>
         </div>
+        {narrow && <div className="adm-mobile-tools">{globalTools}{globalActions}</div>}
         <nav aria-label="Administration">
           {prefs.favorites.length > 0 && (
             <section className="adm-favorites adm-nav-group">
@@ -585,90 +676,9 @@ export default function Administration({
         </nav>
       </aside>
       <section className="adm-main" aria-busy={busy}>
-        <div className="adm-topbar">
-          <nav aria-label="Fil d’Ariane">
-            <button onClick={() => go("overview")}>Administration</button> /{" "}
-            {group} / {title}
-          </nav>
-          <select
-            aria-label="Densité d’affichage"
-            value={prefs.density}
-            onChange={(e) => setPrefs({ ...prefs, density: e.target.value })}
-          >
-            <option value="comfortable">Confortable</option>
-            <option value="compact">Compacte</option>
-          </select>
-        </div>
-        <label className="c-field">
-          Recherche globale · Ctrl + K
-          <input
-            ref={searchInput}
-            type="search"
-            placeholder="Compétences, catégories, personnages, objets…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setSearchLimit(40);
-            }}
-          />
-        </label>
-        {search && (
-          <div className="adm-search" aria-live="polite">
-            {[
-              ...new Set(
-                results.slice(0, searchLimit).map((result) => result.type),
-              ),
-            ].map((type) => (
-              <section key={type}>
-                <h2>{type}</h2>
-                {results
-                  .slice(0, searchLimit)
-                  .filter((result) => result.type === type)
-                  .map((result) => (
-                    <button key={result.id} onClick={() => go(result.target)}>
-                      <span>
-                        {result.label}
-                        {result.archived && <strong> · Archivé</strong>}
-                      </span>
-                      <small>
-                        {result.context} · {workspace.campaign.name}
-                      </small>
-                    </button>
-                  ))}
-              </section>
-            ))}
-            {results.length > searchLimit && (
-              <button onClick={() => setSearchLimit((value) => value + 40)}>
-                Afficher davantage ({results.length - searchLimit})
-              </button>
-            )}
-            {!results.length && <p>Aucun résultat.</p>}
-          </div>
-        )}
+        {!narrow && globalTools}
         <header className="adm-heading">
-          <button className="c-button" onClick={() => openPreview()}>
-            Voir comme un joueur
-          </button>
-          <details className="adm-create-menu">
-            <summary className="c-primary">
-              <Plus size={16} /> Créer
-            </summary>
-            <div>
-              {quickActions.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={(event) => {
-                    if (go(action.target))
-                      event.currentTarget
-                        .closest("details")
-                        ?.removeAttribute("open");
-                  }}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          </details>
+          {!narrow && globalActions}
           <h1>{title}</h1>
           {dirty && <span role="status">Modifications non enregistrées</span>}
         </header>
@@ -695,42 +705,7 @@ export default function Administration({
                 <p>{workspace.settings.description}</p>
               </div>
             </header>
-            <details className="adm-block-options">
-              <summary>Personnaliser le tableau de bord</summary>
-              {prefs.blocks.map((b, i) => (
-                <div className="adm-toolbar" key={b}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={!prefs.hidden.includes(b)}
-                      onChange={(e) =>
-                        setPrefs({
-                          ...prefs,
-                          hidden: e.target.checked
-                            ? prefs.hidden.filter((x) => x !== b)
-                            : [...prefs.hidden, b],
-                        })
-                      }
-                    />
-                    {b}
-                  </label>
-                  <button
-                    disabled={!i}
-                    aria-label={`Monter ${b}`}
-                    onClick={() => moveBlock(i, -1)}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    disabled={i === prefs.blocks.length - 1}
-                    aria-label={`Descendre ${b}`}
-                    onClick={() => moveBlock(i, 1)}
-                  >
-                    ↓
-                  </button>
-                </div>
-              ))}
-            </details>
+
             {prefs.blocks
               .filter((b) => !prefs.hidden.includes(b))
               .map((b) => (
@@ -807,6 +782,42 @@ export default function Administration({
                   )}
                 </section>
               ))}
+            <details className="adm-block-options">
+              <summary>Personnaliser le tableau de bord</summary>
+              {prefs.blocks.map((b, i) => (
+                <div className="adm-toolbar" key={b}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!prefs.hidden.includes(b)}
+                      onChange={(e) =>
+                        setPrefs({
+                          ...prefs,
+                          hidden: e.target.checked
+                            ? prefs.hidden.filter((x) => x !== b)
+                            : [...prefs.hidden, b],
+                        })
+                      }
+                    />
+                    {b}
+                  </label>
+                  <button
+                    disabled={!i}
+                    aria-label={`Monter ${b}`}
+                    onClick={() => moveBlock(i, -1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    disabled={i === prefs.blocks.length - 1}
+                    aria-label={`Descendre ${b}`}
+                    onClick={() => moveBlock(i, 1)}
+                  >
+                    ↓
+                  </button>
+                </div>
+              ))}
+            </details>
           </>
         )}
         {page === "players" && (
@@ -908,7 +919,7 @@ export default function Administration({
                             >
                               Voir les personnages
                             </button>
-                            <button
+                            <button className="adm-secondary-action"
                               disabled={
                                 busy ||
                                 m.id === user.id ||
@@ -1112,7 +1123,7 @@ export default function Administration({
                                   alt=""
                                 />
                               )}
-                              {c.name}
+                              <button onClick={() => onOpenCharacter(c)}>{c.name}</button>
                             </td>
                             {prefs.columns.includes("Classe") && (
                               <td>{c.className || "—"}</td>
@@ -1127,9 +1138,7 @@ export default function Administration({
                               <td>{owner(c.playerId)}</td>
                             )}
                             <td>
-                              <button onClick={() => onOpenCharacter(c)}>
-                                Ouvrir la fiche
-                              </button>
+                              <details><summary>Actions</summary>
                               <button onClick={() => openPreview(c.id)}>
                                 Voir comme un joueur
                               </button>
@@ -1146,7 +1155,7 @@ export default function Administration({
                                 }
                               >
                                 Sorts
-                              </button>
+                              </button></details>
                             </td>
                           </tr>
                         ))}
@@ -1168,6 +1177,13 @@ export default function Administration({
         )}
         {["weapons", "magic"].includes(page) && (
           <>
+            <Library
+              key={`${page}:${epoch}`}
+              {...common}
+              magic={page === "magic"}
+              perform={perform}
+            />
+            <details className="adm-library-settings"><summary>Configurer le catalogue</summary>
             <div className="adm-toolbar">
               <button
                 className="c-button"
@@ -1191,12 +1207,7 @@ export default function Administration({
                 </button>
               )}
             </div>
-            <Library
-              key={`${page}:${epoch}`}
-              {...common}
-              magic={page === "magic"}
-              perform={perform}
-            />
+            </details>
           </>
         )}
         {["creation", "categories"].includes(page) && (
@@ -1207,7 +1218,7 @@ export default function Administration({
             kinds={
               page === "creation"
                 ? ["race", "class"]
-                : ["weapon", "item", "magic", "skill", "race", "class"]
+                : ["weapon", "item", "magic", "skill"]
             }
             onSave={saveSettings}
             onSaveTree={saveSkills}
@@ -1307,6 +1318,9 @@ export default function Administration({
                   conservés.
                 </p>
                 <div className="adm-toolbar">
+                  <button className="c-primary" disabled={busy || !dirty}>
+                    Enregistrer la progression
+                  </button>
                   <button
                     type="button"
                     className="c-button"
@@ -1317,9 +1331,7 @@ export default function Administration({
                   >
                     Restaurer la valeur par défaut
                   </button>
-                  <button className="c-primary" disabled={busy || !dirty}>
-                    Enregistrer la progression
-                  </button>
+
                 </div>
               </form>
             )}
@@ -1358,13 +1370,13 @@ export default function Administration({
         )}
         {page === "data" && (
           <>
-            <p className="c-notice">
+            <h2>Exporter les données de campagne</h2>
+            <p className="c-muted">
               L’export contient les données enregistrées et exclut les
               personnages archivés ainsi que les modifications de formulaire
-              non enregistrées. L’import fusionne les catégories et applique
-              l’apparence ; il ne restaure pas une campagne complète.
+              non enregistrées.
             </p>
-            <h2>Sauvegarde et préréglages</h2>
+
             <div className="adm-toolbar">
               <button
                 className="c-primary"
@@ -1397,6 +1409,8 @@ export default function Administration({
                 Exporter la campagne (JSON)
               </button>
             </div>
+            <h2>Importer un thème et des catégories</h2>
+            <p className="c-muted">Les nouvelles catégories seront ajoutées et le thème du fichier remplacera le thème actuel.</p>
             <label className="c-field">
               Importer un préréglage d’apparence et de catégories
               <input
@@ -1449,7 +1463,7 @@ export default function Administration({
               Historique des changements disponibles, non exhaustif.
             </p>
             {!events.length && <p>Aucun changement enregistré.</p>}
-            <h2>Historique des changements</h2>
+
             {events.map((e) => (
               <p className="adm-event" key={e.id}>
                 <span>{e.action}</span>
@@ -1465,9 +1479,10 @@ export default function Administration({
             <button
               className="c-button"
               onClick={() =>
-                saveSettings({
-                  ...defaultSettings(workspace.tree.races),
-                  categories: workspace.settings.categories,
+                confirm("Restaurer le thème par défaut et effacer la description de la campagne ?") && saveSettings({
+                  ...workspace.settings,
+                  appearance: defaultSettings(workspace.tree.races).appearance,
+                  description: "",
                 })
               }
             >
@@ -1479,22 +1494,23 @@ export default function Administration({
           <div className="adm-archive-links">
             {(
               [
-                ["characters", "Personnages"],
-                ["weapons", "Objets"],
-                ["magic", "Sorts"],
-                ["skills", "Compétences"],
-                ["categories", "Catégories"],
+                ["characters", "Personnages", archives?.length],
+                ["weapons", "Objets", workspace.characters.reduce((n,c) => n+c.inventory.filter(i=>i.archived).length,0)],
+                ["magic", "Sorts", workspace.characters.reduce((n,c) => n+c.spells.filter(i=>i.archived).length,0)],
+                ["skills", "Compétences", workspace.tree.nodes.filter(n=>n.archived).length],
+                ["categories", "Catégories", workspace.settings.categories.filter(c=>c.archived && !["race","class"].includes(c.kind)).length],
+                ["creation", "Races et classes", workspace.settings.categories.filter(c=>c.archived && ["race","class"].includes(c.kind)).length],
               ] as const
-            ).map(([section, label]) => (
+            ).map(([section, label, count]) => (
               <button
                 className="c-button"
                 key={section}
                 onClick={() => go({ page: section, status: "archived" })}
               >
                 {label}{" "}
-                {section === "skills" || section === "categories"
+                {section === "skills" || section === "categories" || section === "creation"
                   ? "archivées"
-                  : "archivés"}
+                  : "archivés"} {count != null && <span>({count})</span>}
               </button>
             ))}
           </div>

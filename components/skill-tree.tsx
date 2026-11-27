@@ -1,6 +1,7 @@
 'use client';
 import {useCampaignSettings} from './campaign-theme';
 import {Check,Lock,Plus,Music,Flame,Sun,Moon,Sparkles,Droplets,Sword} from 'lucide-react';
+import {useIsMobile} from "../hooks/use-mobile";
 import type {ReactNode} from 'react';
 import type {Node} from '../lib/progression';
 import {skillState,type SkillCharacter} from '../lib/skill-state';
@@ -8,16 +9,17 @@ import {skillBranches,skillCategories,rankLabel} from '../lib/skill-branches';
 const icons:Record<string,typeof Music>={Miracles:Sun,Sorts:Sparkles,Pyromancies:Flame,Malédictions:Moon,Mélodies:Music};
 
 export default function SkillProgression({nodes,known,available,character,onSelect,selectedId,detailsId,detailsOpen=true,toolbar,label}:{nodes:Node[];all?:Node[];label:string;known:Set<string>;available:number;character:SkillCharacter;onSelect:(n:Node)=>void;selectedId?:string;detailsId?:string;detailsOpen?:boolean;toolbar?:ReactNode}){
+ const narrow = useIsMobile(760);
  const settings=useCampaignSettings();
  const branches=skillBranches(nodes,label),magic=nodes.some(node=>node.family==='Magie');
  const school=(path:string)=>settings?.categories.find(c=>c.kind==='magic'&&c.baseKey===path);
  return <section className="c-skill-trees" aria-label={`Compétences : ${label}`}>
   <div className="c-skill-toolbar">{toolbar}</div>
   <div className="c-skill-columns" role="region" aria-label="Arbres de progression">
-   {branches.map(branch=>{
+   {branches.map((branch,index)=>{
     const acquired=branch.nodes.filter(node=>known.has(node.id)).length,Icon=icons[branch.name]||(branch.nodes[0].family==='Magie'?Droplets:Sword);
-    return <section className="c-skill-tree" key={branch.id} aria-label={school(branch.name)?.name??branch.name}>
-     <header className="c-skill-tree-heading"><span className="c-eyebrow">{branch.type}</span><h3><Icon size={18} aria-hidden="true"/>{school(branch.name)?.name??branch.name}</h3><div className="c-skill-progress"><span>Progression</span><strong>{acquired} / {branch.nodes.length}</strong></div><progress value={acquired} max={branch.nodes.length} aria-label={`Progression : ${branch.name}`}/>{!branch.linked&&<small>Choix indépendants</small>}</header>
+    return <details className="c-skill-tree" open={!narrow || index===0} key={branch.id} aria-label={school(branch.name)?.name??branch.name}>
+     <summary className="c-skill-tree-heading"><span className="c-eyebrow">{branch.type}</span><h3><Icon size={18} aria-hidden="true"/>{school(branch.name)?.name??branch.name}</h3><div className="c-skill-progress"><span>Progression</span><strong>{acquired} / {branch.nodes.length}</strong></div><progress value={acquired} max={branch.nodes.length} aria-label={`Progression : ${branch.name}`}/>{!branch.linked&&<small>Choix indépendants</small>}</summary>
      <ol className="c-skill-nodes">{branch.nodes.map(node=>{
       const state=skillState(node,character,known,available),rank=branch.ranks.get(node.id)!;
       return <li key={node.id} className={`c-skill-step ${state.acquired?'learned':state.available?'available':'locked'}`} data-linked={branch.linked}>
@@ -27,7 +29,7 @@ export default function SkillProgression({nodes,known,available,character,onSele
        </button>
       </li>;
      })}</ol>
-    </section>;
+    </details>;
    })}
   </div>
   {!nodes.length&&<p className="c-muted">Aucune voie disponible pour ce personnage.</p>}

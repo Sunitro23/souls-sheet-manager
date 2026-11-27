@@ -1,4 +1,5 @@
 "use client";
+import { useIsMobile } from "../../hooks/use-mobile";
 import { useRememberedValue } from "./preferences";
 import type { AdminCommon, Perform } from "./types";
 import { useEffect, useState } from "react";
@@ -17,6 +18,7 @@ export default function Library({
   target,
   onNavigate,
 }: AdminCommon & { magic: boolean; perform: Perform; initialQuery?: string }) {
+  const narrow = useIsMobile(850);
   const field = magic ? "spells" : "inventory";
   const prefix = `${storageKey}:library:${field}`;
   const direct = !!(target?.selected || target?.owner || target?.status);
@@ -81,6 +83,34 @@ export default function Library({
           (r.item.categoryId ?? categoryFor(workspace.settings, r.item)?.id) ===
             kind),
     );
+  function itemActions(ownerId: string, item: Entry) {
+    return <>
+      <button
+        onClick={() => {
+          setCharacterId(ownerId);
+          setDraft(structuredClone(item));
+          setPreview(false);
+        }}
+      >
+        Modifier
+      </button>
+      <button
+        onClick={() => {
+          setCharacterId(ownerId);
+          setDraft({
+            ...structuredClone(item),
+            id: crypto.randomUUID(),
+            name: item.name.slice(0, 90) + " (copie)",
+            equipped: false,
+            memorized: false,
+            archived: false,
+          });
+        }}
+      >
+        Dupliquer
+      </button>
+    </>;
+  }
   function save(item: Entry) {
     if (!character) return;
     const exists = character[field].some((i: Entry) => i.id === item.id);
@@ -232,31 +262,32 @@ export default function Library({
         </>
       ) : (
         <>
-          <div className="adm-filters">
+          <div className="adm-filters adm-library-filters">
+            <input
+              aria-label="Rechercher un contenu"
+              placeholder={magic ? "Rechercher un sort…" : "Rechercher un objet…"}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
             <select
               aria-label="Filtrer par personnage propriétaire"
               value={owner}
               onChange={(e) => setOwner(e.target.value)}
             >
-              <option value="">Tous les propriétaires</option>
+              <option value="">{narrow ? "Propriétaires" : "Tous les propriétaires"}</option>
               {workspace.characters.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
             </select>
-            <input
-              aria-label="Rechercher un contenu"
-              placeholder="Rechercher un contenu"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+
             <select
               aria-label="Catégorie du contenu"
               value={kind}
               onChange={(e) => setKind(e.target.value)}
             >
-              <option value="">Toutes les catégories</option>
+              <option value="">{narrow ? "Catégories" : "Toutes les catégories"}</option>
               {workspace.settings.categories
                 .filter((c) =>
                   magic
@@ -270,8 +301,14 @@ export default function Library({
                 ))}
             </select>
           </div>
-          <div className="adm-table">
-            <table>
+          <div className={narrow ? "adm-compact-list" : "adm-table"}>
+            {narrow ? rows.map(({item,character: c}) => (
+              <details key={c.id + item.id}>
+                <summary><strong>{item.name}</strong><small>{[c.name, item.damage, magic && `${item.mana} FP · ${item.end} END`].filter(Boolean).join(" · ")}</small></summary>
+                <p>{[itemTypes[item.type], categoryFor(workspace.settings,item)?.name || item.category || item.school, magic && `Rang ${item.rank}`].filter(Boolean).join(" · ")}</p>
+                <div className="adm-toolbar">{itemActions(c.id,item)}<button onClick={()=>onNavigate?.({page:"characters",selected:c.id})}>Voir {c.name}</button></div>
+              </details>
+            )) : <table>
               <thead>
                 <tr>
                   <th>Nom</th>
@@ -308,35 +345,12 @@ export default function Library({
                         : ""}
                     </td>
                     <td>
-                      <button
-                        onClick={() => {
-                          setCharacterId(c.id);
-                          setDraft(structuredClone(item));
-                          setPreview(false);
-                        }}
-                      >
-                        Modifier
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCharacterId(c.id);
-                          setDraft({
-                            ...structuredClone(item),
-                            id: crypto.randomUUID(),
-                            name: item.name.slice(0, 90) + " (copie)",
-                            equipped: false,
-                            memorized: false,
-                            archived: false,
-                          });
-                        }}
-                      >
-                        Dupliquer
-                      </button>
+                      {itemActions(c.id,item)}
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table>}
             {!rows.length && <p>Aucun contenu correspondant.</p>}
           </div>
         </>

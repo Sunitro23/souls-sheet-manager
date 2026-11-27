@@ -93,14 +93,14 @@ body { background:radial-gradient(circle at 50% 0,var(--panel),var(--bg) 38rem);
 .c-resource-meter.c-resource-diamond .c-resource-actions button { width:44px; height:44px; min-width:44px; border:1px solid var(--sheet-line)!important; border-radius:50%; background:var(--bg); color:var(--sheet-gold); pointer-events:auto; }
 .c-resource-meter.c-resource-diamond .c-resource-actions button:hover:not(:disabled) { background:color-mix(in srgb,var(--accent) 12%,var(--panel)); border-color:var(--sheet-gold)!important; }
 .c-sheet-subtitle { max-width:34ch; margin:12px auto 0; text-align:center; color:var(--muted); font-size:12px; font-style:italic; overflow-wrap:anywhere; }
-.c-sheet-attributes .c-resource-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; gap:18px; margin:16px 0 0; padding:10px 0 0; border:0; border-top:1px solid var(--sheet-line); background:transparent; }
-.c-sheet-attributes .c-resource-grid .c-resource-meter { display:flex; flex-direction:column; gap:6px; padding:0; border:0; background:transparent; }
-.c-sheet-attributes .c-resource-grid label { display:flex; flex-wrap:wrap; gap:3px; justify-content:space-between; }
-.c-sheet-attributes .c-resource-grid label>span { font-size:11px; letter-spacing:.1em; }
-.c-app .c-sheet-attributes .c-resource-grid input { width:40px; height:28px; padding:0; border:0; border-radius:0; background:transparent; color:var(--sheet-ivory); font:24px Georgia,serif; text-align:right; }
-.c-sheet-attributes .c-resource-grid progress { height:4px; margin:0; border:0; }
-.c-sheet-attributes .c-resource-grid .c-resource-actions { display:flex; justify-content:space-between; margin:0; border:0; }
-.c-sheet-attributes .c-resource-grid .c-resource-actions button { width:44px; min-width:44px; height:36px; min-height:36px; }
+.c-sheet-overview .c-resource-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; gap:18px; margin:16px 0 0; padding:10px 0 0; border:0; border-top:1px solid var(--sheet-line); background:transparent; }
+.c-sheet-overview .c-resource-grid .c-resource-meter { display:flex; flex-direction:column; gap:6px; padding:0; border:0; background:transparent; }
+.c-sheet-overview .c-resource-grid label { display:flex; flex-wrap:wrap; gap:3px; justify-content:space-between; }
+.c-sheet-overview .c-resource-grid label>span { font-size:11px; letter-spacing:.1em; }
+.c-app .c-sheet-overview .c-resource-grid input { width:40px; height:28px; padding:0; border:0; border-radius:0; background:transparent; color:var(--sheet-ivory); font:24px Georgia,serif; text-align:right; }
+.c-sheet-overview .c-resource-grid progress { height:4px; margin:0; border:0; }
+.c-sheet-overview .c-resource-grid .c-resource-actions { display:flex; justify-content:space-between; margin:0; border:0; }
+.c-sheet-overview .c-resource-grid .c-resource-actions button { width:44px; min-width:44px; height:36px; min-height:36px; }
 .c-sheet-facts { margin:0 0 28px; }
 .c-sheet-facts>div { border-bottom:1px solid var(--sheet-line); }
 .c-sheet-facts dt { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; }
@@ -349,3 +349,17 @@ body { background:radial-gradient(circle at 50% 0,var(--panel),var(--bg) 38rem);
  .c-detail-sidebar { max-height:none; }
 }
 @media(prefers-reduced-motion:reduce) { .c-skill-node { transition:none; } }
+
+.c-app .c-creation-step {padding:4px 0;margin:0;border-bottom:1px solid var(--sheet-line)}
+.c-app .c-creation-step>summary {display:flex;align-items:center;gap:8px;padding:8px 0;color:var(--sheet-ivory)}
+.c-creation-step>summary strong {margin-right:auto}
+.c-creation-step>summary span,.c-roster-caption {font-size:12px;color:var(--muted)}
+.c-app .c-creation-step[open]>summary {margin-bottom:12px}
+.c-app details.c-skill-tree {margin:0}
+.c-skill-tree>summary {cursor:pointer}
+@media(max-width:600px){
+ .c-equipped-list .c-equipped-row.is-empty {min-height:44px;padding-block:4px}
+ .c-equipped-row.is-empty .c-inventory-row-copy {display:flex;flex-direction:row;align-items:center;gap:8px}
+ .c-equipped-row.is-empty .c-inventory-row-copy strong {display:none}
+ .c-equipped-row.is-empty .c-item-artwork {width:28px;height:28px}
+}

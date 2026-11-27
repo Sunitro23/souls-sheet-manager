@@ -58,3 +58,21 @@
 .adm-skills-heading{align-items:flex-start}.adm-skills-heading h2,.adm-skills-heading p{margin:0}.adm-category-identity,.adm-skill-options{margin:0}
 .adm-skill-form .c-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media(max-width:760px){.adm-skill-form .c-grid2{grid-template-columns:minmax(0,1fr)}}
+
+.adm-mobile-tools {display:grid;gap:12px;margin-bottom:16px}
+.adm-mobile-tools .adm-topbar nav {display:none}
+.adm-table .adm-secondary-action {background:transparent;border-color:transparent;color:var(--muted)}
+@media(max-width:850px){
+  .c-main:has(.adm-shell)>.c-context {display:none}
+  .adm-shell {gap:8px}
+  .adm-menu-toggle {justify-self:start}
+  .adm-main .adm-heading {margin:0 0 12px}
+  .adm-library-filters {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .adm-library-filters input {grid-column:1/-1;width:100%}
+  .adm-skill-list>.adm-filters {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .adm-skill-list>.adm-filters input {grid-column:1/-1;width:100%}
+  .c-app .adm-compact-list details {margin:0;border-bottom:1px solid var(--line)}
+  .adm-compact-list summary {padding:10px 4px;line-height:1.4;color:var(--text)}
+  .adm-compact-list summary small {display:block;margin-left:1.25em;color:var(--muted)}
+  .adm-compact-list details>p,.adm-compact-list .adm-toolbar {padding-inline:8px}
+}

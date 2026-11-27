@@ -416,6 +416,7 @@ export default function Skills({
         >
           Créer une compétence
         </button>
+        <details className="adm-skill-options"><summary>Affichage et retouches</summary><div className="adm-toolbar">
         <button
           type="button"
           className="c-button"
@@ -440,6 +441,7 @@ export default function Skills({
         >
           Aperçu publié
         </button>
+        </div></details>
         {treeChanged && !nodeDraft && (
           <button
             type="button"

@@ -62,6 +62,35 @@ export default function AppearanceEditor({
           </button>
         ))}
       </div>
+      <section
+        className="adm-theme-preview"
+        style={themeVariables(appearance) as CSSProperties}
+        data-magic-style={appearance.magicStyle}
+        data-weapon-style={appearance.weaponStyle}
+      >
+        <p className="c-eyebrow">Aperçu de la campagne</p>
+        <h2>{workspace.campaign.name}</h2>
+        <p>
+          Les couleurs et les ornements sont partagés avec les joueurs après
+          enregistrement.
+        </p>
+        <div className="c-grid2">
+          <article className="c-magic-branch c-pad">
+            <h3>✧ Souffle spectral</h3>
+            <p>Une magie ancienne habite ces terres.</p>
+          </article>
+          <article className="c-equipment-card c-pad">
+            <h3>⚔ Lame des cendres</h3>
+            <p>Une arme forgée au cœur des braises.</p>
+          </article>
+        </div>
+        <button className="c-primary">Exemple de bouton</button>
+        <p className="c-muted">
+          Le contraste est vérifié à l’enregistrement. Ces styles ne changent ni
+          les dégâts ni les coûts.
+        </p>
+      </section>
+      <details><summary>Couleurs et ornements</summary>
       <div className="c-grid2">
         {(
           [
@@ -108,34 +137,7 @@ export default function AppearanceEditor({
           <small>Défaut : Classique</small>
         </label>
       </div>
-      <section
-        className="adm-theme-preview"
-        style={themeVariables(appearance) as CSSProperties}
-        data-magic-style={appearance.magicStyle}
-        data-weapon-style={appearance.weaponStyle}
-      >
-        <p className="c-eyebrow">Aperçu de la campagne</p>
-        <h2>{workspace.campaign.name}</h2>
-        <p>
-          Les couleurs et les ornements sont partagés avec les joueurs après
-          enregistrement.
-        </p>
-        <div className="c-grid2">
-          <article className="c-magic-branch c-pad">
-            <h3>✧ Souffle spectral</h3>
-            <p>Une magie ancienne habite ces terres.</p>
-          </article>
-          <article className="c-equipment-card c-pad">
-            <h3>⚔ Lame des cendres</h3>
-            <p>Une arme forgée au cœur des braises.</p>
-          </article>
-        </div>
-        <button className="c-primary">Exemple de bouton</button>
-        <p className="c-muted">
-          Le contraste est vérifié à l’enregistrement. Ces styles ne changent ni
-          les dégâts ni les coûts.
-        </p>
-      </section>
+      </details>
     </>
   );
 }

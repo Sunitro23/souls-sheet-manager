@@ -3,6 +3,7 @@ import {Brain, Footprints, Info, MoveUpRight, Pencil, Skull, UserRound, Weight, 
 import type {ReactNode} from 'react';
 import {derive, mod, statNames, type Character} from '../lib/rules';
 import type {CampaignCharacter} from './character-roster';
+import {useIsMobile} from "../hooks/use-mobile";
 import {useCampaignSettings} from './campaign-theme';
 import {characterCategoryLabel} from '../lib/campaign-settings';
 import ResourceMeter from './resource-meter';
@@ -25,6 +26,8 @@ export default function CharacterOverview({character, derived, isGM, busy, onEdi
 }) {
   const settings=useCampaignSettings();
   const death = character.death ?? 0;
+  const mobile = useIsMobile(600);
+  const meters = <div className="c-resource-grid">{(['mana','end'] as const).map(key=><ResourceMeter key={key} kind={key} label={{mana:'FP',end:'END'}[key]} value={character[key]} max={derived[key]} disabled={busy} onChange={value=>onEdit({[key]:value})}/>)}</div>;
   return <div className="c-sheet-overview">
     <section className="c-sheet-attributes" aria-label="Caractéristiques">
       <SheetHeading>Caractéristiques</SheetHeading>
@@ -41,7 +44,7 @@ export default function CharacterOverview({character, derived, isGM, busy, onEdi
         </span>
         {derived.bonuses[stat]>0&&<small className="c-ability-bonus">{derived.stats[stat]} avec équipement</small>}
       </label>)}</div>
-      <div className="c-resource-grid">{(['mana','end'] as const).map(key=><ResourceMeter key={key} kind={key} label={{mana:'FP',end:'END'}[key]} value={character[key]} max={derived[key]} disabled={busy} onChange={value=>onEdit({[key]:value})}/>)}</div>
+      {!mobile && meters}
       <button type="button" className="c-text-button" onClick={onStats}><Info size={15}/>Détails et ajustements</button>
     </section>
     <section className="c-sheet-vitals" aria-label="Portrait et ressources">
@@ -66,6 +69,7 @@ export default function CharacterOverview({character, derived, isGM, busy, onEdi
       <div className="c-sheet-resources" role="group" aria-label="Ressources du personnage">
       <ResourceMeter kind="hp" label="PV" variant="diamond" value={character.hp} max={derived.hp} disabled={busy} onChange={hp=>onEdit({hp})}/>
       </div>
+      {mobile && meters}
     </section>
     <section className="c-sheet-combat" aria-label="Combat et déplacements">
       <SheetHeading>Combat</SheetHeading>

@@ -81,6 +81,7 @@ export function readDestination(search: string): Destination | null {
   for (const key of parameters)
     if (params.has(key)) target[key] = params.get(key)!;
   if (params.get("create") === "1") target.create = true;
+  if (target.page === "categories" && (target.kind === "race" || target.kind === "class")) target.page = "creation";
   return target;
 }
 export function destinationUrl(
@@ -216,7 +217,7 @@ export function searchAdministration(
       }[category.kind],
       archived: category.archived,
       target: {
-        page: "categories" as const,
+        page: category.kind === "race" || category.kind === "class" ? "creation" as const : "categories" as const,
         selected: category.id,
         kind: category.kind,
       },

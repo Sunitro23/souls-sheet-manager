@@ -127,3 +127,13 @@ test("joueurs, voies, catégories et créations utilisent les mêmes destination
   other.members = [];
   assert.equal(searchAdministration(other, "Son Crispant").length, 0);
 });
+
+test("une race reste accessible depuis un ancien lien de catégorie et depuis la recherche MJ", () => {
+  const workspace = fixture();
+  const race = workspace.settings.categories.find(category => category.kind === "race");
+  const expected = {page: "creation", selected: race.id, kind: "race"};
+  const query = new URLSearchParams({...expected, section: "categories"});
+  assert.deepEqual(readDestination(query.toString()), expected);
+  const result = searchAdministration(workspace, race.name).find(result => result.id === "category:" + race.id);
+  assert.deepEqual(result.target, expected);
+});

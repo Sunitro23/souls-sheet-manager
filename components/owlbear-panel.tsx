@@ -39,7 +39,7 @@ export default function OwlbearPanel(props: Props) {
     {!settings && character && derived && <OwlbearMeters character={character} maximum={derived} busy={busy} onEdit={props.onEdit}/>}
     <div className="c-owlbear-content">
       {settings && <button type="button" className="c-owlbear-back" onClick={() => navigate()}><ArrowLeft size={15}/>Revenir aux actions</button>}
-      {props.ready && props.campaignId && <section aria-label="Informations du combat" hidden={settings}><OwlbearCombat key={props.campaignId} campaignId={props.campaignId} characters={characters} canAssign={props.canAssign}/></section>}
+      {props.ready && props.campaignId && <OwlbearCombat settings={settings} key={props.campaignId} campaignId={props.campaignId} characters={characters} canAssign={props.canAssign}/>}
       {props.saveStatus === 'error' && <p role="alert">Échec de l’enregistrement. Vos modifications sont conservées. <button className="c-button" disabled={busy} onClick={props.onSave}>Réessayer</button></p>}
       {props.conflict && <div role="alert"><p>La fiche a changé ailleurs. Copiez votre brouillon ou rechargez la fiche.</p><button className="c-button" onClick={props.onCopyDraft}>Copier le brouillon</button><button className="c-button" disabled={busy} onClick={props.onReload}>Recharger</button></div>}
       {props.ready && <OwlbearTools dirty={props.dirty} characters={characters} canAssign={props.canAssign} character={character} section={settings ? "Paramètres" : "Actions"} tree={props.tree} onCharacter={props.onCharacter} onSection={navigate}/>}

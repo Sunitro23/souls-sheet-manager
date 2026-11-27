@@ -38,9 +38,10 @@ test('Owlbear navigation keeps play resources accessible and public initiative t
   const player=renderToStaticMarkup(React.createElement(Initiative,{combat,canManage:false,playerId:'alice',connectionId:'alice'}));
   assert.match(player,/c-owlbear-footer/);assert.match(player,/Terminer mon tour/);assert.match(player,/Enemy/);assert.match(player,/<b title="Initiative">8<\/b>/);assert.match(player,/aria-current="step"/);
   assert.match(player,/c-turn-strip/);
-  assert.match(player,/Tour de : <strong>Hero/);
+  assert.match(player,/Tour de <strong>Hero/);
   assert.match(player,/c-turn-portrait/);
   assert.doesNotMatch(player,/c-owlbear-active-info/);assert.match(player,/Manche 1/);
+  assert.equal(player.match(/Manche /g)?.length,1);
   assert.doesNotMatch(player,/c-owlbear-current|>Actions<|Esquive/);
   assert.doesNotMatch(player,/DEX : 24|Gérer les tours|Tour précédent/);
   globalThis.__owlbearRuntime={combat:{...combat,turn:1},state:{combat:{...combat,turn:1},pending:null,resolution:null},playerId:'alice',ready:true,error:''};

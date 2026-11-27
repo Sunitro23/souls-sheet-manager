@@ -1,13 +1,13 @@
 "use client";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { initiativeOrder, initiativeTotal, participantsByPlayer } from "../lib/obr/core/combat";
 import type { CombatPreparation, InitiativeAction, TurnAction } from "../lib/obr/core/combat";
 
 import { type Character } from "../lib/rules";
 import { useOwlbearCombat } from "./use-owlbear-combat";
 
-export default function OwlbearInitiative({ combat: initialCombat, canManage, connectionId, playerId, characters = [], portraits = {}, endCombatButton }: {
-  endCombatButton?: ReactNode; portraits?: Record<string, string>; characters?: Character[]; combat: CombatPreparation; canManage: boolean; connectionId: string; playerId: string;
+export default function OwlbearInitiative({ combat: initialCombat, canManage, connectionId, playerId, characters = [], portraits = {} }: {
+  portraits?: Record<string, string>; characters?: Character[]; combat: CombatPreparation; canManage: boolean; connectionId: string; playerId: string;
 }) {
   const runtime = useOwlbearCombat();
   const combat = runtime.state?.combat.id === initialCombat.id ? runtime.state.combat : initialCombat;
@@ -83,7 +83,7 @@ export default function OwlbearInitiative({ combat: initialCombat, canManage, co
     else if (item.right > bounds.right) list.scrollLeft += item.right - bounds.right;
   }, [combat.id, active?.id, currentTurn]);
   return <section className="owlbear-previews" aria-label="Initiatives">
-    {active&&<div className="c-owlbear-order-heading"><p className="c-owlbear-turn-label" role="status">Tour de : <strong>{active.name}</strong></p><span>Manche {Math.floor(currentTurn / Math.max(1, ordered.length)) + 1}</span></div>}
+    {active&&<div className="c-owlbear-order-heading"><p className="c-owlbear-turn-label" role="status">Tour de <strong>{active.name}</strong></p><span>Manche {Math.floor(currentTurn / Math.max(1, ordered.length)) + 1}</span></div>}
     {(error || runtime.error) && <p role="alert">{error || runtime.error}</p>}
     {canManage && combat.phase === "ready" && runtime.ready && !runtime.state && <button className="c-primary" disabled={busy} onClick={async()=>{setBusy(true);try{const {startCombat}=await import('../lib/obr/owlbear/actions');await startCombat(combat);}catch(e){setError((e as Error).message)}finally{setBusy(false)}}}>Démarrer le combat</button>}
     {combat.phase === "preparing" ? <>
@@ -115,6 +115,6 @@ export default function OwlbearInitiative({ combat: initialCombat, canManage, co
       </>}
       {canManage && combat.phase === "ready" && !runtime.state && <button className="c-button" disabled={busy || locked} onClick={() => void change({ type: "open" })}>Corriger les initiatives</button>}
     </>}
-    {active&&(canManage||active.playerId===playerId)&&<div ref={footer} className="c-owlbear-footer"><span className="c-owlbear-round">Manche <b>{Math.floor(currentTurn / Math.max(1, ordered.length)) + 1}</b></span><button className="c-primary" disabled={busy || locked || !runtime.ready} onClick={()=>void turn({type:"next"})}>{active.playerId===playerId?"Terminer mon tour":"Tour suivant"} →</button>{endCombatButton}</div>}
+    {active&&(canManage||active.playerId===playerId)&&<div ref={footer} className="c-owlbear-footer"><button className="c-primary" disabled={busy || locked || !runtime.ready} onClick={()=>void turn({type:"next"})}>{active.playerId===playerId?"Terminer mon tour":"Tour suivant"} →</button></div>}
   </section>;
 }

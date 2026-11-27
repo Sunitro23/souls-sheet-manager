@@ -10,11 +10,11 @@ import { sharedLink } from "../lib/obr/core/links";
 import OwlbearInitiative from "./owlbear-initiative";
 
 type Props = {
-  campaignId: string; canAssign: boolean; characters: (Character & { playerId?: string | null })[];
+  campaignId: string; canAssign: boolean; settings: boolean; characters: (Character & { playerId?: string | null })[];
 };
 type RoomPlayer = CombatPlayer & { role: "GM" | "PLAYER"; connectionId: string };
 
-export default function OwlbearCombat({ campaignId, canAssign, characters }: Props) {
+export default function OwlbearCombat({ campaignId, canAssign, characters, settings }: Props) {
   const [self, setSelf] = useState<RoomPlayer | null>(null);
   const [others, setOthers] = useState<CombatPlayer[]>([]);
   const [combat, setCombat] = useState<CombatPreparation | null>(null);
@@ -88,23 +88,27 @@ export default function OwlbearCombat({ campaignId, canAssign, characters }: Pro
         finally { setBusy(false); }
       }}>Terminer le combat</button>
   ) : null;
-  return <section className="owlbear-previews" aria-label="Combat">
-<datalist id="combat-camps"><option value="Joueurs"/><option value="Ennemis"/></datalist>
-    {error && <p role="alert">{error}</p>}
-    {ready && (!combat || combat.phase === "preparing") && <>
-      {(combat?.participants??detected).length ? <ul className="c-combat-list">{participantsByPlayer(combat?.participants??detected).map(participant => <li key={participant.id}>
-        <div className="c-combat-row"><span className="c-owlbear-participant"><span className="c-owlbear-avatar" aria-hidden="true">♟</span><span><strong>{participant.name}</strong></span></span><span className="c-owlbear-tag">{choices[participant.id]?.camp ?? participant.camp ?? "Joueurs"}</span></div>
-        {canManage && <details><summary>Modifier</summary><label>Camp<input value={choices[participant.id]?.camp ?? participant.camp ?? "Joueurs"} onChange={e=>setChoices(old=>({...old,[participant.id]:{...old[participant.id],camp:e.target.value}}))} maxLength={50} list="combat-camps" /></label>
-        <label>Pion de combat<select value={choices[participant.id]?.tokenId ?? participant.tokenId ?? ""} onChange={e=>setChoices(old=>({...old,[participant.id]:{...old[participant.id],tokenId:e.target.value}}))}>{tokens.filter(t=>t.type==="IMAGE"&&t.layer==="CHARACTER"&&sharedLink(t)?.characterId===participant.characterId).map(t=><option key={t.id} value={t.id}>{t.name || t.id}</option>)}</select></label></details>}
+  return <>
+    {settings && combat?.phase === "ready" && endCombatButton}
+    {settings && error && <p role="alert">{error}</p>}
+    <section className="owlbear-previews" aria-label="Informations du combat" hidden={settings}>
+      <datalist id="combat-camps"><option value="Joueurs"/><option value="Ennemis"/></datalist>
+      {error && <p role="alert">{error}</p>}
+      {ready && (!combat || combat.phase === "preparing") && <>
+        {(combat?.participants??detected).length ? <ul className="c-combat-list">{participantsByPlayer(combat?.participants??detected).map(participant => <li key={participant.id}>
+          <div className="c-combat-row"><span className="c-owlbear-participant"><span className="c-owlbear-avatar" aria-hidden="true">♟</span><span><strong>{participant.name}</strong></span></span><span className="c-owlbear-tag">{choices[participant.id]?.camp ?? participant.camp ?? "Joueurs"}</span></div>
+          {canManage && <details><summary>Modifier</summary><label>Camp<input value={choices[participant.id]?.camp ?? participant.camp ?? "Joueurs"} onChange={e=>setChoices(old=>({...old,[participant.id]:{...old[participant.id],camp:e.target.value}}))} maxLength={50} list="combat-camps" /></label>
+          <label>Pion de combat<select value={choices[participant.id]?.tokenId ?? participant.tokenId ?? ""} onChange={e=>setChoices(old=>({...old,[participant.id]:{...old[participant.id],tokenId:e.target.value}}))}>{tokens.filter(t=>t.type==="IMAGE"&&t.layer==="CHARACTER"&&sharedLink(t)?.characterId===participant.characterId).map(t=><option key={t.id} value={t.id}>{t.name || t.id}</option>)}</select></label></details>}
 
-      </li>)}</ul> : <p>Aucun token associé sur la carte.</p>}
-      <p className="c-owlbear-notice">{(combat?.participants??detected).length} participant(s)</p>
-      {canManage && <div className="c-owlbear-footer"><button type="button" className="c-primary" disabled={busy || !detected.length} onClick={() => void createOrOpen()}>
-        {busy ? "Préparation…" : combat ? "Lancer les initiatives →" : "Créer le combat →"}
-      </button></div>}
-    </>}
-    {ready && combat && combat.campaignId !== campaignId && <p>Combat d’une autre campagne.</p>}
-    {ready && combat && combat.phase !== "preparing" && self && <OwlbearInitiative key={combat.id} combat={combat} canManage={!!canManage} endCombatButton={endCombatButton} connectionId={self.connectionId} playerId={self.id} characters={characters} portraits={Object.fromEntries(tokens.filter((t): t is Item & {image:{url:string}} => t.type === "IMAGE" && "image" in t).map(t=>[t.id,t.image.url]))} />}
-    {combat?.phase !== "ready" && endCombatButton}
-  </section>;
+        </li>)}</ul> : <p>Aucun token associé sur la carte.</p>}
+        <p className="c-owlbear-notice">{(combat?.participants??detected).length} participant(s)</p>
+        {canManage && <div className="c-owlbear-footer"><button type="button" className="c-primary" disabled={busy || !detected.length} onClick={() => void createOrOpen()}>
+          {busy ? "Préparation…" : combat ? "Lancer les initiatives →" : "Créer le combat →"}
+        </button></div>}
+      </>}
+      {ready && combat && combat.campaignId !== campaignId && <p>Combat d’une autre campagne.</p>}
+      {ready && combat && combat.phase !== "preparing" && self && <OwlbearInitiative key={combat.id} combat={combat} canManage={!!canManage} connectionId={self.connectionId} playerId={self.id} characters={characters} portraits={Object.fromEntries(tokens.filter((t): t is Item & {image:{url:string}} => t.type === "IMAGE" && "image" in t).map(t=>[t.id,t.image.url]))} />}
+      {combat?.phase !== "ready" && endCombatButton}
+    </section>
+  </>;
 }
